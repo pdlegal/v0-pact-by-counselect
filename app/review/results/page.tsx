@@ -53,6 +53,7 @@ interface Deviation {
   declarationChecked?: boolean
   approvedBy?: string
   approvalDate?: string
+  showApprovalForm?: boolean
 }
 
 const initialDeviations: Deviation[] = [
@@ -159,43 +160,25 @@ function ActionToggle({
   status, 
   onAccept, 
   onReject,
-  disabled = false 
+  acceptDisabled = false 
 }: { 
   status: DeviationStatus
   onAccept: () => void
   onReject: () => void
-  disabled?: boolean
+  acceptDisabled?: boolean
 }) {
-  if (disabled) {
-    return (
-      <div className="flex gap-2 opacity-50">
-        <button
-          disabled
-          className="px-3 py-1.5 text-xs font-medium rounded cursor-not-allowed"
-          style={{ backgroundColor: "#E2E4E8", color: "#4A4A6A" }}
-        >
-          Accept
-        </button>
-        <button
-          disabled
-          className="px-3 py-1.5 text-xs font-medium rounded cursor-not-allowed"
-          style={{ backgroundColor: "#E2E4E8", color: "#4A4A6A" }}
-        >
-          Reject
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div className="flex gap-2">
       <button
         onClick={onAccept}
+        disabled={acceptDisabled}
         className="px-3 py-1.5 text-xs font-medium rounded transition-colors"
         style={{ 
           backgroundColor: status === "accepted" ? "#E8F5E9" : "#FFFFFF",
-          color: status === "accepted" ? "#1B5E20" : "#4A4A6A",
-          border: "1px solid #E2E4E8"
+          color: status === "accepted" ? "#1B5E20" : acceptDisabled ? "#9B9B9B" : "#4A4A6A",
+          border: "1px solid #E2E4E8",
+          opacity: acceptDisabled ? 0.6 : 1,
+          cursor: acceptDisabled ? "not-allowed" : "pointer"
         }}
       >
         Accept
@@ -219,16 +202,25 @@ function DeviationCard({
   deviation, 
   onStatusChange,
   onDeclarationChange,
-  onApprovalFieldChange
+  onApprovalFieldChange,
+  onShowApprovalForm
 }: { 
   deviation: Deviation
   onStatusChange: (id: number, status: DeviationStatus) => void
   onDeclarationChange?: (id: number, checked: boolean) => void
   onApprovalFieldChange?: (id: number, field: "approvedBy" | "approvalDate", value: string) => void
+  onShowApprovalForm?: (id: number, show: boolean) => void
 }) {
   const isEscalation = deviation.type === "escalation"
   const isMajor = deviation.type === "major"
-  const needsDeclaration = isMajor && !deviation.declarationChecked
+  
+  // For major deviations, Accept is disabled until all approval fields are filled
+  const canAcceptMajor = isMajor 
+    ? (deviation.declarationChecked && deviation.approvedBy?.trim() && deviation.approvalDate?.trim())
+    : true
+  
+  // Show approval form when user intends to accept a major deviation
+  const showApprovalForm = isMajor && deviation.showApprovalForm
 
   return (
     <div 
@@ -269,28 +261,19 @@ function DeviationCard({
             {deviation.reason}
           </p>
           
-          {isMajor && (
+          {showApprovalForm && (
             <div className="mt-3 p-3 rounded-md" style={{ backgroundColor: "#F7F8FA" }}>
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={deviation.declarationChecked || false}
-                  onChange={(e) => onDeclarationChange?.(deviation.id, e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded"
-                  style={{ accentColor: "#FB6A1B" }}
-                />
-                <span className="text-xs" style={{ color: "#4A4A6A" }}>
-                  I confirm I have received the necessary approval to accept this deviation.
-                </span>
-              </label>
+              <p className="text-xs mb-3" style={{ color: "#431F5D", fontWeight: 500 }}>
+                To accept this major deviation, please provide approval details:
+              </p>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label 
                     className="block text-xs mb-1"
                     style={{ color: "#4A4A6A" }}
                   >
-                    Approved by
+                    Approved by <span style={{ color: "#B71C1C" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -310,7 +293,7 @@ function DeviationCard({
                     className="block text-xs mb-1"
                     style={{ color: "#4A4A6A" }}
                   >
-                    Date approved
+                    Date approved <span style={{ color: "#B71C1C" }}>*</span>
                   </label>
                   <input
                     type="date"
@@ -325,6 +308,19 @@ function DeviationCard({
                   />
                 </div>
               </div>
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deviation.declarationChecked || false}
+                  onChange={(e) => onDeclarationChange?.(deviation.id, e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded"
+                  style={{ accentColor: "#FB6A1B" }}
+                />
+                <span className="text-xs" style={{ color: "#4A4A6A" }}>
+                  I confirm I have received the necessary approval to accept this deviation.
+                </span>
+              </label>
             </div>
           )}
         </div>
@@ -333,9 +329,23 @@ function DeviationCard({
           <div className="flex-shrink-0">
             <ActionToggle
               status={deviation.status}
-              onAccept={() => onStatusChange(deviation.id, "accepted")}
-              onReject={() => onStatusChange(deviation.id, "rejected")}
-              disabled={needsDeclaration}
+              onAccept={() => {
+                if (isMajor && !showApprovalForm) {
+                  // Show the approval form first
+                  onShowApprovalForm?.(deviation.id, true)
+                } else if (!isMajor || canAcceptMajor) {
+                  // Accept directly for minor, or accept if major has all fields filled
+                  onStatusChange(deviation.id, "accepted")
+                }
+              }}
+              onReject={() => {
+                // Hide approval form if rejecting
+                if (isMajor) {
+                  onShowApprovalForm?.(deviation.id, false)
+                }
+                onStatusChange(deviation.id, "rejected")
+              }}
+              acceptDisabled={isMajor && showApprovalForm && !canAcceptMajor}
             />
           </div>
         )}
@@ -363,6 +373,12 @@ export default function DeviationTablePage() {
   const handleApprovalFieldChange = (id: number, field: "approvedBy" | "approvalDate", value: string) => {
     setDeviations(prev => 
       prev.map(d => d.id === id ? { ...d, [field]: value } : d)
+    )
+  }
+
+  const handleShowApprovalForm = (id: number, show: boolean) => {
+    setDeviations(prev => 
+      prev.map(d => d.id === id ? { ...d, showApprovalForm: show } : d)
     )
   }
 
@@ -479,6 +495,7 @@ export default function DeviationTablePage() {
             onStatusChange={handleStatusChange}
             onDeclarationChange={handleDeclarationChange}
             onApprovalFieldChange={handleApprovalFieldChange}
+            onShowApprovalForm={handleShowApprovalForm}
           />
         ))}
 
@@ -501,6 +518,7 @@ export default function DeviationTablePage() {
             onStatusChange={handleStatusChange}
             onDeclarationChange={handleDeclarationChange}
             onApprovalFieldChange={handleApprovalFieldChange}
+            onShowApprovalForm={handleShowApprovalForm}
           />
         ))}
 
@@ -523,6 +541,7 @@ export default function DeviationTablePage() {
             onStatusChange={handleStatusChange}
             onDeclarationChange={handleDeclarationChange}
             onApprovalFieldChange={handleApprovalFieldChange}
+            onShowApprovalForm={handleShowApprovalForm}
           />
         ))}
 
