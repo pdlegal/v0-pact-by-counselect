@@ -205,7 +205,7 @@ export default function ReviewOutputPage() {
           >
             {"Changes reflect Technia's agreed NDA positions. Items marked "}
             <span className="font-medium">Your decision</span>
-            {" require approval from your team before the NDA is sent. If you have questions, contact your Counselect attorney."}
+            {" require approval from your team before the NDA is sent. If you have questions, contact your TECHNIA attorney."}
           </p>
 
           {/* Divider */}
