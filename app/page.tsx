@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 
 function PactWordmark() {
   return (
@@ -22,12 +23,21 @@ function PactWordmark() {
           }}
         />
       </div>
-      <span 
-        className="text-xs mt-0.5"
-        style={{ color: "#4A4A6A" }}
-      >
-        by Counselect
-      </span>
+      <div className="flex items-center gap-1 mt-0.5">
+        <span 
+          className="text-xs"
+          style={{ color: "#4A4A6A" }}
+        >
+          by
+        </span>
+        <Image
+          src="/images/counselect-logo.jpg"
+          alt="Counselect"
+          width={80}
+          height={20}
+          className="object-contain"
+        />
+      </div>
     </div>
   )
 }
