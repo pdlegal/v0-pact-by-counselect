@@ -56,18 +56,6 @@ function HeroSection() {
       className="flex-1 w-full px-6 py-16 flex flex-col items-center justify-center"
       style={{ backgroundColor: "#431F5D" }}
     >
-      {/* Eyebrow */}
-      <span
-        className="font-medium uppercase mb-3"
-        style={{ 
-          color: "#FB6A1B", 
-          fontSize: "11px",
-          letterSpacing: "0.08em"
-        }}
-      >
-        by Counselect
-      </span>
-
       {/* Headline */}
       <h1 
         className="font-medium text-center mb-3"
