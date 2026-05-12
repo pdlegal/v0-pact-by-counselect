@@ -43,7 +43,7 @@ function NavBar() {
 function HeroSection() {
   return (
     <section 
-      className="w-full px-6 py-16 flex flex-col items-center"
+      className="flex-1 w-full px-6 py-16 flex flex-col items-center justify-center"
       style={{ backgroundColor: "#431F5D" }}
     >
       {/* Eyebrow */}
