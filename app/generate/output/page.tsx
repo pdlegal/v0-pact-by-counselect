@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 
 function PactWordmark() {
@@ -46,6 +47,51 @@ function NavBar() {
         </div>
       </div>
     </nav>
+  )
+}
+
+function StarRating() {
+  const [rating, setRating] = useState<number | null>(null)
+  const [hoveredRating, setHoveredRating] = useState<number | null>(null)
+
+  return (
+    <div className="text-center">
+      {rating === null ? (
+        <>
+          <p style={{ fontSize: "13px", color: "#431F5D" }}>
+            How was your experience with Pact?
+          </p>
+          <div className="flex justify-center gap-2 mt-3">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setRating(star)}
+                onMouseEnter={() => setHoveredRating(star)}
+                onMouseLeave={() => setHoveredRating(null)}
+                className="transition-colors"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill={
+                    (hoveredRating !== null && star <= hoveredRating) 
+                      ? "#FB6A1B" 
+                      : "#E2E4E8"
+                  }
+                >
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+          Thank you for your feedback.
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -191,14 +237,29 @@ export default function GenerateOutputPage() {
             {"This NDA has been drafted to Technia's standard positions. Review it before sending to your counterparty. If you have questions, contact your TECHNIA attorney."}
           </p>
 
-          {/* Return Link */}
-          <div className="mt-6 text-center">
+          {/* Divider */}
+          <div 
+            className="my-6"
+            style={{ height: "0.5px", backgroundColor: "#E2E4E8" }}
+          />
+
+          {/* Feedback Section */}
+          <StarRating />
+
+          {/* Divider */}
+          <div 
+            className="my-6"
+            style={{ height: "0.5px", backgroundColor: "#E2E4E8" }}
+          />
+
+          {/* Submit Another Link */}
+          <div className="text-center">
             <Link
               href="/home"
-              className="hover:underline transition-all"
+              className="underline transition-opacity hover:opacity-80"
               style={{ fontSize: "13px", color: "#431F5D" }}
             >
-              Generate another NDA
+              Submit another NDA
             </Link>
           </div>
         </div>
