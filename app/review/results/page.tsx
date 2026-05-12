@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 function PactWordmark() {
@@ -344,6 +345,7 @@ function DeviationCard({
 }
 
 export default function DeviationTablePage() {
+  const router = useRouter()
   const [deviations, setDeviations] = useState<Deviation[]>(initialDeviations)
 
   const handleStatusChange = (id: number, status: DeviationStatus) => {
@@ -539,6 +541,7 @@ export default function DeviationTablePage() {
         {/* Download Button */}
         <button
           disabled={!allActioned}
+          onClick={() => allActioned && router.push("/review/output")}
           className="w-full py-3 rounded-md font-medium transition-all mt-4"
           style={{
             background: allActioned 
