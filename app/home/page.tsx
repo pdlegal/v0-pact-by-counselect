@@ -6,17 +6,19 @@ function PactWordmark({ variant = "light" }: { variant?: "light" | "dark" }) {
   const textColor = variant === "light" ? "#FFFFFF" : "#431F5D"
   
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-baseline">
       <span 
         className="text-xl font-medium"
         style={{ color: textColor }}
       >
         Pact
       </span>
-      <div 
-        className="w-3 h-3 rounded-full"
+      <span
+        className="inline-block rounded-full ml-0.5"
         style={{ 
           background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+          width: "6px",
+          height: "6px"
         }}
       />
     </div>

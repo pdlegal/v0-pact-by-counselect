@@ -7,7 +7,7 @@ import Link from "next/link"
 function PactWordmark() {
   return (
     <div className="flex flex-col items-center">
-      <div className="flex items-center">
+      <div className="flex items-baseline">
         <span 
           className="text-2xl font-medium"
           style={{ color: "#431F5D" }}
@@ -15,16 +15,15 @@ function PactWordmark() {
           Pact
         </span>
         <span
-          className="ml-0.5 inline-block rounded-full"
+          className="inline-block rounded-full ml-0.5"
           style={{
             background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
-            width: "12px",
-            height: "12px",
-            marginBottom: "8px"
+            width: "8px",
+            height: "8px"
           }}
         />
       </div>
-      <div className="flex items-center gap-1.5 mt-1">
+      <div className="flex items-center gap-1.5 mt-2">
         <span 
           style={{ color: "#9B9B9B", fontSize: "11px" }}
         >
@@ -36,6 +35,7 @@ function PactWordmark() {
           width={70}
           height={18}
           className="object-contain"
+          style={{ marginTop: "-2px" }}
           unoptimized
         />
       </div>
