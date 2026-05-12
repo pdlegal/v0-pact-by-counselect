@@ -57,23 +57,36 @@ function HeroSection() {
       style={{ backgroundColor: "#431F5D" }}
     >
       {/* Headline */}
-      <h1 
-        className="font-medium text-center mb-3"
-        style={{ 
-          color: "#FFFFFF",
-          fontSize: "28px"
-        }}
-      >
-        Every deal starts here.
-      </h1>
+      <div className="flex flex-col items-center mb-4">
+        <h1 
+          className="font-semibold text-center"
+          style={{ 
+            color: "#FFFFFF",
+            fontSize: "clamp(32px, 5vw, 42px)",
+            letterSpacing: "-0.01em"
+          }}
+        >
+          Every deal starts{" "}
+          <span style={{ color: "#FB6A1B" }}>here</span>.
+        </h1>
+        {/* Gradient underline */}
+        <div 
+          className="mt-3 rounded-full"
+          style={{ 
+            width: "80px",
+            height: "3px",
+            background: "linear-gradient(90deg, #FB6A1B, #D2582F)"
+          }}
+        />
+      </div>
 
       {/* Subline */}
       <p 
-        className="font-normal text-center mb-8"
+        className="font-normal text-center mb-10"
         style={{ 
           color: "rgba(255,255,255,0.65)",
-          fontSize: "14px",
-          maxWidth: "320px"
+          fontSize: "15px",
+          maxWidth: "340px"
         }}
       >
         Trusted counsel, from the very first signature.
