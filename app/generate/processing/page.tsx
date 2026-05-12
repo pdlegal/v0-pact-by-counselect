@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 
 // Pact wordmark component
 function PactWordmark() {
@@ -101,33 +101,94 @@ function ProgressStepper({ steps }: { steps: Step[] }) {
   )
 }
 
-// Completion message component
-function CompletionMessage() {
+// Loading counter component
+function LoadingCounter({ onComplete }: { onComplete: () => void }) {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const duration = 5000 // 5 seconds
+    const interval = 50 // Update every 50ms
+    const increment = 100 / (duration / interval)
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + increment
+        if (next >= 100) {
+          clearInterval(timer)
+          return 100
+        }
+        return next
+      })
+    }, interval)
+
+    // Call onComplete after 5 seconds
+    const completeTimer = setTimeout(() => {
+      onComplete()
+    }, duration)
+
+    return () => {
+      clearInterval(timer)
+      clearTimeout(completeTimer)
+    }
+  }, [onComplete])
+
   return (
-    <div className="flex items-center gap-2 mt-4">
-      <svg 
-        width="16" 
-        height="16" 
-        viewBox="0 0 16 16" 
-        fill="none"
-        style={{ color: "#1B5E20" }}
+    <div className="mt-3 flex items-center gap-3">
+      {/* Progress bar */}
+      <div 
+        className="flex-1 h-1 rounded-full overflow-hidden"
+        style={{ backgroundColor: "#E2E4E8" }}
       >
-        <path 
-          d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM6.4 12L2.4 8L3.52 6.88L6.4 9.76L12.48 3.68L13.6 4.8L6.4 12Z" 
-          fill="currentColor"
+        <div 
+          className="h-full rounded-full transition-all duration-50"
+          style={{ 
+            width: `${progress}%`,
+            background: "linear-gradient(135deg, #FB6A1B, #D2582F)"
+          }}
         />
-      </svg>
+      </div>
+      {/* Percentage */}
       <span 
-        className="text-[13px]"
-        style={{ color: "#1B5E20" }}
+        className="font-medium tabular-nums"
+        style={{ fontSize: "12px", color: "#431F5D", minWidth: "36px" }}
       >
-        Your NDA is ready.
+        {Math.round(progress)}%
       </span>
     </div>
   )
 }
 
+// Completion message component
+function CompletionMessage({ onComplete }: { onComplete: () => void }) {
+  return (
+    <div className="mt-4 pt-4" style={{ borderTop: "1px solid #E2E4E8" }}>
+      <div className="flex items-center gap-2">
+        <svg 
+          width="16" 
+          height="16" 
+          viewBox="0 0 16 16" 
+          fill="none"
+          style={{ color: "#1B5E20" }}
+        >
+          <path 
+            d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM6.4 12L2.4 8L3.52 6.88L6.4 9.76L12.48 3.68L13.6 4.8L6.4 12Z" 
+            fill="currentColor"
+          />
+        </svg>
+        <span 
+          className="text-[13px]"
+          style={{ color: "#1B5E20" }}
+        >
+          Your NDA is ready. Loading your download...
+        </span>
+      </div>
+      <LoadingCounter onComplete={onComplete} />
+    </div>
+  )
+}
+
 export default function GenerateProcessingPage() {
+  const router = useRouter()
   const [steps, setSteps] = useState<Step[]>([
     { label: "Details received", status: "complete" },
     { label: "Selecting the right template...", status: "pending" },
@@ -135,6 +196,10 @@ export default function GenerateProcessingPage() {
     { label: "Preparing your NDA", status: "pending" }
   ])
   const [isComplete, setIsComplete] = useState(false)
+
+  const handleNavigateToOutput = () => {
+    router.push("/generate/output")
+  }
 
   // Animation timeline
   useEffect(() => {
@@ -229,7 +294,7 @@ export default function GenerateProcessingPage() {
           <ProgressStepper steps={steps} />
           
           {/* Completion message */}
-          {isComplete && <CompletionMessage />}
+          {isComplete && <CompletionMessage onComplete={handleNavigateToOutput} />}
         </div>
       </div>
     </main>
