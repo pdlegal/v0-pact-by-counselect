@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 
 function PactWordmark() {
   return (
@@ -178,6 +179,14 @@ export default function LoginPage() {
             >
               {"We'll send a one-click link — no password needed."}
             </p>
+
+            <Link
+              href="/home"
+              className="block text-center mt-6 text-sm font-medium transition-opacity hover:opacity-80"
+              style={{ color: "#431F5D" }}
+            >
+              Skip to homepage (dev)
+            </Link>
           </>
         )}
       </div>
