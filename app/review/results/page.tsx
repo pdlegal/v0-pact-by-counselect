@@ -50,6 +50,8 @@ interface Deviation {
   reason: string
   status: DeviationStatus
   declarationChecked?: boolean
+  approvedBy?: string
+  approvalDate?: string
 }
 
 const initialDeviations: Deviation[] = [
@@ -215,11 +217,13 @@ function ActionToggle({
 function DeviationCard({ 
   deviation, 
   onStatusChange,
-  onDeclarationChange
+  onDeclarationChange,
+  onApprovalFieldChange
 }: { 
   deviation: Deviation
   onStatusChange: (id: number, status: DeviationStatus) => void
   onDeclarationChange?: (id: number, checked: boolean) => void
+  onApprovalFieldChange?: (id: number, field: "approvedBy" | "approvalDate", value: string) => void
 }) {
   const isEscalation = deviation.type === "escalation"
   const isMajor = deviation.type === "major"
@@ -265,18 +269,62 @@ function DeviationCard({
           </p>
           
           {isMajor && (
-            <label className="flex items-start gap-2 mt-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={deviation.declarationChecked || false}
-                onChange={(e) => onDeclarationChange?.(deviation.id, e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded"
-                style={{ accentColor: "#FB6A1B" }}
-              />
-              <span className="text-xs" style={{ color: "#4A4A6A" }}>
-                I confirm I have received the necessary approval to accept this deviation.
-              </span>
-            </label>
+            <div className="mt-3 p-3 rounded-md" style={{ backgroundColor: "#F7F8FA" }}>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deviation.declarationChecked || false}
+                  onChange={(e) => onDeclarationChange?.(deviation.id, e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded"
+                  style={{ accentColor: "#FB6A1B" }}
+                />
+                <span className="text-xs" style={{ color: "#4A4A6A" }}>
+                  I confirm I have received the necessary approval to accept this deviation.
+                </span>
+              </label>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label 
+                    className="block text-xs mb-1"
+                    style={{ color: "#4A4A6A" }}
+                  >
+                    Approved by
+                  </label>
+                  <input
+                    type="text"
+                    value={deviation.approvedBy || ""}
+                    onChange={(e) => onApprovalFieldChange?.(deviation.id, "approvedBy", e.target.value)}
+                    placeholder="Name of approver"
+                    className="w-full px-3 py-2 text-xs rounded-md"
+                    style={{ 
+                      backgroundColor: "#FFFFFF",
+                      border: "1px solid #E2E4E8",
+                      color: "#431F5D"
+                    }}
+                  />
+                </div>
+                <div>
+                  <label 
+                    className="block text-xs mb-1"
+                    style={{ color: "#4A4A6A" }}
+                  >
+                    Date approved
+                  </label>
+                  <input
+                    type="date"
+                    value={deviation.approvalDate || ""}
+                    onChange={(e) => onApprovalFieldChange?.(deviation.id, "approvalDate", e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-md"
+                    style={{ 
+                      backgroundColor: "#FFFFFF",
+                      border: "1px solid #E2E4E8",
+                      color: "#431F5D"
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
         
@@ -307,6 +355,12 @@ export default function DeviationTablePage() {
   const handleDeclarationChange = (id: number, checked: boolean) => {
     setDeviations(prev => 
       prev.map(d => d.id === id ? { ...d, declarationChecked: checked } : d)
+    )
+  }
+
+  const handleApprovalFieldChange = (id: number, field: "approvedBy" | "approvalDate", value: string) => {
+    setDeviations(prev => 
+      prev.map(d => d.id === id ? { ...d, [field]: value } : d)
     )
   }
 
@@ -422,6 +476,7 @@ export default function DeviationTablePage() {
             deviation={deviation}
             onStatusChange={handleStatusChange}
             onDeclarationChange={handleDeclarationChange}
+            onApprovalFieldChange={handleApprovalFieldChange}
           />
         ))}
 
@@ -443,6 +498,7 @@ export default function DeviationTablePage() {
             deviation={deviation}
             onStatusChange={handleStatusChange}
             onDeclarationChange={handleDeclarationChange}
+            onApprovalFieldChange={handleApprovalFieldChange}
           />
         ))}
 
@@ -464,6 +520,7 @@ export default function DeviationTablePage() {
             deviation={deviation}
             onStatusChange={handleStatusChange}
             onDeclarationChange={handleDeclarationChange}
+            onApprovalFieldChange={handleApprovalFieldChange}
           />
         ))}
 
