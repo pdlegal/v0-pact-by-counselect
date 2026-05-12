@@ -53,7 +53,7 @@ function ProcessingSteps({ onComplete }: ProcessingStepsProps) {
   const steps = [
     "NDA received",
     "Identifying clauses",
-    "Comparing to Technia's NDA standards...",
+    "Comparing to TECHNIA's NDA standards...",
     "Checking for consistency",
     "Preparing your deviation summary"
   ]

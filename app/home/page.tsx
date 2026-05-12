@@ -132,7 +132,7 @@ function HeroSection() {
               fontSize: "11px"
             }}
           >
-            {"Upload a counterparty NDA. Receive a reviewed version with Technia's positions applied."}
+            {"Upload a counterparty NDA. Receive a reviewed version with TECHNIA's positions applied."}
           </span>
         </div>
       </div>
@@ -145,7 +145,7 @@ function HeroSection() {
           fontSize: "11px"
         }}
       >
-        {"Reviewed against Technia's NDA standards"}
+        {"Reviewed against TECHNIA's NDA standards"}
       </p>
     </section>
   )

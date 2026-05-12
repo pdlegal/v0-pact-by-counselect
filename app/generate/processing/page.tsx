@@ -192,7 +192,7 @@ export default function GenerateProcessingPage() {
   const [steps, setSteps] = useState<Step[]>([
     { label: "Details received", status: "complete" },
     { label: "Selecting the right template...", status: "pending" },
-    { label: "Applying Technia's NDA positions", status: "pending" },
+    { label: "Applying TECHNIA's NDA positions", status: "pending" },
     { label: "Preparing your NDA", status: "pending" }
   ])
   const [isComplete, setIsComplete] = useState(false)

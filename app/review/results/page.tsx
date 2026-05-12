@@ -62,7 +62,7 @@ const initialDeviations: Deviation[] = [
     title: "Survival period",
     counterparty: "5 years from date of disclosure",
     standard: "3 years from date of disclosure",
-    reason: "Technia does not accept survival periods exceeding 3 years.",
+    reason: "TECHNIA does not accept survival periods exceeding 3 years.",
     status: "pending"
   },
   {
@@ -71,7 +71,7 @@ const initialDeviations: Deviation[] = [
     title: "Governing law",
     counterparty: "Laws of New York",
     standard: "English law, England and Wales",
-    reason: "Technia's standard governing law is England and Wales.",
+    reason: "TECHNIA's standard governing law is England and Wales.",
     status: "pending"
   },
   {
@@ -80,7 +80,7 @@ const initialDeviations: Deviation[] = [
     title: "Notice period for return of materials",
     counterparty: "30 days",
     standard: "14 days",
-    reason: "Technia's standard return period is 14 days.",
+    reason: "TECHNIA's standard return period is 14 days.",
     status: "pending"
   },
   {
@@ -109,7 +109,7 @@ const initialDeviations: Deviation[] = [
     title: "Residuals clause",
     counterparty: "Requires attorney review",
     standard: "",
-    reason: "This clause type is outside Technia's standard playbook. Your Counselect attorney has been notified and will follow up within 4 business hours.",
+    reason: "This clause type is outside TECHNIA's standard playbook. Your Counselect attorney has been notified and will follow up within 4 business hours.",
     status: "pending"
   }
 ]
@@ -259,7 +259,7 @@ function DeviationCard({
                 <span className="text-xs" style={{ color: "#431F5D" }}>{deviation.counterparty}</span>
               </div>
               <div className="mb-2">
-                <span className="text-xs" style={{ color: "#4A4A6A" }}>{"Technia's standard: "}</span>
+                <span className="text-xs" style={{ color: "#4A4A6A" }}>{"TECHNIA's standard: "}</span>
                 <span className="text-xs" style={{ color: "#431F5D" }}>{deviation.standard}</span>
               </div>
             </>
@@ -399,7 +399,7 @@ export default function DeviationTablePage() {
           className="mb-6"
           style={{ color: "#4A4A6A", fontSize: "13px" }}
         >
-          {"Reviewed against Technia's NDA standards · 6 issues found"}
+          {"Reviewed against TECHNIA's NDA standards · 6 issues found"}
         </p>
 
         {/* Summary Badges */}
@@ -448,7 +448,7 @@ export default function DeviationTablePage() {
             className="italic"
             style={{ color: "#4A4A6A", fontSize: "13px" }}
           >
-            {"Based on Technia's NDA playbook, the three most significant issues are: (1) Survival period is 5 years — Technia's standard is 3 years. (2) Governing law is New York — Technia prefers English law. (3) Perpetual confidentiality — requires leadership approval."}
+            {"Based on TECHNIA's NDA playbook, the three most significant issues are: (1) Survival period is 5 years — TECHNIA's standard is 3 years. (2) Governing law is New York — TECHNIA prefers English law. (3) Perpetual confidentiality — requires leadership approval."}
           </p>
         </div>
 

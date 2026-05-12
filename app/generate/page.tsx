@@ -417,7 +417,7 @@ export default function GeneratePage() {
             className="font-normal mb-6"
             style={{ fontSize: "13px", color: "#4A4A6A" }}
           >
-            {"Answer a few questions and we'll draft it to Technia's standard."}
+            {"Answer a few questions and we'll draft it to TECHNIA's standard."}
           </p>
 
           {/* SECTION: About the agreement */}
@@ -592,7 +592,7 @@ export default function GeneratePage() {
                 setYourCompanyName(val)
                 setErrors(prev => ({ ...prev, yourCompanyName: false }))
               }}
-              placeholder="e.g. Technia AB"
+              placeholder="e.g. TECHNIA AB"
               error={errors.yourCompanyName}
             />
             {errors.yourCompanyName && (

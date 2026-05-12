@@ -132,7 +132,7 @@ export default function GenerateOutputPage() {
             className="text-center mt-2"
             style={{ fontSize: "13px", color: "#4A4A6A" }}
           >
-            {"Drafted to Technia's standard · Mutual NDA · English law · 1-year term"}
+            {"Drafted to TECHNIA's standard · Mutual NDA · English law · 1-year term"}
           </p>
 
           {/* Key Terms Cards */}
@@ -234,7 +234,7 @@ export default function GenerateOutputPage() {
               lineHeight: 1.6
             }}
           >
-            {"This NDA has been drafted to Technia's standard positions. Review it before sending to your counterparty. If you have questions, contact your TECHNIA attorney."}
+            {"This NDA has been drafted to TECHNIA's standard positions. Review it before sending to your counterparty. If you have questions, contact your TECHNIA attorney."}
           </p>
 
           {/* Divider */}

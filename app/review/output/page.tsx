@@ -119,7 +119,7 @@ export default function ReviewOutputPage() {
             className="font-normal text-center mt-2"
             style={{ fontSize: "13px", color: "#4A4A6A" }}
           >
-            {"Reviewed against Technia's NDA playbook · Ready to send to counterparty"}
+            {"Reviewed against TECHNIA's NDA playbook · Ready to send to counterparty"}
           </p>
 
           {/* Metric Cards */}
@@ -203,7 +203,7 @@ export default function ReviewOutputPage() {
               lineHeight: "1.6"
             }}
           >
-            {"Changes reflect Technia's agreed NDA positions. Items marked "}
+            {"Changes reflect TECHNIA's agreed NDA positions. Items marked "}
             <span className="font-medium">Your decision</span>
             {" require approval from your team before the NDA is sent. If you have questions, contact your TECHNIA attorney."}
           </p>
