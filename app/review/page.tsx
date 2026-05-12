@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 function PactWordmark() {
@@ -387,6 +388,7 @@ function FileUpload({
 }
 
 export default function ReviewIntakePage() {
+  const router = useRouter()
   const [partyType, setPartyType] = useState<string>("")
   const [sharingDirection, setSharingDirection] = useState<string>("")
   const [purpose, setPurpose] = useState("")
@@ -426,16 +428,8 @@ export default function ReviewIntakePage() {
     setErrors(newErrors)
     
     if (Object.keys(newErrors).length === 0) {
-      // Form is valid, proceed to next step
-      console.log("Form submitted:", {
-        partyType,
-        sharingDirection,
-        purpose,
-        country,
-        duration,
-        companyName,
-        file: file?.name
-      })
+      // Form is valid, navigate to processing page
+      router.push("/processing")
     }
   }
 
