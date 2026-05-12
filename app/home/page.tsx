@@ -85,7 +85,8 @@ function HeroSection() {
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-2.5">
         {/* Primary Button Group */}
         <div className="flex flex-col items-center">
-          <button
+          <Link
+            href="/generate"
             className="font-medium mb-2"
             style={{
               backgroundColor: "#FFFFFF",
@@ -96,7 +97,7 @@ function HeroSection() {
             }}
           >
             I need an NDA
-          </button>
+          </Link>
           <span
             className="font-normal text-center max-w-[200px]"
             style={{
