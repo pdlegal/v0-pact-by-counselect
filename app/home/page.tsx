@@ -110,7 +110,8 @@ function HeroSection() {
 
         {/* Secondary Button Group */}
         <div className="flex flex-col items-center">
-          <button
+          <Link
+            href="/review"
             className="font-normal mb-2"
             style={{
               backgroundColor: "transparent",
@@ -122,7 +123,7 @@ function HeroSection() {
             }}
           >
             I need an NDA reviewed
-          </button>
+          </Link>
           <span
             className="font-normal text-center max-w-[200px]"
             style={{
