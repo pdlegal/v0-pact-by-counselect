@@ -152,7 +152,7 @@ function HeroSection() {
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
+    <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#431F5D" }}>
       <NavBar />
       <HeroSection />
     </main>
