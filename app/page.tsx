@@ -9,24 +9,23 @@ function PactWordmark() {
       <div className="flex items-center">
         <span 
           className="text-2xl font-medium"
-          style={{ color: "#0D1F3C" }}
+          style={{ color: "#431F5D" }}
         >
           Pact
         </span>
         <span
           className="ml-0.5 inline-block rounded-full"
           style={{
-            backgroundColor: "#00897B",
-            width: "5px",
-            height: "5px",
+            background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+            width: "12px",
+            height: "12px",
             marginBottom: "8px"
           }}
         />
       </div>
       <div className="flex items-center gap-1.5 mt-1">
         <span 
-          className="text-xs"
-          style={{ color: "#4A4A6A" }}
+          style={{ color: "#9B9B9B", fontSize: "11px" }}
         >
           by
         </span>
@@ -86,27 +85,27 @@ export default function LoginPage() {
         {formState === "success" ? (
           <div className="text-center">
             <h1 
-              className="text-xl font-medium mb-4"
-              style={{ color: "#0D1F3C" }}
+              className="font-medium mb-4"
+              style={{ color: "#431F5D", fontSize: "18px" }}
             >
               Check your inbox
             </h1>
             <p 
-              className="text-sm leading-relaxed"
-              style={{ color: "#4A4A6A" }}
+              className="leading-relaxed"
+              style={{ color: "#4A4A6A", fontSize: "13px" }}
             >
               {"We've sent a login link to "}
-              <span className="font-medium" style={{ color: "#0D1F3C" }}>
+              <span className="font-medium" style={{ color: "#431F5D" }}>
                 {submittedEmail}
               </span>
-              {". Check your inbox — it expires in 15 minutes."}
+              {". Check your inbox — the link expires in 15 minutes."}
             </p>
           </div>
         ) : (
           <>
             <h1 
-              className="text-xl font-medium text-center mb-2"
-              style={{ color: "#0D1F3C" }}
+              className="font-medium text-center mb-2"
+              style={{ color: "#431F5D", fontSize: "18px" }}
             >
               Sign in to Pact
             </h1>
@@ -127,15 +126,16 @@ export default function LoginPage() {
                 }}
                 placeholder="you@yourcompany.com"
                 required
-                className="w-full px-4 py-3 text-sm rounded-lg mb-3 outline-none transition-all"
+                className="w-full px-4 py-3 text-sm outline-none transition-all"
                 style={{
-                  backgroundColor: "#FFFFFF",
-                  border: "1px solid #E2E4E8",
-                  color: "#0D1F3C"
+                  backgroundColor: "#F7F8FA",
+                  border: "0.5px solid #E2E4E8",
+                  borderRadius: "6px",
+                  color: "#431F5D"
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "#00897B"
-                  e.target.style.boxShadow = "0 0 0 2px rgba(0, 137, 123, 0.1)"
+                  e.target.style.borderColor = "#FB6A1B"
+                  e.target.style.boxShadow = "0 0 0 2px rgba(251, 106, 27, 0.2)"
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#E2E4E8"
@@ -145,10 +145,13 @@ export default function LoginPage() {
 
               {formState === "error" && (
                 <div 
-                  className="px-3 py-3 rounded-lg mb-3 text-sm leading-relaxed"
+                  className="px-3 py-3 mt-3 leading-relaxed"
                   style={{
                     backgroundColor: "#FFEBEE",
-                    color: "#B71C1C"
+                    color: "#B71C1C",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    padding: "10px 12px"
                   }}
                 >
                   This email domain is not registered on Pact. Contact your Counselect account manager to get access.
@@ -157,10 +160,12 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 text-sm font-medium rounded-lg transition-opacity hover:opacity-90"
+                className="w-full py-3 font-medium mt-3 transition-opacity hover:opacity-90"
                 style={{
-                  backgroundColor: "#00897B",
-                  color: "#FFFFFF"
+                  background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+                  color: "#FFFFFF",
+                  borderRadius: "6px",
+                  fontSize: "14px"
                 }}
               >
                 Send me a login link
@@ -169,7 +174,7 @@ export default function LoginPage() {
 
             <p 
               className="text-center mt-4"
-              style={{ color: "#4A4A6A", fontSize: "11px" }}
+              style={{ color: "#9B9B9B", fontSize: "11px" }}
             >
               {"We'll send a one-click link — no password needed."}
             </p>
