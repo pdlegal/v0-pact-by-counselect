@@ -23,7 +23,7 @@ function PactWordmark() {
           }}
         />
       </div>
-      <div className="flex items-center gap-1 mt-0.5">
+      <div className="flex items-center gap-1.5 mt-1">
         <span 
           className="text-xs"
           style={{ color: "#4A4A6A" }}
@@ -31,11 +31,12 @@ function PactWordmark() {
           by
         </span>
         <Image
-          src="/images/counselect-logo.jpg"
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo_actual%20colours%404x-6LAad0QHNxezqbH0koD47Bfz5Wwjr3.png"
           alt="Counselect"
-          width={80}
-          height={20}
+          width={70}
+          height={18}
           className="object-contain"
+          unoptimized
         />
       </div>
     </div>
