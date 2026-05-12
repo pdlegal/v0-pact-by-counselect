@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 
 function PactWordmark() {
   return (
@@ -92,20 +92,14 @@ function ProcessingSteps({ onComplete }: ProcessingStepsProps) {
       setAllComplete(true)
     }, 8000)
 
-    // Call onComplete after showing confirmation for 1s
-    const timer6 = setTimeout(() => {
-      onComplete()
-    }, 9000)
-
     return () => {
       clearTimeout(timer1)
       clearTimeout(timer2)
       clearTimeout(timer3)
       clearTimeout(timer4)
       clearTimeout(timer5)
-      clearTimeout(timer6)
     }
-  }, [onComplete])
+  }, [])
 
   return (
     <div className="flex flex-col">
@@ -151,7 +145,7 @@ function ProcessingSteps({ onComplete }: ProcessingStepsProps) {
         </div>
       ))}
 
-      {/* Completion message */}
+      {/* Completion message with loading counter */}
       {allComplete && (
         <div 
           className="mt-6 pt-4"
@@ -163,20 +157,81 @@ function ProcessingSteps({ onComplete }: ProcessingStepsProps) {
           >
             Your NDA has been reviewed. Loading your results...
           </p>
+          <LoadingCounter onComplete={onComplete} />
         </div>
       )}
     </div>
   )
 }
 
+interface LoadingCounterProps {
+  onComplete: () => void
+}
+
+function LoadingCounter({ onComplete }: LoadingCounterProps) {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const duration = 5000 // 5 seconds
+    const interval = 50 // Update every 50ms
+    const increment = 100 / (duration / interval)
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + increment
+        if (next >= 100) {
+          clearInterval(timer)
+          return 100
+        }
+        return next
+      })
+    }, interval)
+
+    // Call onComplete after 5 seconds
+    const completeTimer = setTimeout(() => {
+      onComplete()
+    }, duration)
+
+    return () => {
+      clearInterval(timer)
+      clearTimeout(completeTimer)
+    }
+  }, [onComplete])
+
+  return (
+    <div className="mt-3 flex items-center gap-3">
+      {/* Progress bar */}
+      <div 
+        className="flex-1 h-1 rounded-full overflow-hidden"
+        style={{ backgroundColor: "#E2E4E8" }}
+      >
+        <div 
+          className="h-full rounded-full transition-all duration-50"
+          style={{ 
+            width: `${progress}%`,
+            background: "linear-gradient(135deg, #FB6A1B, #D2582F)"
+          }}
+        />
+      </div>
+      {/* Percentage */}
+      <span 
+        className="font-medium tabular-nums"
+        style={{ fontSize: "12px", color: "#431F5D", minWidth: "36px" }}
+      >
+        {Math.round(progress)}%
+      </span>
+    </div>
+  )
+}
+
 export default function ProcessingPage() {
+  const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(true)
 
   const handleComplete = useCallback(() => {
     setIsProcessing(false)
-    // Navigate to results page (placeholder for now)
-    // router.push("/results")
-  }, [])
+    router.push("/review/results")
+  }, [router])
 
   // Navigate-away warning
   useEffect(() => {
