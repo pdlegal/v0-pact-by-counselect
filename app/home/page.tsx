@@ -29,7 +29,15 @@ function NavBar() {
       className="w-full px-6 py-4 flex items-center justify-between"
       style={{ backgroundColor: "#431F5D" }}
     >
-      <PactWordmark variant="light" />
+      <div className="flex flex-col">
+        <PactWordmark variant="light" />
+        <span 
+          className="text-xs font-normal mt-0.5"
+          style={{ color: "rgba(255,255,255,0.65)" }}
+        >
+          by Counselect
+        </span>
+      </div>
       <span 
         className="text-xs font-normal"
         style={{ color: "rgba(255,255,255,0.65)" }}
@@ -41,6 +49,8 @@ function NavBar() {
 }
 
 function HeroSection() {
+  const buttonWidth = "220px"
+  
   return (
     <section 
       className="flex-1 w-full px-6 py-16 flex flex-col items-center justify-center"
@@ -82,27 +92,28 @@ function HeroSection() {
       </p>
 
       {/* Buttons */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-2.5">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-4">
         {/* Primary Button Group */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" style={{ width: buttonWidth }}>
           <Link
             href="/generate"
-            className="font-medium mb-2"
+            className="w-full text-center font-medium mb-3"
             style={{
               backgroundColor: "#FFFFFF",
               color: "#431F5D",
               borderRadius: "6px",
-              padding: "10px 20px",
+              padding: "12px 20px",
               fontSize: "14px"
             }}
           >
             I need an NDA
           </Link>
           <span
-            className="font-normal text-center max-w-[200px]"
+            className="font-normal text-center"
             style={{
               color: "rgba(255,255,255,0.45)",
-              fontSize: "11px"
+              fontSize: "11px",
+              lineHeight: 1.5
             }}
           >
             Answer five to ten questions. Receive a ready-to-send NDA.
@@ -110,26 +121,27 @@ function HeroSection() {
         </div>
 
         {/* Secondary Button Group */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" style={{ width: buttonWidth }}>
           <Link
             href="/review"
-            className="font-normal mb-2"
+            className="w-full text-center font-normal mb-3"
             style={{
               backgroundColor: "transparent",
               border: "1.5px solid rgba(255,255,255,0.35)",
               color: "rgba(255,255,255,0.85)",
               borderRadius: "6px",
-              padding: "10px 20px",
+              padding: "12px 20px",
               fontSize: "14px"
             }}
           >
             I need an NDA reviewed
           </Link>
           <span
-            className="font-normal text-center max-w-[200px]"
+            className="font-normal text-center"
             style={{
               color: "rgba(255,255,255,0.45)",
-              fontSize: "11px"
+              fontSize: "11px",
+              lineHeight: 1.5
             }}
           >
             {"Upload a counterparty NDA. Receive a reviewed version with TECHNIA's positions applied."}
