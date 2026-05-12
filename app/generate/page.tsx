@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 function PactWordmark() {
@@ -330,6 +331,7 @@ const COUNTRIES = [
 ]
 
 export default function GeneratePage() {
+  const router = useRouter()
   const [errors, setErrors] = useState<Record<string, boolean>>({})
   
   // Field 1 - Party type
@@ -383,8 +385,8 @@ export default function GeneratePage() {
     setErrors(newErrors)
     
     if (Object.keys(newErrors).length === 0) {
-      // Form is valid, proceed
-      console.log("Form submitted successfully")
+      // Form is valid, navigate to processing page
+      router.push("/generate/processing")
     }
   }
 
