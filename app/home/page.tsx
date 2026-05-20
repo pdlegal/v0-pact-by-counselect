@@ -40,12 +40,21 @@ function NavBar() {
           by Counselect
         </span>
       </div>
-      <span 
-        className="text-xs font-normal"
-        style={{ color: "rgba(255,255,255,0.65)" }}
-      >
-        Prajoy · <Link href="/" className="hover:underline">Log out</Link>
-      </span>
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/pending"
+          className="text-xs font-normal hover:underline"
+          style={{ color: "rgba(255,255,255,0.65)" }}
+        >
+          My requests
+        </Link>
+        <span 
+          className="text-xs font-normal"
+          style={{ color: "rgba(255,255,255,0.65)" }}
+        >
+          Prajoy · <Link href="/" className="hover:underline">Log out</Link>
+        </span>
+      </div>
     </nav>
   )
 }
