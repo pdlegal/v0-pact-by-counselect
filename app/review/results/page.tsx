@@ -388,6 +388,42 @@ export default function DeviationTablePage() {
   const allActioned = actionedCount === totalActionable
 
   const hasMajorAccepted = deviations.some(d => d.type === "major" && d.status === "accepted")
+  
+  // Get major deviations that need approval (pending or with approval form shown)
+  const majorDeviationsForApproval = deviations.filter(
+    d => d.type === "major" && (d.status === "pending" || d.showApprovalForm)
+  )
+
+  const handleRequestApproval = () => {
+    // Build email table content
+    const tableRows = majorDeviationsForApproval.map(d => 
+      `| ${d.title} | ${d.counterparty} | ${d.standard} | ${d.reason} |`
+    ).join('\n')
+    
+    const emailSubject = encodeURIComponent("Approval Required: Major NDA Deviations")
+    const emailBody = encodeURIComponent(
+`Dear Business Head,
+
+I am requesting your approval for the following major deviations identified in an NDA review:
+
+| Clause | Counterparty Position | TECHNIA Standard | Reason |
+|--------|----------------------|------------------|--------|
+${majorDeviationsForApproval.map(d => 
+  `| ${d.title} | ${d.counterparty} | ${d.standard} | ${d.reason} |`
+).join('\n')}
+
+Please confirm your approval by replying to this email with:
+- Your name (as approver)
+- Date of approval
+- Confirmation that you approve the above deviations
+
+Thank you.
+
+Best regards`
+    )
+    
+    window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`
+  }
 
   const minorDeviations = deviations.filter(d => d.type === "minor")
   const majorDeviations = deviations.filter(d => d.type === "major")
@@ -500,17 +536,31 @@ export default function DeviationTablePage() {
         ))}
 
         {/* Major Deviations Section */}
-        <h2 
-          className="uppercase mb-3 mt-6"
-          style={{ 
-            color: "#4A4A6A", 
-            fontSize: "11px", 
-            letterSpacing: "0.1em",
-            fontWeight: 500
-          }}
-        >
-          Major Deviations
-        </h2>
+        <div className="flex items-center justify-between mb-3 mt-6">
+          <h2 
+            className="uppercase"
+            style={{ 
+              color: "#4A4A6A", 
+              fontSize: "11px", 
+              letterSpacing: "0.1em",
+              fontWeight: 500
+            }}
+          >
+            Major Deviations
+          </h2>
+          {majorDeviationsForApproval.length > 0 && (
+            <button
+              onClick={handleRequestApproval}
+              className="px-3 py-1.5 rounded text-xs font-medium transition-opacity hover:opacity-90"
+              style={{
+                backgroundColor: "#431F5D",
+                color: "#FFFFFF"
+              }}
+            >
+              Request approval
+            </button>
+          )}
+        </div>
         {majorDeviations.map(deviation => (
           <DeviationCard
             key={deviation.id}

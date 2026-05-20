@@ -404,13 +404,6 @@ export default function ReviewIntakePage() {
     "Only we will share", 
     "Only they will share"
   ]
-  const durationOptions = [
-    "Less than 3 months",
-    "3–6 months",
-    "6–12 months", 
-    "1–2 years",
-    "More than 2 years"
-  ]
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -539,37 +532,14 @@ export default function ReviewIntakePage() {
               />
 
               {/* Field 5: Duration */}
-              <div className="space-y-3">
-                <label 
-                  className="block font-normal"
-                  style={{ color: "#431F5D", fontSize: "14px" }}
-                >
-                  How long do you expect to be working together?
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {durationOptions.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setDuration(option)}
-                      className="px-3 py-2 rounded-lg font-normal transition-all"
-                      style={{
-                        backgroundColor: duration === option ? "#F3EEF7" : "#FFFFFF",
-                        border: duration === option ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8",
-                        color: "#431F5D",
-                        fontSize: "13px"
-                      }}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-                {errors.duration && (
-                  <span style={{ color: "#B71C1C", fontSize: "12px" }}>
-                    {errors.duration}
-                  </span>
-                )}
-              </div>
+              <TextInput
+                label="How long is the agreement term?"
+                placeholder="e.g. 2 years, 18 months, 5 years"
+                value={duration}
+                onChange={setDuration}
+                helperText="Enter the specific duration for this NDA."
+                error={errors.duration}
+              />
 
               {/* Field 6: Company Name */}
               <TextInput
