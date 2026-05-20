@@ -7,16 +7,20 @@ import Link from "next/link"
 // Pact wordmark component
 function PactWordmark() {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-baseline">
       <span 
-        className="text-xl font-medium tracking-tight"
+        className="text-xl font-medium"
         style={{ color: "#FFFFFF" }}
       >
         Pact
       </span>
       <span
-        className="w-[6px] h-[6px] rounded-full -mt-2"
-        style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)" }}
+        className="inline-block rounded-full ml-0.5"
+        style={{ 
+          background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+          width: "6px",
+          height: "6px"
+        }}
       />
     </div>
   )

@@ -208,17 +208,21 @@ const versionHistory: VersionHistory[] = [
 // COMPONENTS
 // ─────────────────────────────────────────────
 
-function PactWordmark() {
+ function PactWordmark() {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-baseline">
       <span className="text-xl font-medium text-white">Pact</span>
-      <div 
-        className="w-2 h-2 rounded-full"
-        style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)" }}
+      <span
+        className="inline-block rounded-full ml-0.5"
+        style={{ 
+          background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+          width: "6px",
+          height: "6px"
+        }}
       />
     </div>
   )
-}
+  }
 
 function NavBar() {
   return (
@@ -1135,7 +1139,7 @@ function ClientAccessPanel({ clients }: { clients: Client[] }) {
   )
 }
 
-// ─────────────────────────────────────────────
+// ────────────────────────���────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────
 
