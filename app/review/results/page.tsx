@@ -388,11 +388,37 @@ export default function DeviationTablePage() {
   const allActioned = actionedCount === totalActionable
 
   const hasMajorAccepted = deviations.some(d => d.type === "major" && d.status === "accepted")
+  const hasEscalation = deviations.some(d => d.type === "escalation")
+  const onlyMinorDeviations = !deviations.some(d => d.type === "major" || d.type === "escalation")
   
   // Get major deviations that need approval (pending or with approval form shown)
   const majorDeviationsForApproval = deviations.filter(
     d => d.type === "major" && (d.status === "pending" || d.showApprovalForm)
   )
+
+  const handleNotifyLegal = () => {
+    const escalationClauses = deviations.filter(d => d.type === "escalation")
+    const clauseList = escalationClauses.map(d => `- ${d.title}: ${d.counterparty}`).join('\n')
+    
+    const emailSubject = encodeURIComponent("NDA Review - Escalation Required")
+    const emailBody = encodeURIComponent(
+`Dear Legal Team,
+
+An NDA review has identified the following clause(s) that require legal review:
+
+${clauseList}
+
+I have attached the reviewed NDA with all other changes applied. The escalated clause(s) are highlighted as "To be confirmed by legal."
+
+Please review and provide a version ready to send to the counterparty.
+
+Thank you.
+
+Best regards`
+    )
+    
+    window.location.href = `mailto:legal.external@technia.com?subject=${emailSubject}&body=${emailBody}`
+  }
 
   const handleRequestApproval = () => {
     // Build email table content
@@ -596,36 +622,88 @@ Best regards`
         ))}
 
         {/* Warning Banner */}
-        {hasMajorAccepted && (
+        {hasMajorAccepted && !hasEscalation && (
           <div 
             className="p-3 rounded-md mb-4 mt-6"
             style={{ backgroundColor: "#FFF3E0", borderRadius: "6px" }}
           >
             <p style={{ color: "#E65100", fontSize: "13px" }}>
-              This document contains major deviations. It must be reviewed by legal before being sent to the counterparty.
+              This document contains major deviations. Ensure approvals are documented before sending.
             </p>
           </div>
         )}
 
-        {/* Download Button */}
-        <button
-          disabled={!allActioned}
-          onClick={() => allActioned && router.push("/review/output")}
-          className="w-full py-3 rounded-md font-medium transition-all mt-4"
-          style={{
-            background: allActioned 
-              ? "linear-gradient(135deg, #FB6A1B, #D2582F)" 
-              : "#E2E4E8",
-            color: allActioned ? "#FFFFFF" : "#4A4A6A",
-            cursor: allActioned ? "pointer" : "not-allowed",
-            fontSize: "14px"
-          }}
-        >
-          {allActioned 
-            ? "Download reviewed NDA (.docx)" 
-            : "Action all deviations to unlock"
-          }
-        </button>
+        {/* Escalation Warning */}
+        {hasEscalation && (
+          <div 
+            className="p-4 rounded-md mb-4 mt-6"
+            style={{ backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2", borderRadius: "6px" }}
+          >
+            <p className="font-medium mb-2" style={{ color: "#B71C1C", fontSize: "14px" }}>
+              This version is NOT ready for the counterparty.
+            </p>
+            <p style={{ color: "#B71C1C", fontSize: "13px", lineHeight: 1.6 }}>
+              Send it to <span className="font-medium">legal.external@technia.com</span>. Expect a response within 24 hours with a version ready to send.
+            </p>
+          </div>
+        )}
+
+        {/* Ready to send message (only minor deviations) */}
+        {allActioned && onlyMinorDeviations && (
+          <div 
+            className="p-3 rounded-md mb-4 mt-6"
+            style={{ backgroundColor: "#E8F5E9", borderRadius: "6px" }}
+          >
+            <p style={{ color: "#1B5E20", fontSize: "13px" }}>
+              This version is ready to send to the counterparty.
+            </p>
+          </div>
+        )}
+
+        {/* Notify Legal Button (when escalation exists) */}
+        {hasEscalation && allActioned && (
+          <>
+            <button
+              onClick={handleNotifyLegal}
+              className="w-full py-3 rounded-md font-medium transition-all mt-4"
+              style={{
+                backgroundColor: "#B71C1C",
+                color: "#FFFFFF",
+                fontSize: "14px"
+              }}
+            >
+              Notify legal
+            </button>
+            <p 
+              className="text-center mt-2"
+              style={{ color: "#4A4A6A", fontSize: "11px" }}
+            >
+              Download a version with the escalated clause highlighted as &quot;To be confirmed by legal.&quot;
+            </p>
+          </>
+        )}
+
+        {/* Download Button (only when no escalation) */}
+        {!hasEscalation && (
+          <button
+            disabled={!allActioned}
+            onClick={() => allActioned && router.push("/review/output")}
+            className="w-full py-3 rounded-md font-medium transition-all mt-4"
+            style={{
+              background: allActioned 
+                ? "linear-gradient(135deg, #FB6A1B, #D2582F)" 
+                : "#E2E4E8",
+              color: allActioned ? "#FFFFFF" : "#4A4A6A",
+              cursor: allActioned ? "pointer" : "not-allowed",
+              fontSize: "14px"
+            }}
+          >
+            {allActioned 
+              ? "Download reviewed NDA (.docx)" 
+              : "Action all deviations to unlock"
+            }
+          </button>
+        )}
       </div>
     </main>
   )
