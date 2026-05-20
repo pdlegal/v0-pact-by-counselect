@@ -516,24 +516,20 @@ export default function GeneratePage() {
 
           {/* Field 5 - Duration */}
           <div className="mb-6">
-            <FieldLabel error={errors.duration}>How long do you expect to be working together?</FieldLabel>
-            <div className="flex flex-wrap gap-2">
-              {["Less than 3 months", "3–6 months", "6–12 months", "1–2 years", "More than 2 years"].map((option) => (
-                <RadioCard
-                  key={option}
-                  selected={duration === option}
-                  onClick={() => {
-                    setDuration(option)
-                    setErrors(prev => ({ ...prev, duration: false }))
-                  }}
-                >
-                  {option}
-                </RadioCard>
-              ))}
-            </div>
+            <FieldLabel error={errors.duration}>How long is the agreement term?</FieldLabel>
+            <TextInput
+              value={duration}
+              onChange={(val) => {
+                setDuration(val)
+                setErrors(prev => ({ ...prev, duration: false }))
+              }}
+              placeholder="e.g. 2 years, 18 months, 5 years"
+              error={errors.duration}
+            />
+            <FieldHelper>Enter the specific duration for this NDA.</FieldHelper>
             {errors.duration && (
               <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please select a duration
+                Please enter a duration
               </p>
             )}
           </div>
