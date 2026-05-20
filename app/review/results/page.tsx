@@ -637,13 +637,10 @@ Best regards`
         {hasEscalation && (
           <div 
             className="p-4 rounded-md mb-4 mt-6"
-            style={{ backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2", borderRadius: "6px" }}
+            style={{ backgroundColor: "#F3EEF7", border: "1px solid #E2E4E8", borderRadius: "6px" }}
           >
-            <p className="font-medium mb-2" style={{ color: "#B71C1C", fontSize: "14px" }}>
-              This version is NOT ready for the counterparty.
-            </p>
-            <p style={{ color: "#B71C1C", fontSize: "13px", lineHeight: 1.6 }}>
-              Send it to <span className="font-medium">legal.external@technia.com</span>. Expect a response within 24 hours with a version ready to send.
+            <p style={{ color: "#431F5D", fontSize: "13px", lineHeight: 1.6 }}>
+              {"A copy of this analysis has been shared with TECHNIA's legal team for their review. Please expect a response shortly."}
             </p>
           </div>
         )}
@@ -660,50 +657,27 @@ Best regards`
           </div>
         )}
 
-        {/* Notify Legal Button (when escalation exists) */}
-        {hasEscalation && allActioned && (
-          <>
-            <button
-              onClick={handleNotifyLegal}
-              className="w-full py-3 rounded-md font-medium transition-all mt-4"
-              style={{
-                backgroundColor: "#B71C1C",
-                color: "#FFFFFF",
-                fontSize: "14px"
-              }}
-            >
-              Notify legal
-            </button>
-            <p 
-              className="text-center mt-2"
-              style={{ color: "#4A4A6A", fontSize: "11px" }}
-            >
-              Download a version with the escalated clause highlighted as &quot;To be confirmed by legal.&quot;
-            </p>
-          </>
-        )}
-
-        {/* Download Button (only when no escalation) */}
-        {!hasEscalation && (
-          <button
-            disabled={!allActioned}
-            onClick={() => allActioned && router.push("/review/output")}
-            className="w-full py-3 rounded-md font-medium transition-all mt-4"
-            style={{
-              background: allActioned 
-                ? "linear-gradient(135deg, #FB6A1B, #D2582F)" 
-                : "#E2E4E8",
-              color: allActioned ? "#FFFFFF" : "#4A4A6A",
-              cursor: allActioned ? "pointer" : "not-allowed",
-              fontSize: "14px"
-            }}
-          >
-            {allActioned 
+        {/* Download Button (disabled when escalation exists) */}
+        <button
+          disabled={!allActioned || hasEscalation}
+          onClick={() => allActioned && !hasEscalation && router.push("/review/output")}
+          className="w-full py-3 rounded-md font-medium transition-all mt-4"
+          style={{
+            background: (allActioned && !hasEscalation)
+              ? "linear-gradient(135deg, #FB6A1B, #D2582F)" 
+              : "#E2E4E8",
+            color: (allActioned && !hasEscalation) ? "#FFFFFF" : "#4A4A6A",
+            cursor: (allActioned && !hasEscalation) ? "pointer" : "not-allowed",
+            fontSize: "14px"
+          }}
+        >
+          {hasEscalation
+            ? "Download unavailable — awaiting legal review"
+            : allActioned 
               ? "Download reviewed NDA (.docx)" 
               : "Action all deviations to unlock"
-            }
-          </button>
-        )}
+          }
+        </button>
       </div>
     </main>
   )
