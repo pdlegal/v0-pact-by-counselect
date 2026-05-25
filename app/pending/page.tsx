@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -247,12 +247,21 @@ function EmptyState({ message }: { message: string }) {
   )
 }
 
-// ─────────────────────────────────────────────
+// ────────���────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────
 
 export default function PendingRequestsPage() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabType>("active")
+
+  // Handle tab query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get("tab")
+    if (tabParam === "completed") {
+      setActiveTab("completed")
+    }
+  }, [searchParams])
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>

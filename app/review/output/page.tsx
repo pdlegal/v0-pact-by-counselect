@@ -100,11 +100,26 @@ const ESCALATION_PRESENT = false
 
 export default function ReviewOutputPage() {
   const [attorneyNotified, setAttorneyNotified] = useState(false)
+  const [lastDownloadTime, setLastDownloadTime] = useState<string | null>(null)
   const escalation = ESCALATION_PRESENT
 
   const handleNotifyAttorney = () => {
     // In production, this would send an email
     setAttorneyNotified(true)
+  }
+
+  const handleDownload = () => {
+    // In production, this would trigger a file download
+    const now = new Date()
+    const formatted = now.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }) + ' at ' + now.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    setLastDownloadTime(formatted)
   }
 
   return (
@@ -137,6 +152,7 @@ export default function ReviewOutputPage() {
 
               {/* Download Button */}
               <button
+                onClick={handleDownload}
                 className="w-full font-medium text-white mt-6"
                 style={{
                   background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
@@ -148,6 +164,16 @@ export default function ReviewOutputPage() {
                 Download reviewed NDA
               </button>
 
+              {/* Download confirmation */}
+              {lastDownloadTime && (
+                <p 
+                  className="font-normal text-center mt-3"
+                  style={{ fontSize: "12px", color: "#1B5E20" }}
+                >
+                  Downloaded — {lastDownloadTime}
+                </p>
+              )}
+
               {/* Helper text */}
               <p 
                 className="font-normal italic text-center mt-3"
@@ -155,6 +181,19 @@ export default function ReviewOutputPage() {
               >
                 This version is ready to send to the other party.
               </p>
+
+              {/* View my requests link */}
+              {lastDownloadTime && (
+                <div className="text-center mt-4">
+                  <Link
+                    href="/pending?tab=completed"
+                    className="font-normal underline"
+                    style={{ fontSize: "13px", color: "#431F5D" }}
+                  >
+                    View my requests
+                  </Link>
+                </div>
+              )}
             </>
           )}
 
