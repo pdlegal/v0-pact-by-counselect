@@ -95,7 +95,18 @@ function StarRating() {
   )
 }
 
+// Set to true to demo the escalation state
+const ESCALATION_PRESENT = false
+
 export default function ReviewOutputPage() {
+  const [attorneyNotified, setAttorneyNotified] = useState(false)
+  const escalation = ESCALATION_PRESENT
+
+  const handleNotifyAttorney = () => {
+    // In production, this would send an email
+    setAttorneyNotified(true)
+  }
+
   return (
     <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
       <NavBar />
@@ -105,107 +116,145 @@ export default function ReviewOutputPage() {
           className="w-full max-w-[560px] rounded-lg p-6"
           style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
         >
-          {/* Heading */}
-          <h1 
-            className="font-medium text-center"
-            style={{ fontSize: "20px", color: "#431F5D" }}
-          >
-            Your NDA is ready
-          </h1>
-          
-          {/* Subheading */}
-          <p 
-            className="font-normal text-center mt-2"
-            style={{ fontSize: "13px", color: "#4A4A6A" }}
-          >
-            {"Reviewed against TECHNIA's NDA playbook · Ready to send to counterparty"}
-          </p>
-
-          {/* Metric Cards */}
-          <div className="grid grid-cols-3 gap-3 mt-6">
-            <div 
-              className="rounded-md px-3 py-2 text-center"
-              style={{ backgroundColor: "#F3EEF7" }}
-            >
-              <p 
-                className="font-medium"
-                style={{ fontSize: "13px", color: "#431F5D" }}
+          {/* STATE 1 — No escalation */}
+          {!escalation && (
+            <>
+              {/* Heading */}
+              <h1 
+                className="font-medium text-center"
+                style={{ fontSize: "20px", color: "#431F5D" }}
               >
-                2 redlines applied
-              </p>
-            </div>
-            <div 
-              className="rounded-md px-3 py-2 text-center"
-              style={{ backgroundColor: "#E8F5E9" }}
-            >
+                Your NDA is ready
+              </h1>
+              
+              {/* Subheading */}
               <p 
-                className="font-medium"
-                style={{ fontSize: "13px", color: "#1B5E20" }}
+                className="font-normal text-center mt-2"
+                style={{ fontSize: "13px", color: "#4A4A6A" }}
               >
-                1 deviation accepted
+                {"Reviewed against TECHNIA's NDA standards · Ready to send to counterparty"}
               </p>
-            </div>
-            <div 
-              className="rounded-md px-3 py-2 text-center"
-              style={{ backgroundColor: "#FFF3E0" }}
-            >
+
+              {/* Download Button */}
+              <button
+                className="w-full font-medium text-white mt-6"
+                style={{
+                  background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+                  borderRadius: "6px",
+                  padding: "13px",
+                  fontSize: "14px"
+                }}
+              >
+                Download reviewed NDA
+              </button>
+
+              {/* Helper text */}
               <p 
-                className="font-medium"
-                style={{ fontSize: "13px", color: "#E65100" }}
+                className="font-normal italic text-center mt-3"
+                style={{ fontSize: "11px", color: "#4A4A6A" }}
               >
-                1 declaration made
+                This version is ready to send to the other party.
               </p>
-            </div>
-          </div>
+            </>
+          )}
 
-          {/* Divider */}
-          <div 
-            className="my-6"
-            style={{ height: "0.5px", backgroundColor: "#E2E4E8" }}
-          />
+          {/* STATE 2 — Escalation present */}
+          {escalation && (
+            <>
+              {/* Heading */}
+              <h1 
+                className="font-medium text-center"
+                style={{ fontSize: "20px", color: "#431F5D" }}
+              >
+                Your NDA needs one more step
+              </h1>
+              
+              {/* Subheading */}
+              <p 
+                className="font-normal text-center mt-2"
+                style={{ fontSize: "13px", color: "#4A4A6A" }}
+              >
+                One clause requires attorney review before this NDA can be sent.
+              </p>
 
-          {/* Download Button */}
-          <button
-            className="w-full font-medium text-white"
-            style={{
-              background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
-              borderRadius: "6px",
-              padding: "13px",
-              fontSize: "14px"
-            }}
-          >
-            Download reviewed NDA (.docx)
-          </button>
+              {/* Before attorney notified */}
+              {!attorneyNotified && (
+                <>
+                  <button
+                    onClick={handleNotifyAttorney}
+                    className="w-full font-medium text-white mt-6"
+                    style={{
+                      backgroundColor: "#431F5D",
+                      borderRadius: "6px",
+                      padding: "13px",
+                      fontSize: "14px"
+                    }}
+                  >
+                    Notify Counselect attorney
+                  </button>
 
-          {/* Email Link */}
-          <div className="text-center mt-4">
-            <button
-              className="font-normal hover:underline"
-              style={{ fontSize: "13px", color: "#FB6A1B" }}
-            >
-              Email this to me
-            </button>
-          </div>
+                  <div 
+                    className="text-center mt-4 mx-auto"
+                    style={{ maxWidth: "440px" }}
+                  >
+                    <p 
+                      className="font-normal"
+                      style={{ fontSize: "12px", color: "#4A4A6A", lineHeight: 1.8 }}
+                    >
+                      {"An email will be sent to your Counselect attorney. You will be cc'd."}
+                    </p>
+                    <p 
+                      className="font-normal"
+                      style={{ fontSize: "12px", color: "#4A4A6A", lineHeight: 1.8 }}
+                    >
+                      Expect a reviewed version within 1–2 business days that is ready to send to the other party.
+                    </p>
+                  </div>
+                </>
+              )}
 
-          {/* Divider */}
-          <div 
-            className="my-6"
-            style={{ height: "0.5px", backgroundColor: "#E2E4E8" }}
-          />
+              {/* After attorney notified */}
+              {attorneyNotified && (
+                <>
+                  <button
+                    disabled
+                    className="w-full font-medium mt-6"
+                    style={{
+                      backgroundColor: "#E8F5E9",
+                      color: "#1B5E20",
+                      borderRadius: "6px",
+                      padding: "13px",
+                      fontSize: "14px",
+                      cursor: "default"
+                    }}
+                  >
+                    Attorney notified ✓
+                  </button>
 
-          {/* Small Print */}
-          <p 
-            className="font-normal"
-            style={{ 
-              fontSize: "11px", 
-              color: "#4A4A6A",
-              lineHeight: "1.6"
-            }}
-          >
-            {"Changes reflect TECHNIA's agreed NDA positions. Items marked "}
-            <span className="font-medium">Your decision</span>
-            {" require approval from your team before the NDA is sent. If you have questions, contact your TECHNIA attorney."}
-          </p>
+                  <button
+                    className="w-full font-medium mt-3"
+                    style={{
+                      backgroundColor: "transparent",
+                      color: "#431F5D",
+                      border: "1px solid #431F5D",
+                      borderRadius: "6px",
+                      padding: "13px",
+                      fontSize: "14px"
+                    }}
+                  >
+                    Download internal draft
+                  </button>
+
+                  <p 
+                    className="font-normal text-center mt-3"
+                    style={{ fontSize: "11px", color: "#E65100" }}
+                  >
+                    Do not send this version to the other party.
+                  </p>
+                </>
+              )}
+            </>
+          )}
 
           {/* Divider */}
           <div 
