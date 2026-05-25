@@ -322,7 +322,7 @@ function DeviationCard({
                   style={{ accentColor: "#FB6A1B" }}
                 />
                 <span className="text-xs" style={{ color: "#4A4A6A" }}>
-                  I confirm I have received the necessary approval to accept this deviation.
+                  I confirm approval has been received for this deviation.
                 </span>
               </label>
             </div>
@@ -361,6 +361,7 @@ function DeviationCard({
 export default function DeviationTablePage() {
   const router = useRouter()
   const [deviations, setDeviations] = useState<Deviation[]>(initialDeviations)
+  const [approvalEmailSent, setApprovalEmailSent] = useState(false)
 
   const handleStatusChange = (id: number, status: DeviationStatus) => {
     setDeviations(prev => 
@@ -453,6 +454,7 @@ Best regards`
     )
     
     window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`
+    setApprovalEmailSent(true)
   }
 
   const minorDeviations = deviations.filter(d => d.type === "minor")
@@ -566,29 +568,57 @@ Best regards`
         ))}
 
         {/* Major Deviations Section */}
-        <div className="flex items-center justify-between mb-3 mt-6">
-          <h2 
-            className="uppercase"
-            style={{ 
-              color: "#4A4A6A", 
-              fontSize: "11px", 
-              letterSpacing: "0.1em",
-              fontWeight: 500
-            }}
-          >
-            Major Deviations
-          </h2>
-          {majorDeviationsForApproval.length > 0 && (
-            <button
-              onClick={handleRequestApproval}
-              className="px-3 py-1.5 rounded text-xs font-medium transition-opacity hover:opacity-90"
-              style={{
-                backgroundColor: "#431F5D",
-                color: "#FFFFFF"
+        <div className="flex flex-col mb-3 mt-6">
+          <div className="flex items-center justify-between">
+            <h2 
+              className="uppercase"
+              style={{ 
+                color: "#4A4A6A", 
+                fontSize: "11px", 
+                letterSpacing: "0.1em",
+                fontWeight: 500
               }}
             >
-              Request approval
-            </button>
+              Major Deviations
+            </h2>
+            {majorDeviationsForApproval.length > 0 && !approvalEmailSent && (
+              <button
+                onClick={handleRequestApproval}
+                className="px-3 py-1.5 rounded text-xs font-medium transition-opacity hover:opacity-90"
+                style={{
+                  backgroundColor: "transparent",
+                  color: "#431F5D",
+                  border: "1px solid #431F5D"
+                }}
+              >
+                Consolidate major deviations into approval email
+              </button>
+            )}
+            {approvalEmailSent && (
+              <div className="flex items-center gap-2">
+                <span 
+                  className="px-2 py-1 rounded-full text-xs font-medium"
+                  style={{ backgroundColor: "#FFF3E0", color: "#E65100" }}
+                >
+                  Approval email sent · Awaiting response
+                </span>
+                <button
+                  onClick={handleRequestApproval}
+                  className="text-xs hover:underline"
+                  style={{ color: "#431F5D" }}
+                >
+                  Resend
+                </button>
+              </div>
+            )}
+          </div>
+          {majorDeviationsForApproval.length > 0 && !approvalEmailSent && (
+            <p 
+              className="italic mt-1.5"
+              style={{ color: "#4A4A6A", fontSize: "12px" }}
+            >
+              Generates a pre-formatted email listing all major deviations. You send it manually to your approver.
+            </p>
           )}
         </div>
         {majorDeviations.map(deviation => (
