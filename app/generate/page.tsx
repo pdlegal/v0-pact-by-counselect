@@ -97,7 +97,7 @@ function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: num
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="font-medium uppercase -mx-6 sm:-mx-8 px-6 sm:px-8 py-3 mt-8 mb-6"
+      className="font-medium uppercase -mx-6 sm:-mx-8 px-6 sm:px-8 py-3 mt-8 mb-6 text-center"
       style={{
         fontSize: "11px",
         color: "#431F5D",
