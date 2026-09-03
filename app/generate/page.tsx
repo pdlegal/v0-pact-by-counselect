@@ -4,18 +4,52 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
+// ─────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────
+
+type EngagementType =
+  | "exploring"
+  | "evaluating"
+  | "sharing_data"
+  | "something_else"
+  | ""
+
+type InformationType =
+  | "software"
+  | "customer_data"
+  | "employee_data"
+  | "branding"
+  | "financial"
+  | "none"
+
+type DurationUnit = "weeks" | "months" | "years"
+
+// ─────────────────────────────────────────────
+// CLAUSE TRIGGER LOGIC
+// ─────────────────────────────────────────────
+
+function getTriggeredClauses(informationTypes: InformationType[]) {
+  const ipTriggered = informationTypes.includes("software")
+  const dataPrivacyTriggered =
+    informationTypes.includes("customer_data") ||
+    informationTypes.includes("employee_data")
+  return { ipTriggered, dataPrivacyTriggered }
+}
+
+// ─────────────────────────────────────────────
+// COMPONENTS
+// ─────────────────────────────────────────────
+
 function PactWordmark() {
   return (
     <div className="flex items-baseline">
-      <span 
-        className="text-xl font-medium"
-        style={{ color: "#FFFFFF" }}
-      >
+      <span className="text-xl font-medium" style={{ color: "#FFFFFF" }}>
         Pact
       </span>
       <span
         className="inline-block rounded-full ml-0.5"
-        style={{ 
+        style={{
           background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
           width: "6px",
           height: "6px"
@@ -27,17 +61,12 @@ function PactWordmark() {
 
 function NavBar() {
   return (
-    <nav 
+    <nav
       className="w-full px-6 py-4 flex items-center justify-between"
       style={{ backgroundColor: "#431F5D" }}
     >
-      <Link href="/home">
-        <PactWordmark />
-      </Link>
-      <span 
-        className="font-normal"
-        style={{ color: "rgba(255,255,255,0.65)", fontSize: "12px" }}
-      >
+      <Link href="/home"><PactWordmark /></Link>
+      <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
         Prajoy · <Link href="/" className="hover:underline">Log out</Link>
       </span>
     </nav>
@@ -46,22 +75,15 @@ function NavBar() {
 
 function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: number }) {
   const progress = (step / totalSteps) * 100
-  
   return (
     <div className="mb-6">
-      <span 
-        className="font-normal mb-2 block"
-        style={{ fontSize: "12px", color: "#4A4A6A" }}
-      >
+      <span className="font-normal" style={{ color: "#4A4A6A", fontSize: "12px" }}>
         Step {step} of {totalSteps}
       </span>
-      <div 
-        className="w-full h-[3px] rounded-full"
-        style={{ backgroundColor: "#E2E4E8" }}
-      >
-        <div 
+      <div className="mt-2 w-full h-[3px] rounded-full" style={{ backgroundColor: "#E2E4E8" }}>
+        <div
           className="h-full rounded-full transition-all duration-300"
-          style={{ 
+          style={{
             width: `${progress}%`,
             background: "linear-gradient(90deg, #FB6A1B, #D2582F)"
           }}
@@ -73,12 +95,13 @@ function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: num
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div 
-      className="font-normal uppercase mt-8 mb-4"
-      style={{ 
-        fontSize: "11px", 
+    <div
+      className="font-medium uppercase mt-8 mb-4 pb-2"
+      style={{
+        fontSize: "11px",
         color: "#4A4A6A",
-        letterSpacing: "0.08em"
+        letterSpacing: "0.08em",
+        borderBottom: "0.5px solid #E2E4E8"
       }}
     >
       {children}
@@ -86,12 +109,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function FieldLabel({ children, error }: { children: React.ReactNode; error?: boolean }) {
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label 
-      className="font-medium block mb-2"
-      style={{ fontSize: "14px", color: error ? "#B71C1C" : "#431F5D" }}
-    >
+    <label className="block font-normal" style={{ color: "#431F5D", fontSize: "14px" }}>
       {children}
     </label>
   )
@@ -99,308 +119,511 @@ function FieldLabel({ children, error }: { children: React.ReactNode; error?: bo
 
 function FieldHelper({ children }: { children: React.ReactNode }) {
   return (
-    <p 
-      className="font-normal mt-1.5"
-      style={{ fontSize: "12px", color: "#4A4A6A" }}
-    >
+    <p className="font-normal mt-1" style={{ color: "#4A4A6A", fontSize: "12px" }}>
       {children}
     </p>
   )
 }
 
-function RadioCard({ 
-  selected, 
-  onClick, 
-  children,
+function FieldError({ message }: { message: string }) {
+  return (
+    <span style={{ color: "#B71C1C", fontSize: "12px" }}>{message}</span>
+  )
+}
+
+function RadioCard({
+  label,
+  sublabel,
+  selected,
+  onClick,
   fullWidth = false
-}: { 
+}: {
+  label: string
+  sublabel?: string
   selected: boolean
   onClick: () => void
-  children: React.ReactNode
   fullWidth?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`font-normal text-left p-4 rounded-lg transition-all ${fullWidth ? 'w-full' : ''}`}
+      className={`p-4 rounded-lg text-left transition-all ${fullWidth ? "w-full" : ""}`}
       style={{
-        border: selected ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8",
         backgroundColor: selected ? "#F3EEF7" : "#FFFFFF",
+        border: selected ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8",
         color: "#431F5D",
         fontSize: "14px"
       }}
     >
-      {children}
+      <span className="font-normal block">{label}</span>
+      {sublabel && (
+        <span className="font-normal block mt-0.5" style={{ fontSize: "12px", color: "#4A4A6A" }}>
+          {sublabel}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function CheckboxCard({
+  label,
+  sublabel,
+  checked,
+  onChange
+}: {
+  label: string
+  sublabel?: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full p-4 rounded-lg text-left transition-all flex items-start gap-3"
+      style={{
+        backgroundColor: checked ? "#F3EEF7" : "#FFFFFF",
+        border: checked ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8"
+      }}
+    >
+      <div
+        className="flex-shrink-0 w-4 h-4 rounded mt-0.5 flex items-center justify-center"
+        style={{
+          backgroundColor: checked ? "#431F5D" : "#FFFFFF",
+          border: checked ? "1.5px solid #431F5D" : "1.5px solid #E2E4E8"
+        }}
+      >
+        {checked && (
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 4L3.5 6.5L9 1" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </div>
+      <div>
+        <span className="font-normal block" style={{ fontSize: "14px", color: "#431F5D" }}>
+          {label}
+        </span>
+        {sublabel && (
+          <span className="font-normal block mt-0.5" style={{ fontSize: "12px", color: "#4A4A6A" }}>
+            {sublabel}
+          </span>
+        )}
+      </div>
     </button>
   )
 }
 
 function TextInput({
+  label,
+  placeholder,
   value,
   onChange,
-  placeholder,
-  maxLength,
+  helperText,
   error
 }: {
+  label: string
+  placeholder?: string
   value: string
   onChange: (value: string) => void
-  placeholder?: string
-  maxLength?: number
-  error?: boolean
+  helperText?: string
+  error?: string
 }) {
   return (
-    <div className="relative">
+    <div className="space-y-2">
+      <FieldLabel>{label}</FieldLabel>
       <input
         type="text"
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        className="w-full px-3 py-2.5 rounded-lg font-normal transition-all outline-none"
+        className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
         style={{
-          fontSize: "14px",
           backgroundColor: "#F7F8FA",
           border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-          color: "#431F5D"
+          color: "#431F5D",
+          fontSize: "14px"
         }}
-        onFocus={(e) => {
-          e.target.style.border = "2px solid #FB6A1B"
-        }}
-        onBlur={(e) => {
-          e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8"
-        }}
+        onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
       />
-      {maxLength && (
-        <span 
-          className="absolute right-3 top-1/2 -translate-y-1/2 font-normal"
-          style={{ fontSize: "11px", color: "#9B9B9B" }}
-        >
-          {value.length}/{maxLength}
-        </span>
-      )}
+      {helperText && !error && <FieldHelper>{helperText}</FieldHelper>}
+      {error && <FieldError message={error} />}
     </div>
   )
 }
 
 function TextArea({
+  label,
+  placeholder,
   value,
   onChange,
-  placeholder,
-  rows = 3,
+  helperText,
   error
 }: {
+  label: string
+  placeholder?: string
   value: string
   onChange: (value: string) => void
-  placeholder?: string
-  rows?: number
-  error?: boolean
+  helperText?: string
+  error?: string
 }) {
   return (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      rows={rows}
-      className="w-full px-3 py-2.5 rounded-lg font-normal transition-all outline-none resize-none"
-      style={{
-        fontSize: "14px",
-        backgroundColor: "#F7F8FA",
-        border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-        color: "#431F5D"
-      }}
-      onFocus={(e) => {
-        e.target.style.border = "2px solid #FB6A1B"
-      }}
-      onBlur={(e) => {
-        e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8"
-      }}
-    />
-  )
-}
-
-function SearchableDropdown({
-  value,
-  onChange,
-  options,
-  placeholder,
-  error
-}: {
-  value: string
-  onChange: (value: string) => void
-  options: string[]
-  placeholder?: string
-  error?: boolean
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  
-  const filteredOptions = options.filter(opt => 
-    opt.toLowerCase().includes(search.toLowerCase())
-  )
-  
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        value={value || search}
-        onChange={(e) => {
-          setSearch(e.target.value)
-          onChange("")
-          setIsOpen(true)
-        }}
-        onFocus={() => setIsOpen(true)}
+    <div className="space-y-2">
+      <FieldLabel>{label}</FieldLabel>
+      <textarea
         placeholder={placeholder}
-        className="w-full px-3 py-2.5 rounded-lg font-normal transition-all outline-none"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all resize-none"
         style={{
-          fontSize: "14px",
           backgroundColor: "#F7F8FA",
           border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-          color: "#431F5D"
+          color: "#431F5D",
+          fontSize: "14px"
         }}
-        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
       />
-      <svg 
-        className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-        width="16" 
-        height="16" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="#4A4A6A" 
-        strokeWidth="2"
-      >
-        <path d="M6 9l6 6 6-6"/>
-      </svg>
-      
-      {isOpen && filteredOptions.length > 0 && (
-        <div 
-          className="absolute z-10 w-full mt-1 max-h-48 overflow-auto rounded-lg shadow-lg"
-          style={{ 
-            backgroundColor: "#FFFFFF",
-            border: "0.5px solid #E2E4E8"
-          }}
-        >
-          {filteredOptions.slice(0, 10).map((option) => (
-            <button
-              key={option}
-              type="button"
-              className="w-full px-3 py-2 text-left font-normal hover:bg-gray-50 transition-colors"
-              style={{ fontSize: "14px", color: "#431F5D" }}
-              onClick={() => {
-                onChange(option)
-                setSearch("")
-                setIsOpen(false)
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
+      {helperText && !error && <FieldHelper>{helperText}</FieldHelper>}
+      {error && <FieldError message={error} />}
     </div>
   )
 }
 
-const COUNTRIES = [
-  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", 
-  "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados",
-  "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina",
-  "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia",
-  "Cameroon", "Canada", "Cape Verde", "Central African Republic", "Chad", "Chile",
-  "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus",
-  "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador",
-  "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Ethiopia", "Fiji",
-  "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece",
-  "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
-  "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel",
-  "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait",
-  "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein",
-  "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali",
-  "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova",
-  "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia",
-  "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria",
-  "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine",
-  "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
-  "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia",
-  "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Saudi Arabia", "Senegal",
-  "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
-  "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain",
-  "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan",
-  "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago",
-  "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates",
-  "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City",
-  "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-]
+function CountryDropdown({
+  label,
+  value,
+  onChange,
+  helperText,
+  error
+}: {
+  label: string
+  value: { name: string; code: string }
+  onChange: (value: { name: string; code: string }) => void
+  helperText?: string
+  error?: string
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [search, setSearch] = useState("")
 
-export default function GeneratePage() {
-  const router = useRouter()
-  const [errors, setErrors] = useState<Record<string, boolean>>({})
-  
-  // Field 1 - Party type
-  const [partyType, setPartyType] = useState("")
-  
-  // Field 2 - Sharing direction
-  const [sharingDirection, setSharingDirection] = useState("")
-  
-  // Field 3 - Purpose
-  const [purpose, setPurpose] = useState("")
-  
-  // Field 4 - Other party country
-  const [otherPartyCountry, setOtherPartyCountry] = useState("")
-  
-  // Field 5 - Duration
-  const [duration, setDuration] = useState("")
-  
-  // Field 6 - Other company name
-  const [otherCompanyName, setOtherCompanyName] = useState("")
-  
-  // Field 7 - Other company country
-  const [otherCompanyCountry, setOtherCompanyCountry] = useState("")
-  
-  // Field 8 - Your company name
-  const [yourCompanyName, setYourCompanyName] = useState("")
-  
-  // Field 9 - Your company address
-  const [yourCompanyAddress, setYourCompanyAddress] = useState("")
-  
-  // Field 10 - Signatory
-  const [signatoryName, setSignatoryName] = useState("")
-  const [signatoryTitle, setSignatoryTitle] = useState("")
+  const countries = [
+    { name: "Australia", code: "AU" },
+    { name: "Austria", code: "AT" },
+    { name: "Belgium", code: "BE" },
+    { name: "Brazil", code: "BR" },
+    { name: "Canada", code: "CA" },
+    { name: "China", code: "CN" },
+    { name: "Denmark", code: "DK" },
+    { name: "Finland", code: "FI" },
+    { name: "France", code: "FR" },
+    { name: "Germany", code: "DE" },
+    { name: "Hong Kong", code: "HK" },
+    { name: "India", code: "IN" },
+    { name: "Ireland", code: "IE" },
+    { name: "Israel", code: "IL" },
+    { name: "Italy", code: "IT" },
+    { name: "Japan", code: "JP" },
+    { name: "Mexico", code: "MX" },
+    { name: "Netherlands", code: "NL" },
+    { name: "New Zealand", code: "NZ" },
+    { name: "Norway", code: "NO" },
+    { name: "Poland", code: "PL" },
+    { name: "Portugal", code: "PT" },
+    { name: "Singapore", code: "SG" },
+    { name: "South Korea", code: "KR" },
+    { name: "Spain", code: "ES" },
+    { name: "Sweden", code: "SE" },
+    { name: "Switzerland", code: "CH" },
+    { name: "Taiwan", code: "TW" },
+    { name: "United Arab Emirates", code: "AE" },
+    { name: "United Kingdom", code: "GB" },
+    { name: "United States", code: "US" }
+  ]
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    const newErrors: Record<string, boolean> = {}
-    
-    if (!partyType) newErrors.partyType = true
-    if (!sharingDirection) newErrors.sharingDirection = true
-    if (!purpose) newErrors.purpose = true
-    if (!otherPartyCountry) newErrors.otherPartyCountry = true
-    if (!duration) newErrors.duration = true
-    if (!otherCompanyName) newErrors.otherCompanyName = true
-    if (!otherCompanyCountry) newErrors.otherCompanyCountry = true
-    if (!yourCompanyName) newErrors.yourCompanyName = true
-    if (!yourCompanyAddress) newErrors.yourCompanyAddress = true
-    if (!signatoryName) newErrors.signatoryName = true
-    if (!signatoryTitle) newErrors.signatoryTitle = true
-    
-    setErrors(newErrors)
-    
-    if (Object.keys(newErrors).length === 0) {
-      // Form is valid, navigate to processing page
-      router.push("/generate/processing")
+  const filtered = countries.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="space-y-2 relative">
+      <FieldLabel>{label}</FieldLabel>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search countries..."
+          value={isOpen ? search : value.name}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            if (!isOpen) setIsOpen(true)
+          }}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+          className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
+          style={{
+            backgroundColor: "#F7F8FA",
+            border: error
+              ? "1.5px solid #B71C1C"
+              : isOpen
+                ? "2px solid #FB6A1B"
+                : "0.5px solid #E2E4E8",
+            color: "#431F5D",
+            fontSize: "14px"
+          }}
+        />
+        {isOpen && (
+          <div
+            className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-lg shadow-lg z-10"
+            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}
+          >
+            {filtered.map((country) => (
+              <button
+                key={country.code}
+                type="button"
+                onClick={() => {
+                  onChange(country)
+                  setSearch("")
+                  setIsOpen(false)
+                }}
+                className="w-full px-4 py-2 text-left font-normal hover:bg-gray-50 transition-colors"
+                style={{ color: "#431F5D", fontSize: "14px" }}
+              >
+                {country.name}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <div className="px-4 py-2 font-normal" style={{ color: "#4A4A6A", fontSize: "14px" }}>
+                No countries found
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {helperText && !error && <FieldHelper>{helperText}</FieldHelper>}
+      {error && <FieldError message={error} />}
+    </div>
+  )
+}
+
+function DurationInput({
+  value,
+  unit,
+  onValueChange,
+  onUnitChange,
+  error
+}: {
+  value: string
+  unit: DurationUnit
+  onValueChange: (v: string) => void
+  onUnitChange: (u: DurationUnit) => void
+  error?: string
+}) {
+  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+    if (raw === "" || (/^\d+$/.test(raw) && parseInt(raw) > 0)) {
+      onValueChange(raw)
     }
   }
 
   return (
+    <div className="flex gap-3">
+      <input
+        type="text"
+        inputMode="numeric"
+        value={value}
+        onChange={handleNumberInput}
+        placeholder="e.g. 12"
+        className="w-28 px-4 py-3 rounded-lg font-normal outline-none transition-all text-center"
+        style={{
+          backgroundColor: "#F7F8FA",
+          border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
+          color: "#431F5D",
+          fontSize: "14px"
+        }}
+        onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
+      />
+      <select
+        value={unit}
+        onChange={(e) => onUnitChange(e.target.value as DurationUnit)}
+        className="flex-1 px-4 py-3 rounded-lg font-normal outline-none transition-all"
+        style={{
+          backgroundColor: "#F7F8FA",
+          border: "0.5px solid #E2E4E8",
+          color: "#431F5D",
+          fontSize: "14px",
+          appearance: "none",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A4A6A' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 12px center",
+          paddingRight: "36px"
+        }}
+        onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+        onBlur={(e) => { e.target.style.border = "0.5px solid #E2E4E8" }}
+      >
+        <option value="weeks">Weeks</option>
+        <option value="months">Months</option>
+        <option value="years">Years</option>
+      </select>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────
+
+export default function GeneratePage() {
+  const router = useRouter()
+
+  // Will come from session once auth is wired
+  const clientName = "TECHNIA"
+
+  // ── About the agreement ──
+  const [partyType, setPartyType] = useState("")
+  const [sharingDirection, setSharingDirection] = useState("")
+  const [engagementType, setEngagementType] = useState<EngagementType>("")
+  const [informationTypes, setInformationTypes] = useState<InformationType[]>([])
+  const [durationValue, setDurationValue] = useState("")
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>("months")
+
+  // ── About the counterparty ──
+  const [counterpartyName, setCounterpartyName] = useState("")
+  const [counterpartyCountry, setCounterpartyCountry] = useState<{ name: string; code: string }>({ name: "", code: "" })
+
+  // ── About your company ──
+  // Note: when auth is wired, suggest pre-populating from a saved entity list per client
+  const [yourCompanyName, setYourCompanyName] = useState("")
+  const [yourCompanyAddress, setYourCompanyAddress] = useState("")
+  const [signatoryName, setSignatoryName] = useState("")
+  const [signatoryTitle, setSignatoryTitle] = useState("")
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Derived
+  const showInformationTypes =
+    engagementType === "exploring" ||
+    engagementType === "evaluating" ||
+    engagementType === "sharing_data"
+
+  const showEscalationBanner = engagementType === "something_else"
+  const { ipTriggered, dataPrivacyTriggered } = getTriggeredClauses(informationTypes)
+
+  const toggleInformationType = (type: InformationType) => {
+    setInformationTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    )
+    if (errors.informationTypes) setErrors(prev => ({ ...prev, informationTypes: "" }))
+  }
+
+  const handleEngagementTypeChange = (type: EngagementType) => {
+    setEngagementType(type)
+    setInformationTypes([])
+    if (errors.engagementType) setErrors(prev => ({ ...prev, engagementType: "" }))
+  }
+
+  const clearError = (key: string) => {
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: "" }))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const newErrors: Record<string, string> = {}
+
+    if (!partyType) newErrors.partyType = "Please select who you are sharing information with"
+    if (!sharingDirection) newErrors.sharingDirection = "Please select the sharing direction"
+    if (!engagementType) newErrors.engagementType = "Please describe this engagement"
+    if (showInformationTypes && informationTypes.length === 0) {
+      newErrors.informationTypes = "Please select at least one information type"
+    }
+    if (!durationValue) newErrors.duration = "Please enter the agreement term"
+    if (!counterpartyName.trim()) newErrors.counterpartyName = "Please enter the counterparty name"
+    if (!counterpartyCountry.code) newErrors.counterpartyCountry = "Please select a country"
+    if (!yourCompanyName.trim()) newErrors.yourCompanyName = "Please enter your company name"
+    if (!yourCompanyAddress.trim()) newErrors.yourCompanyAddress = "Please enter your company address"
+    if (!signatoryName.trim()) newErrors.signatoryName = "Please enter the signatory name"
+    if (!signatoryTitle.trim()) newErrors.signatoryTitle = "Please enter the signatory title"
+
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length === 0) {
+      // Will pass full form data to processing page once backend is wired
+      router.push("/generate/processing")
+    }
+  }
+
+  const partyTypes = ["Customer", "Supplier or vendor", "Partner", "Other"]
+  const sharingOptions = [
+    "Both sides will share",
+    "Only we will share",
+    "Only they will share"
+  ]
+  const engagementOptions: { value: EngagementType; label: string; sublabel: string }[] = [
+    {
+      value: "exploring",
+      label: "Exploring a potential partnership or collaboration",
+      sublabel: "Early stage conversations, scoping an engagement"
+    },
+    {
+      value: "evaluating",
+      label: "Evaluating a vendor, technology, or service",
+      sublabel: "Assessing a product, platform, or supplier"
+    },
+    {
+      value: "sharing_data",
+      label: "Sharing specific confidential data",
+      sublabel: "Transferring data as part of a defined purpose"
+    },
+    {
+      value: "something_else",
+      label: "Something else — I'm not sure",
+      sublabel: "A Counselect attorney will review before finalisation"
+    }
+  ]
+  const informationOptions: { value: InformationType; label: string; sublabel: string }[] = [
+    {
+      value: "software",
+      label: "Software, platform access, or demos",
+      sublabel: "Code, SaaS access, proprietary technology, demo environments"
+    },
+    {
+      value: "customer_data",
+      label: "Customer or client information",
+      sublabel: "Personal data about customers or end users"
+    },
+    {
+      value: "employee_data",
+      label: "Employee or HR information",
+      sublabel: "Staff personal data, payroll, HR records"
+    },
+    {
+      value: "financial",
+      label: "Financial or commercial data",
+      sublabel: "Revenue figures, pricing, forecasts, commercial terms"
+    },
+    {
+      value: "branding",
+      label: "Branding or marketing materials",
+      sublabel: "Logos, campaign assets, brand guidelines"
+    },
+    {
+      value: "none",
+      label: "None of the above",
+      sublabel: "General business information only"
+    }
+  ]
+
+  return (
     <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>
       <NavBar />
-      
+
       <div className="px-4 py-8">
-        <form 
+        <form
           onSubmit={handleSubmit}
           className="mx-auto w-full p-6 sm:p-8"
-          style={{ 
+          style={{
             maxWidth: "580px",
             backgroundColor: "#FFFFFF",
             border: "0.5px solid #E2E4E8",
@@ -408,261 +631,244 @@ export default function GeneratePage() {
           }}
         >
           <ProgressIndicator step={1} totalSteps={2} />
-          
-          <h1 
-            className="font-medium mb-2"
-            style={{ fontSize: "16px", color: "#431F5D" }}
-          >
+
+          <h1 className="font-medium mb-2" style={{ fontSize: "16px", color: "#431F5D" }}>
             {"Let's build your NDA"}
           </h1>
-          <p 
-            className="font-normal mb-6"
-            style={{ fontSize: "13px", color: "#4A4A6A" }}
-          >
-            {"Answer a few questions and we'll draft it to TECHNIA's standard."}
+          <p className="font-normal mb-2" style={{ fontSize: "13px", color: "#4A4A6A" }}>
+            Answer a few questions and we'll draft it to {clientName}'s standard.
           </p>
 
-          {/* SECTION: About the agreement */}
+          {/* ── SECTION 1: About the agreement ── */}
           <SectionLabel>About the agreement</SectionLabel>
 
-          {/* Field 1 - Party type */}
-          <div className="mb-6">
-            <FieldLabel error={errors.partyType}>Who are you sharing information with?</FieldLabel>
+          {/* Party type */}
+          <div className="mb-6 space-y-3">
+            <FieldLabel>Who are you sharing information with?</FieldLabel>
             <div className="grid grid-cols-2 gap-3">
-              {["Customer", "Supplier or vendor", "Partner", "Other"].map((option) => (
+              {partyTypes.map((type) => (
                 <RadioCard
-                  key={option}
-                  selected={partyType === option}
-                  onClick={() => {
-                    setPartyType(option)
-                    setErrors(prev => ({ ...prev, partyType: false }))
-                  }}
-                >
-                  {option}
-                </RadioCard>
+                  key={type}
+                  label={type}
+                  selected={partyType === type}
+                  onClick={() => { setPartyType(type); clearError("partyType") }}
+                />
               ))}
             </div>
-            {errors.partyType && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please select an option
-              </p>
-            )}
+            {errors.partyType && <FieldError message={errors.partyType} />}
           </div>
 
-          {/* Field 2 - Sharing direction */}
-          <div className="mb-6">
-            <FieldLabel error={errors.sharingDirection}>Will both sides be sharing confidential information?</FieldLabel>
+          {/* Sharing direction */}
+          <div className="mb-6 space-y-3">
+            <FieldLabel>Will both sides be sharing confidential information?</FieldLabel>
             <div className="flex flex-col gap-3">
-              {["Both sides will share", "Only we will share", "Only they will share"].map((option) => (
+              {sharingOptions.map((option) => (
                 <RadioCard
                   key={option}
+                  label={option}
                   selected={sharingDirection === option}
-                  onClick={() => {
-                    setSharingDirection(option)
-                    setErrors(prev => ({ ...prev, sharingDirection: false }))
-                  }}
+                  onClick={() => { setSharingDirection(option); clearError("sharingDirection") }}
                   fullWidth
-                >
-                  {option}
-                </RadioCard>
+                />
               ))}
             </div>
-            {errors.sharingDirection && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please select an option
-              </p>
-            )}
+            {errors.sharingDirection && <FieldError message={errors.sharingDirection} />}
           </div>
 
-          {/* Field 3 - Purpose */}
-          <div className="mb-6">
-            <FieldLabel error={errors.purpose}>What is this NDA for?</FieldLabel>
-            <TextInput
-              value={purpose}
-              onChange={(val) => {
-                setPurpose(val)
-                setErrors(prev => ({ ...prev, purpose: false }))
-              }}
-              placeholder="e.g. onboarding a new software vendor"
-              maxLength={150}
-              error={errors.purpose}
-            />
-            <FieldHelper>A brief description — this shapes the purpose clause.</FieldHelper>
-            {errors.purpose && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please enter a purpose
-              </p>
-            )}
+          {/* Engagement type */}
+          <div className="mb-6 space-y-3">
+            <FieldLabel>What best describes this engagement?</FieldLabel>
+            <div className="flex flex-col gap-3">
+              {engagementOptions.map((option) => (
+                <RadioCard
+                  key={option.value}
+                  label={option.label}
+                  sublabel={option.sublabel}
+                  selected={engagementType === option.value}
+                  onClick={() => handleEngagementTypeChange(option.value)}
+                  fullWidth
+                />
+              ))}
+            </div>
+            {errors.engagementType && <FieldError message={errors.engagementType} />}
           </div>
 
-          {/* Field 4 - Other party country */}
-          <div className="mb-6">
-            <FieldLabel error={errors.otherPartyCountry}>What country is the other party based in?</FieldLabel>
-            <SearchableDropdown
-              value={otherPartyCountry}
-              onChange={(val) => {
-                setOtherPartyCountry(val)
-                setErrors(prev => ({ ...prev, otherPartyCountry: false }))
-              }}
-              options={COUNTRIES}
-              placeholder="Search for a country..."
-              error={errors.otherPartyCountry}
-            />
-            <FieldHelper>Used to apply the right governing law.</FieldHelper>
-            {errors.otherPartyCountry && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please select a country
+          {/* Escalation banner */}
+          {showEscalationBanner && (
+            <div
+              className="p-4 rounded-lg mb-6"
+              style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}
+            >
+              <p style={{ fontSize: "13px", color: "#E65100", lineHeight: 1.5 }}>
+                Your {clientName} attorney will review this submission before finalisation.
               </p>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Field 5 - Duration */}
-          <div className="mb-6">
-            <FieldLabel error={errors.duration}>How long is the agreement term?</FieldLabel>
-            <TextInput
-              value={duration}
-              onChange={(val) => {
-                setDuration(val)
-                setErrors(prev => ({ ...prev, duration: false }))
-              }}
-              placeholder="e.g. 2 years, 18 months, 5 years"
+          {/* Information types (conditional) */}
+          {showInformationTypes && (
+            <div className="mb-6 space-y-3">
+              <div>
+                <FieldLabel>What type of information will you be sharing?</FieldLabel>
+                <FieldHelper>Select all that apply.</FieldHelper>
+              </div>
+              <div className="flex flex-col gap-3">
+                {informationOptions.map((option) => (
+                  <CheckboxCard
+                    key={option.value}
+                    label={option.label}
+                    sublabel={option.sublabel}
+                    checked={informationTypes.includes(option.value)}
+                    onChange={() => toggleInformationType(option.value)}
+                  />
+                ))}
+              </div>
+              {errors.informationTypes && <FieldError message={errors.informationTypes} />}
+
+              {/* Clause trigger indicators */}
+              {(ipTriggered || dataPrivacyTriggered) && (
+                <div
+                  className="p-3 rounded-lg space-y-1"
+                  style={{ backgroundColor: "#F3EEF7", border: "1px solid #D1C4E9" }}
+                >
+                  <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
+                    Additional clauses will be included:
+                  </p>
+                  {ipTriggered && (
+                    <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                      · IP licensing clause — access is for evaluation only, ownership stays with the disclosing party
+                    </p>
+                  )}
+                  {dataPrivacyTriggered && (
+                    <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                      · Data privacy clause — both parties acknowledge applicable privacy laws and processing limitations
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Duration */}
+          <div className="mb-6 space-y-3">
+            <FieldLabel>How long is the agreement term?</FieldLabel>
+            <DurationInput
+              value={durationValue}
+              unit={durationUnit}
+              onValueChange={(v) => { setDurationValue(v); clearError("duration") }}
+              onUnitChange={setDurationUnit}
               error={errors.duration}
             />
-            <FieldHelper>Enter the specific duration for this NDA.</FieldHelper>
-            {errors.duration && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please enter a duration
-              </p>
-            )}
+            <FieldHelper>
+              {durationValue
+                ? `Agreement term: ${durationValue} ${durationUnit}`
+                : "Enter a number and select weeks, months, or years."
+              }
+            </FieldHelper>
+            {errors.duration && <FieldError message={errors.duration} />}
           </div>
 
-          {/* SECTION: About the other party */}
-          <SectionLabel>About the other party</SectionLabel>
+          {/* ── SECTION 2: About the counterparty ── */}
+          <SectionLabel>About the counterparty</SectionLabel>
 
-          {/* Field 6 - Other company name */}
+          {/* Counterparty name */}
           <div className="mb-6">
-            <FieldLabel error={errors.otherCompanyName}>Name of the other company</FieldLabel>
             <TextInput
-              value={otherCompanyName}
-              onChange={(val) => {
-                setOtherCompanyName(val)
-                setErrors(prev => ({ ...prev, otherCompanyName: false }))
-              }}
-              error={errors.otherCompanyName}
+              label="Name of the other company"
+              placeholder="e.g. Acme Corp"
+              value={counterpartyName}
+              onChange={(val) => { setCounterpartyName(val); clearError("counterpartyName") }}
+              error={errors.counterpartyName}
             />
-            {errors.otherCompanyName && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please enter the company name
-              </p>
-            )}
           </div>
 
-          {/* Field 7 - Other company country */}
+          {/* Counterparty country */}
           <div className="mb-6">
-            <FieldLabel error={errors.otherCompanyCountry}>Their registered country</FieldLabel>
-            <SearchableDropdown
-              value={otherCompanyCountry}
-              onChange={(val) => {
-                setOtherCompanyCountry(val)
-                setErrors(prev => ({ ...prev, otherCompanyCountry: false }))
-              }}
-              options={COUNTRIES}
-              placeholder="Search for a country..."
-              error={errors.otherCompanyCountry}
+            <CountryDropdown
+              label="Which country is the counterparty based in?"
+              value={counterpartyCountry}
+              onChange={(val) => { setCounterpartyCountry(val); clearError("counterpartyCountry") }}
+              helperText="Used to assess jurisdiction risk. Governing law is set by your playbook."
+              error={errors.counterpartyCountry}
             />
-            <FieldHelper>Where they are legally incorporated.</FieldHelper>
-            {errors.otherCompanyCountry && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please select a country
-              </p>
-            )}
           </div>
 
-          {/* SECTION: About your company */}
+          {/* ── SECTION 3: About your company ── */}
           <SectionLabel>About your company</SectionLabel>
 
-          {/* Field 8 - Your company name */}
+          <p
+            className="font-normal mb-4"
+            style={{ fontSize: "12px", color: "#4A4A6A" }}
+          >
+            If your organisation has multiple entities, enter the details of the specific entity signing this NDA.
+          </p>
+
+          {/* Your company name */}
           <div className="mb-6">
-            <FieldLabel error={errors.yourCompanyName}>{"Your company's full legal name"}</FieldLabel>
             <TextInput
-              value={yourCompanyName}
-              onChange={(val) => {
-                setYourCompanyName(val)
-                setErrors(prev => ({ ...prev, yourCompanyName: false }))
-              }}
+              label="Your company's full legal name"
               placeholder="e.g. TECHNIA AB"
+              value={yourCompanyName}
+              onChange={(val) => { setYourCompanyName(val); clearError("yourCompanyName") }}
               error={errors.yourCompanyName}
             />
-            {errors.yourCompanyName && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please enter your company name
-              </p>
-            )}
           </div>
 
-          {/* Field 9 - Your company address */}
+          {/* Your company address */}
           <div className="mb-6">
-            <FieldLabel error={errors.yourCompanyAddress}>{"Your company's registered address"}</FieldLabel>
             <TextArea
+              label="Your company's registered address"
+              placeholder="Street, City, Postcode, Country"
               value={yourCompanyAddress}
-              onChange={(val) => {
-                setYourCompanyAddress(val)
-                setErrors(prev => ({ ...prev, yourCompanyAddress: false }))
-              }}
-              placeholder="Street, City, Country"
-              rows={3}
+              onChange={(val) => { setYourCompanyAddress(val); clearError("yourCompanyAddress") }}
               error={errors.yourCompanyAddress}
             />
-            {errors.yourCompanyAddress && (
-              <p className="mt-2 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                Please enter your company address
-              </p>
-            )}
           </div>
 
-          {/* SECTION: Signatory */}
-          <SectionLabel>Signatory</SectionLabel>
-
-          {/* Field 10 - Signatory name and title */}
-          <div className="mb-8">
-            <FieldLabel error={errors.signatoryName || errors.signatoryTitle}>Name and title of the person signing</FieldLabel>
+          {/* Signatory */}
+          <div className="mb-8 space-y-2">
+            <FieldLabel>Name and title of the person signing</FieldLabel>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <TextInput
-                  value={signatoryName}
-                  onChange={(val) => {
-                    setSignatoryName(val)
-                    setErrors(prev => ({ ...prev, signatoryName: false }))
-                  }}
+              <div className="space-y-1">
+                <input
+                  type="text"
                   placeholder="Full name"
-                  error={errors.signatoryName}
-                />
-                {errors.signatoryName && (
-                  <p className="mt-1 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                    Required
-                  </p>
-                )}
-              </div>
-              <div>
-                <TextInput
-                  value={signatoryTitle}
-                  onChange={(val) => {
-                    setSignatoryTitle(val)
-                    setErrors(prev => ({ ...prev, signatoryTitle: false }))
+                  value={signatoryName}
+                  onChange={(e) => { setSignatoryName(e.target.value); clearError("signatoryName") }}
+                  className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
+                  style={{
+                    backgroundColor: "#F7F8FA",
+                    border: errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
+                    color: "#431F5D",
+                    fontSize: "14px"
                   }}
-                  placeholder="e.g. Head of Sales"
-                  error={errors.signatoryTitle}
+                  onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+                  onBlur={(e) => { e.target.style.border = errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
                 />
-                {errors.signatoryTitle && (
-                  <p className="mt-1 font-normal" style={{ fontSize: "12px", color: "#B71C1C" }}>
-                    Required
-                  </p>
-                )}
+                {errors.signatoryName && <FieldError message={errors.signatoryName} />}
+              </div>
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  placeholder="e.g. Head of Sales"
+                  value={signatoryTitle}
+                  onChange={(e) => { setSignatoryTitle(e.target.value); clearError("signatoryTitle") }}
+                  className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
+                  style={{
+                    backgroundColor: "#F7F8FA",
+                    border: errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
+                    color: "#431F5D",
+                    fontSize: "14px"
+                  }}
+                  onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+                  onBlur={(e) => { e.target.style.border = errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
+                />
+                {errors.signatoryTitle && <FieldError message={errors.signatoryTitle} />}
               </div>
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             className="w-full py-3 font-medium rounded-md transition-opacity hover:opacity-90"
