@@ -424,7 +424,7 @@ export default function ReviewIntakePage() {
     
     if (Object.keys(newErrors).length === 0) {
       // Form is valid, navigate to processing page
-      router.push("/processing")
+      router.push("/review/processing")
     }
   }
 
