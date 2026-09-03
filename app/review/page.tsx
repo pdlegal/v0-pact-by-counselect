@@ -524,3 +524,374 @@ function FileUpload({
               ? "1.5px dashed #B71C1C"
               : "1.5px dashed #E2E4E8",
           borderRadius: "8px"
+        }}
+      >
+        <p className="font-medium mb-1" style={{ color: "#431F5D", fontSize: "13px" }}>
+          Drop their NDA here, or click to browse
+        </p>
+        <p className="font-normal" style={{ color: "#4A4A6A", fontSize: "12px" }}>
+          .docx or .pdf · max 10 MB
+        </p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".docx,.pdf"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
+      {error && <FieldError message={error} />}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────
+
+export default function ReviewIntakePage() {
+  const router = useRouter()
+
+  // Will come from session once auth is wired
+  const clientName = "TECHNIA"
+
+  // ── About the agreement ──
+  const [partyType, setPartyType] = useState("")
+  const [sharingDirection, setSharingDirection] = useState("")
+  const [engagementType, setEngagementType] = useState<EngagementType>("")
+  const [informationTypes, setInformationTypes] = useState<InformationType[]>([])
+  const [durationValue, setDurationValue] = useState("")
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>("months")
+
+  // ── About the counterparty ──
+  const [counterpartyName, setCounterpartyName] = useState("")
+  const [country, setCountry] = useState<{ name: string; code: string }>({ name: "", code: "" })
+
+  // File
+  const [file, setFile] = useState<File | null>(null)
+
+  // Errors
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Derived
+  const showInformationTypes =
+    engagementType === "exploring" ||
+    engagementType === "evaluating" ||
+    engagementType === "sharing_data"
+
+  const showEscalationBanner = engagementType === "something_else"
+  const { ipTriggered, dataPrivacyTriggered } = getTriggeredClauses(informationTypes)
+
+  const toggleInformationType = (type: InformationType) => {
+    setInformationTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    )
+    if (errors.informationTypes) setErrors(prev => ({ ...prev, informationTypes: "" }))
+  }
+
+  const handleEngagementTypeChange = (type: EngagementType) => {
+    setEngagementType(type)
+    setInformationTypes([])
+    if (errors.engagementType) setErrors(prev => ({ ...prev, engagementType: "" }))
+  }
+
+  const clearError = (key: string) => {
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: "" }))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const newErrors: Record<string, string> = {}
+
+    if (!partyType) newErrors.partyType = "Please select who you are sharing information with"
+    if (!sharingDirection) newErrors.sharingDirection = "Please select the sharing direction"
+    if (!engagementType) newErrors.engagementType = "Please describe this engagement"
+    if (showInformationTypes && informationTypes.length === 0) {
+      newErrors.informationTypes = "Please select at least one information type"
+    }
+    if (!durationValue) newErrors.duration = "Please enter the agreement term"
+    if (!counterpartyName.trim()) newErrors.counterpartyName = "Please enter the counterparty name"
+    if (!country.code) newErrors.country = "Please select a country"
+    if (!file) newErrors.file = "Please upload the NDA document"
+
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length === 0) {
+      router.push("/review/processing")
+    }
+  }
+
+  const partyTypes = ["Customer", "Supplier or vendor", "Partner", "Other"]
+  const sharingOptions = [
+    "Both sides will share",
+    "Only we will share",
+    "Only they will share"
+  ]
+  const engagementOptions: { value: EngagementType; label: string; sublabel: string }[] = [
+    {
+      value: "exploring",
+      label: "Exploring a potential partnership or collaboration",
+      sublabel: "Early stage conversations, scoping an engagement"
+    },
+    {
+      value: "evaluating",
+      label: "Evaluating a vendor, technology, or service",
+      sublabel: "Assessing a product, platform, or supplier"
+    },
+    {
+      value: "sharing_data",
+      label: "Sharing specific confidential data",
+      sublabel: "Transferring data as part of a defined purpose"
+    },
+    {
+      value: "something_else",
+      label: "Something else — I'm not sure",
+      sublabel: "A Counselect attorney will review before finalisation"
+    }
+  ]
+  const informationOptions: { value: InformationType; label: string; sublabel: string }[] = [
+    {
+      value: "software",
+      label: "Software, platform access, or demos",
+      sublabel: "Code, SaaS access, proprietary technology, demo environments"
+    },
+    {
+      value: "customer_data",
+      label: "Customer or client information",
+      sublabel: "Personal data about customers or end users"
+    },
+    {
+      value: "employee_data",
+      label: "Employee or HR information",
+      sublabel: "Staff personal data, payroll, HR records"
+    },
+    {
+      value: "financial",
+      label: "Financial or commercial data",
+      sublabel: "Revenue figures, pricing, forecasts, commercial terms"
+    },
+    {
+      value: "branding",
+      label: "Branding or marketing materials",
+      sublabel: "Logos, campaign assets, brand guidelines"
+    },
+    {
+      value: "none",
+      label: "None of the above",
+      sublabel: "General business information only"
+    }
+  ]
+
+  return (
+    <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
+      <NavBar />
+
+      <div className="flex-1 flex justify-center px-4 py-8">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full"
+          style={{
+            maxWidth: "580px",
+            backgroundColor: "#FFFFFF",
+            border: "0.5px solid #E2E4E8",
+            borderRadius: "10px",
+            overflow: "hidden"
+          }}
+        >
+          {/* Form header */}
+          <div className="px-6 sm:px-8 pt-6 sm:pt-8">
+            <ProgressIndicator step={1} totalSteps={2} />
+            <h1 className="font-medium mb-2" style={{ color: "#431F5D", fontSize: "16px" }}>
+              Tell us about this NDA
+            </h1>
+            <p className="font-normal" style={{ color: "#4A4A6A", fontSize: "13px" }}>
+              A few quick questions so we can apply the right positions.
+            </p>
+          </div>
+
+          {/* ── SECTION 1: About the agreement ── */}
+          <SectionLabel>About the agreement</SectionLabel>
+
+          <div className="px-6 sm:px-8 space-y-8">
+
+            {/* Party type */}
+            <div className="space-y-3">
+              <FieldLabel>Who are you sharing information with?</FieldLabel>
+              <div className="grid grid-cols-2 gap-3">
+                {partyTypes.map((type) => (
+                  <RadioCard
+                    key={type}
+                    label={type}
+                    selected={partyType === type}
+                    onClick={() => { setPartyType(type); clearError("partyType") }}
+                  />
+                ))}
+              </div>
+              {errors.partyType && <FieldError message={errors.partyType} />}
+            </div>
+
+            {/* Sharing direction */}
+            <div className="space-y-3">
+              <FieldLabel>Will both sides be sharing confidential information?</FieldLabel>
+              <div className="flex flex-col gap-3">
+                {sharingOptions.map((option) => (
+                  <RadioCard
+                    key={option}
+                    label={option}
+                    selected={sharingDirection === option}
+                    onClick={() => { setSharingDirection(option); clearError("sharingDirection") }}
+                    fullWidth
+                  />
+                ))}
+              </div>
+              {errors.sharingDirection && <FieldError message={errors.sharingDirection} />}
+            </div>
+
+            {/* Engagement type */}
+            <div className="space-y-3">
+              <FieldLabel>What best describes this engagement?</FieldLabel>
+              <div className="flex flex-col gap-3">
+                {engagementOptions.map((option) => (
+                  <RadioCard
+                    key={option.value}
+                    label={option.label}
+                    sublabel={option.sublabel}
+                    selected={engagementType === option.value}
+                    onClick={() => handleEngagementTypeChange(option.value)}
+                    fullWidth
+                  />
+                ))}
+              </div>
+              {errors.engagementType && <FieldError message={errors.engagementType} />}
+            </div>
+
+            {/* Escalation banner */}
+            {showEscalationBanner && (
+              <div
+                className="p-4 rounded-lg"
+                style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}
+              >
+                <p style={{ fontSize: "13px", color: "#E65100", lineHeight: 1.5 }}>
+                  Your {clientName} attorney will review this submission before finalisation.
+                </p>
+              </div>
+            )}
+
+            {/* Information types */}
+            {showInformationTypes && (
+              <div className="space-y-3">
+                <div>
+                  <FieldLabel>What type of information will you be sharing?</FieldLabel>
+                  <FieldHelper>Select all that apply.</FieldHelper>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {informationOptions.map((option) => (
+                    <CheckboxCard
+                      key={option.value}
+                      label={option.label}
+                      sublabel={option.sublabel}
+                      checked={informationTypes.includes(option.value)}
+                      onChange={() => toggleInformationType(option.value)}
+                    />
+                  ))}
+                </div>
+                {errors.informationTypes && <FieldError message={errors.informationTypes} />}
+
+                {(ipTriggered || dataPrivacyTriggered) && (
+                  <div
+                    className="p-3 rounded-lg space-y-1"
+                    style={{ backgroundColor: "#F3EEF7", border: "1px solid #D1C4E9" }}
+                  >
+                    <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
+                      Additional clauses will be included:
+                    </p>
+                    {ipTriggered && (
+                      <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                        · IP licensing clause — access is for evaluation only, ownership stays with the disclosing party
+                      </p>
+                    )}
+                    {dataPrivacyTriggered && (
+                      <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                        · Data privacy clause — both parties acknowledge applicable privacy laws and processing limitations
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Duration */}
+            <div className="space-y-3">
+              <FieldLabel>How long is the agreement term?</FieldLabel>
+              <DurationInput
+                value={durationValue}
+                unit={durationUnit}
+                onValueChange={(v) => { setDurationValue(v); clearError("duration") }}
+                onUnitChange={setDurationUnit}
+                error={errors.duration}
+              />
+              <FieldHelper>
+                {durationValue
+                  ? `Agreement term: ${durationValue} ${durationUnit}`
+                  : "Enter a number and select weeks, months, or years."
+                }
+              </FieldHelper>
+              {errors.duration && <FieldError message={errors.duration} />}
+            </div>
+
+          </div>
+
+          {/* ── SECTION 2: About the counterparty ── */}
+          <SectionLabel>About the counterparty</SectionLabel>
+
+          <div className="px-6 sm:px-8 space-y-6">
+
+            <TextInput
+              label="Name of the other company"
+              placeholder="e.g. Acme Corp"
+              value={counterpartyName}
+              onChange={(val) => { setCounterpartyName(val); clearError("counterpartyName") }}
+              error={errors.counterpartyName}
+            />
+
+            <CountryDropdown
+              label="Which country is the counterparty based in?"
+              value={country}
+              onChange={(val) => { setCountry(val); clearError("country") }}
+              helperText="Used to assess jurisdiction risk. Governing law is set by your playbook."
+              error={errors.country}
+            />
+
+            {/* File upload */}
+            <div className="space-y-1">
+              <FieldLabel>Upload their NDA</FieldLabel>
+              <FileUpload
+                file={file}
+                onFileSelect={setFile}
+                onRemove={() => setFile(null)}
+                error={errors.file}
+              />
+            </div>
+
+            {/* Submit */}
+            <div className="pb-6 sm:pb-8 pt-2">
+              <button
+                type="submit"
+                className="w-full py-3 rounded-md font-medium text-white transition-opacity hover:opacity-90"
+                style={{
+                  background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+                  fontSize: "14px",
+                  borderRadius: "6px"
+                }}
+              >
+                Review this NDA
+              </button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </main>
+  )
+}
