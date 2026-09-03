@@ -4,6 +4,42 @@ import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
+// ─────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────
+
+type EngagementType = 
+  | "exploring"
+  | "evaluating"
+  | "sharing_data"
+  | "something_else"
+  | ""
+
+type InformationType = 
+  | "software"
+  | "customer_data"
+  | "employee_data"
+  | "branding"
+  | "financial"
+  | "none"
+
+// ─────────────────────────────────────────────
+// CLAUSE TRIGGER LOGIC
+// ─────────────────────────────────────────────
+
+function getTriggeredClauses(informationTypes: InformationType[]) {
+  const ipTriggered = informationTypes.includes("software")
+  const dataPrivacyTriggered = 
+    informationTypes.includes("customer_data") || 
+    informationTypes.includes("employee_data")
+  
+  return { ipTriggered, dataPrivacyTriggered }
+}
+
+// ─────────────────────────────────────────────
+// COMPONENTS
+// ─────────────────────────────────────────────
+
 function PactWordmark() {
   return (
     <div className="flex items-baseline">
@@ -46,7 +82,6 @@ function NavBar() {
 
 function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: number }) {
   const progress = (step / totalSteps) * 100
-  
   return (
     <div className="mb-6">
       <span 
@@ -72,12 +107,14 @@ function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: num
 }
 
 function RadioCard({ 
-  label, 
+  label,
+  sublabel,
   selected, 
   onClick,
   fullWidth = false
 }: { 
   label: string
+  sublabel?: string
   selected: boolean
   onClick: () => void
   fullWidth?: boolean
@@ -86,7 +123,7 @@ function RadioCard({
     <button
       type="button"
       onClick={onClick}
-      className={`p-4 rounded-lg text-left font-normal transition-all ${fullWidth ? 'w-full' : ''}`}
+      className={`p-4 rounded-lg text-left transition-all ${fullWidth ? "w-full" : ""}`}
       style={{
         backgroundColor: selected ? "#F3EEF7" : "#FFFFFF",
         border: selected ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8",
@@ -94,7 +131,69 @@ function RadioCard({
         fontSize: "14px"
       }}
     >
-      {label}
+      <span className="font-normal block">{label}</span>
+      {sublabel && (
+        <span 
+          className="font-normal block mt-0.5"
+          style={{ fontSize: "12px", color: "#4A4A6A" }}
+        >
+          {sublabel}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function CheckboxCard({
+  label,
+  sublabel,
+  checked,
+  onChange
+}: {
+  label: string
+  sublabel?: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full p-4 rounded-lg text-left transition-all flex items-start gap-3"
+      style={{
+        backgroundColor: checked ? "#F3EEF7" : "#FFFFFF",
+        border: checked ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8"
+      }}
+    >
+      <div 
+        className="flex-shrink-0 w-4 h-4 rounded mt-0.5 flex items-center justify-center"
+        style={{
+          backgroundColor: checked ? "#431F5D" : "#FFFFFF",
+          border: checked ? "1.5px solid #431F5D" : "1.5px solid #E2E4E8"
+        }}
+      >
+        {checked && (
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 4L3.5 6.5L9 1" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </div>
+      <div>
+        <span 
+          className="font-normal block"
+          style={{ fontSize: "14px", color: "#431F5D" }}
+        >
+          {label}
+        </span>
+        {sublabel && (
+          <span 
+            className="font-normal block mt-0.5"
+            style={{ fontSize: "12px", color: "#4A4A6A" }}
+          >
+            {sublabel}
+          </span>
+        )}
+      </div>
     </button>
   )
 }
@@ -168,25 +267,50 @@ function CountryDropdown({
   error
 }: {
   label: string
-  value: string
-  onChange: (value: string) => void
+  value: { name: string; code: string }
+  onChange: (value: { name: string; code: string }) => void
   helperText?: string
   error?: string
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
-  
+
   const countries = [
-    "Australia", "Austria", "Belgium", "Brazil", "Canada", "China", 
-    "Denmark", "Finland", "France", "Germany", "Hong Kong", "India", 
-    "Ireland", "Israel", "Italy", "Japan", "Mexico", "Netherlands", 
-    "New Zealand", "Norway", "Poland", "Portugal", "Singapore", 
-    "South Korea", "Spain", "Sweden", "Switzerland", "Taiwan",
-    "United Arab Emirates", "United Kingdom", "United States"
+    { name: "Australia", code: "AU" },
+    { name: "Austria", code: "AT" },
+    { name: "Belgium", code: "BE" },
+    { name: "Brazil", code: "BR" },
+    { name: "Canada", code: "CA" },
+    { name: "China", code: "CN" },
+    { name: "Denmark", code: "DK" },
+    { name: "Finland", code: "FI" },
+    { name: "France", code: "FR" },
+    { name: "Germany", code: "DE" },
+    { name: "Hong Kong", code: "HK" },
+    { name: "India", code: "IN" },
+    { name: "Ireland", code: "IE" },
+    { name: "Israel", code: "IL" },
+    { name: "Italy", code: "IT" },
+    { name: "Japan", code: "JP" },
+    { name: "Mexico", code: "MX" },
+    { name: "Netherlands", code: "NL" },
+    { name: "New Zealand", code: "NZ" },
+    { name: "Norway", code: "NO" },
+    { name: "Poland", code: "PL" },
+    { name: "Portugal", code: "PT" },
+    { name: "Singapore", code: "SG" },
+    { name: "South Korea", code: "KR" },
+    { name: "Spain", code: "ES" },
+    { name: "Sweden", code: "SE" },
+    { name: "Switzerland", code: "CH" },
+    { name: "Taiwan", code: "TW" },
+    { name: "United Arab Emirates", code: "AE" },
+    { name: "United Kingdom", code: "GB" },
+    { name: "United States", code: "US" }
   ]
-  
-  const filteredCountries = countries.filter(c => 
-    c.toLowerCase().includes(search.toLowerCase())
+
+  const filtered = countries.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -201,16 +325,21 @@ function CountryDropdown({
         <input
           type="text"
           placeholder="Search countries..."
-          value={isOpen ? search : value}
+          value={isOpen ? search : value.name}
           onChange={(e) => {
             setSearch(e.target.value)
             if (!isOpen) setIsOpen(true)
           }}
           onFocus={() => setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
           className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
           style={{
             backgroundColor: "#F7F8FA",
-            border: error ? "1.5px solid #B71C1C" : isOpen ? "2px solid #FB6A1B" : "0.5px solid #E2E4E8",
+            border: error 
+              ? "1.5px solid #B71C1C" 
+              : isOpen 
+                ? "2px solid #FB6A1B" 
+                : "0.5px solid #E2E4E8",
             color: "#431F5D",
             fontSize: "14px"
           }}
@@ -223,9 +352,9 @@ function CountryDropdown({
               border: "0.5px solid #E2E4E8"
             }}
           >
-            {filteredCountries.map((country) => (
+            {filtered.map((country) => (
               <button
-                key={country}
+                key={country.code}
                 type="button"
                 onClick={() => {
                   onChange(country)
@@ -235,10 +364,10 @@ function CountryDropdown({
                 className="w-full px-4 py-2 text-left font-normal hover:bg-gray-50 transition-colors"
                 style={{ color: "#431F5D", fontSize: "14px" }}
               >
-                {country}
+                {country.name}
               </button>
             ))}
-            {filteredCountries.length === 0 && (
+            {filtered.length === 0 && (
               <div 
                 className="px-4 py-2 font-normal"
                 style={{ color: "#4A4A6A", fontSize: "14px" }}
@@ -293,7 +422,6 @@ function FileUpload({
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
-    
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
       const droppedFile = files[0]
@@ -314,19 +442,16 @@ function FileUpload({
   }
 
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+    if (bytes < 1024) return bytes + " B"
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB"
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB"
   }
 
   if (file) {
     return (
       <div 
         className="p-4 rounded-lg flex items-center justify-between"
-        style={{ 
-          backgroundColor: "#FFFFFF",
-          border: "0.5px solid #E2E4E8"
-        }}
+        style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}
       >
         <div>
           <p className="font-medium" style={{ color: "#431F5D", fontSize: "14px" }}>
@@ -389,72 +514,196 @@ function FileUpload({
   )
 }
 
+// ─────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────
+
 export default function ReviewIntakePage() {
   const router = useRouter()
-  const [partyType, setPartyType] = useState<string>("")
-  const [sharingDirection, setSharingDirection] = useState<string>("")
+
+  // Will come from session once auth is wired
+  const clientName = "TECHNIA"
+
+  // Field 1 — party type
+  const [partyType, setPartyType] = useState("")
+
+  // Field 2 — sharing direction
+  const [sharingDirection, setSharingDirection] = useState("")
+
+  // Field 3 — engagement type (Step 1 of new two-step)
+  const [engagementType, setEngagementType] = useState<EngagementType>("")
+
+  // Field 4 — information types (Step 2, conditional)
+  const [informationTypes, setInformationTypes] = useState<InformationType[]>([])
+
+  // Field 5 — purpose
   const [purpose, setPurpose] = useState("")
-  const [country, setCountry] = useState("")
-  const [duration, setDuration] = useState<string>("")
+
+  // Field 6 — country (stores ISO code + display name)
+  const [country, setCountry] = useState<{ name: string; code: string }>({ name: "", code: "" })
+
+  // Field 7 — duration
+  const [duration, setDuration] = useState("")
+
+  // Field 8 — company name
   const [companyName, setCompanyName] = useState("")
+
+  // File upload
   const [file, setFile] = useState<File | null>(null)
+
+  // Errors
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const partyTypes = ["Customer", "Supplier or vendor", "Partner", "Other"]
-  const sharingOptions = [
-    "Both sides will share",
-    "Only we will share", 
-    "Only they will share"
-  ]
+  // Derived state
+  const showInformationTypes = 
+    engagementType === "exploring" || 
+    engagementType === "evaluating" || 
+    engagementType === "sharing_data"
+
+  const showEscalationBanner = engagementType === "something_else"
+
+  const { ipTriggered, dataPrivacyTriggered } = getTriggeredClauses(informationTypes)
+
+  const toggleInformationType = (type: InformationType) => {
+    setInformationTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    )
+    if (errors.informationTypes) {
+      setErrors(prev => ({ ...prev, informationTypes: "" }))
+    }
+  }
+
+  const handleEngagementTypeChange = (type: EngagementType) => {
+    setEngagementType(type)
+    // Reset information types when engagement type changes
+    setInformationTypes([])
+    if (errors.engagementType) {
+      setErrors(prev => ({ ...prev, engagementType: "" }))
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const newErrors: Record<string, string> = {}
-    
+
     if (!partyType) newErrors.partyType = "Please select who you are sharing information with"
     if (!sharingDirection) newErrors.sharingDirection = "Please select the sharing direction"
+    if (!engagementType) newErrors.engagementType = "Please describe this engagement"
+    if (showInformationTypes && informationTypes.length === 0) {
+      newErrors.informationTypes = "Please select at least one information type"
+    }
     if (!purpose.trim()) newErrors.purpose = "Please describe what this NDA is for"
-    if (!country) newErrors.country = "Please select a country"
+    if (!country.code) newErrors.country = "Please select a country"
     if (!duration) newErrors.duration = "Please select a duration"
     if (!companyName.trim()) newErrors.companyName = "Please enter the company name"
     if (!file) newErrors.file = "Please upload the NDA document"
-    
+
     setErrors(newErrors)
-    
+
     if (Object.keys(newErrors).length === 0) {
-      // Form is valid, navigate to processing page
+      // Will pass full form data to processing page once backend is wired
       router.push("/review/processing")
     }
   }
 
+  const partyTypes = ["Customer", "Supplier or vendor", "Partner", "Other"]
+  const sharingOptions = [
+    "Both sides will share",
+    "Only we will share",
+    "Only they will share"
+  ]
+  const engagementOptions: { value: EngagementType; label: string; sublabel: string }[] = [
+    {
+      value: "exploring",
+      label: "Exploring a potential partnership or collaboration",
+      sublabel: "Early stage conversations, scoping an engagement"
+    },
+    {
+      value: "evaluating",
+      label: "Evaluating a vendor, technology, or service",
+      sublabel: "Assessing a product, platform, or supplier"
+    },
+    {
+      value: "sharing_data",
+      label: "Sharing specific confidential data",
+      sublabel: "Transferring data as part of a defined purpose"
+    },
+    {
+      value: "something_else",
+      label: "Something else — I'm not sure",
+      sublabel: "A Counselect attorney will review before finalisation"
+    }
+  ]
+  const informationOptions: { value: InformationType; label: string; sublabel: string }[] = [
+    {
+      value: "software",
+      label: "Software, platform access, or demos",
+      sublabel: "Code, SaaS access, proprietary technology, demo environments"
+    },
+    {
+      value: "customer_data",
+      label: "Customer or client information",
+      sublabel: "Personal data about customers or end users"
+    },
+    {
+      value: "employee_data",
+      label: "Employee or HR information",
+      sublabel: "Staff personal data, payroll, HR records"
+    },
+    {
+      value: "financial",
+      label: "Financial or commercial data",
+      sublabel: "Revenue figures, pricing, forecasts, commercial terms"
+    },
+    {
+      value: "branding",
+      label: "Branding or marketing materials",
+      sublabel: "Logos, campaign assets, brand guidelines"
+    },
+    {
+      value: "none",
+      label: "None of the above",
+      sublabel: "General business information only"
+    }
+  ]
+  const durationOptions = [
+    "3 months",
+    "6 months",
+    "1 year",
+    "2 years",
+    "3 years"
+  ]
+
   return (
     <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
       <NavBar />
-      
+
       <div className="flex-1 flex justify-center px-4 py-8">
-        <form 
+        <form
           onSubmit={handleSubmit}
           className="w-full"
           style={{ maxWidth: "580px" }}
         >
-          <div 
+          <div
             className="p-6 sm:p-8 rounded-lg"
-            style={{ 
+            style={{
               backgroundColor: "#FFFFFF",
               border: "0.5px solid #E2E4E8",
               borderRadius: "10px"
             }}
           >
             <ProgressIndicator step={1} totalSteps={2} />
-            
-            <h1 
+
+            <h1
               className="font-medium mb-2"
               style={{ color: "#431F5D", fontSize: "16px" }}
             >
               Tell us about this NDA
             </h1>
-            <p 
+            <p
               className="font-normal mb-8"
               style={{ color: "#4A4A6A", fontSize: "13px" }}
             >
@@ -462,9 +711,10 @@ export default function ReviewIntakePage() {
             </p>
 
             <div className="space-y-8">
-              {/* Field 1: Party Type */}
+
+              {/* Field 1 — Party type */}
               <div className="space-y-3">
-                <label 
+                <label
                   className="block font-normal"
                   style={{ color: "#431F5D", fontSize: "14px" }}
                 >
@@ -476,7 +726,10 @@ export default function ReviewIntakePage() {
                       key={type}
                       label={type}
                       selected={partyType === type}
-                      onClick={() => setPartyType(type)}
+                      onClick={() => {
+                        setPartyType(type)
+                        if (errors.partyType) setErrors(prev => ({ ...prev, partyType: "" }))
+                      }}
                     />
                   ))}
                 </div>
@@ -487,9 +740,9 @@ export default function ReviewIntakePage() {
                 )}
               </div>
 
-              {/* Field 2: Sharing Direction */}
+              {/* Field 2 — Sharing direction */}
               <div className="space-y-3">
-                <label 
+                <label
                   className="block font-normal"
                   style={{ color: "#431F5D", fontSize: "14px" }}
                 >
@@ -501,7 +754,10 @@ export default function ReviewIntakePage() {
                       key={option}
                       label={option}
                       selected={sharingDirection === option}
-                      onClick={() => setSharingDirection(option)}
+                      onClick={() => {
+                        setSharingDirection(option)
+                        if (errors.sharingDirection) setErrors(prev => ({ ...prev, sharingDirection: "" }))
+                      }}
                       fullWidth
                     />
                   ))}
@@ -513,54 +769,189 @@ export default function ReviewIntakePage() {
                 )}
               </div>
 
-              {/* Field 3: Purpose */}
+              {/* Field 3 — Engagement type (Step 1) */}
+              <div className="space-y-3">
+                <label
+                  className="block font-normal"
+                  style={{ color: "#431F5D", fontSize: "14px" }}
+                >
+                  What best describes this engagement?
+                </label>
+                <div className="flex flex-col gap-3">
+                  {engagementOptions.map((option) => (
+                    <RadioCard
+                      key={option.value}
+                      label={option.label}
+                      sublabel={option.sublabel}
+                      selected={engagementType === option.value}
+                      onClick={() => handleEngagementTypeChange(option.value)}
+                      fullWidth
+                    />
+                  ))}
+                </div>
+                {errors.engagementType && (
+                  <span style={{ color: "#B71C1C", fontSize: "12px" }}>
+                    {errors.engagementType}
+                  </span>
+                )}
+              </div>
+
+              {/* Escalation banner for "something else" */}
+              {showEscalationBanner && (
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}
+                >
+                  <p style={{ fontSize: "13px", color: "#E65100", lineHeight: 1.5 }}>
+                    Your {clientName} attorney will review this submission before finalisation.
+                  </p>
+                </div>
+              )}
+
+              {/* Field 4 — Information types (Step 2, conditional) */}
+              {showInformationTypes && (
+                <div className="space-y-3">
+                  <div>
+                    <label
+                      className="block font-normal"
+                      style={{ color: "#431F5D", fontSize: "14px" }}
+                    >
+                      What type of information will you be sharing?
+                    </label>
+                    <p
+                      className="font-normal mt-1"
+                      style={{ color: "#4A4A6A", fontSize: "12px" }}
+                    >
+                      Select all that apply.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {informationOptions.map((option) => (
+                      <CheckboxCard
+                        key={option.value}
+                        label={option.label}
+                        sublabel={option.sublabel}
+                        checked={informationTypes.includes(option.value)}
+                        onChange={() => toggleInformationType(option.value)}
+                      />
+                    ))}
+                  </div>
+                  {errors.informationTypes && (
+                    <span style={{ color: "#B71C1C", fontSize: "12px" }}>
+                      {errors.informationTypes}
+                    </span>
+                  )}
+
+                  {/* Clause trigger indicators */}
+                  {(ipTriggered || dataPrivacyTriggered) && (
+                    <div
+                      className="p-3 rounded-lg space-y-1"
+                      style={{ backgroundColor: "#F3EEF7", border: "1px solid #D1C4E9" }}
+                    >
+                      <p
+                        className="font-medium"
+                        style={{ fontSize: "12px", color: "#431F5D" }}
+                      >
+                        Additional clauses will be included:
+                      </p>
+                      {ipTriggered && (
+                        <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                          · IP licensing clause — access is for evaluation only, ownership stays with the disclosing party
+                        </p>
+                      )}
+                      {dataPrivacyTriggered && (
+                        <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                          · Data privacy clause — both parties acknowledge applicable privacy laws and processing limitations
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Field 5 — Purpose */}
               <TextInput
                 label="What is this NDA for?"
                 placeholder="e.g. evaluating a potential software vendor"
                 value={purpose}
-                onChange={setPurpose}
+                onChange={(val) => {
+                  setPurpose(val)
+                  if (errors.purpose) setErrors(prev => ({ ...prev, purpose: "" }))
+                }}
                 helperText="A brief description — this shapes the purpose clause."
                 maxLength={150}
                 error={errors.purpose}
               />
 
-              {/* Field 4: Country */}
+              {/* Field 6 — Country */}
               <CountryDropdown
                 label="What country is the other party based in?"
                 value={country}
-                onChange={setCountry}
+                onChange={(val) => {
+                  setCountry(val)
+                  if (errors.country) setErrors(prev => ({ ...prev, country: "" }))
+                }}
                 helperText="Used to apply the right governing law."
                 error={errors.country}
               />
 
-              {/* Field 5: Duration */}
-              <TextInput
-                label="How long is the agreement term?"
-                placeholder="e.g. 2 years, 18 months, 5 years"
-                value={duration}
-                onChange={setDuration}
-                helperText="Enter the specific duration for this NDA."
-                error={errors.duration}
-              />
+              {/* Field 7 — Duration */}
+              <div className="space-y-3">
+                <label
+                  className="block font-normal"
+                  style={{ color: "#431F5D", fontSize: "14px" }}
+                >
+                  How long is the agreement term?
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                  {durationOptions.map((option) => (
+                    <RadioCard
+                      key={option}
+                      label={option}
+                      selected={duration === option}
+                      onClick={() => {
+                        setDuration(option)
+                        if (errors.duration) setErrors(prev => ({ ...prev, duration: "" }))
+                      }}
+                    />
+                  ))}
+                </div>
+                {errors.duration && (
+                  <span style={{ color: "#B71C1C", fontSize: "12px" }}>
+                    {errors.duration}
+                  </span>
+                )}
+              </div>
 
-              {/* Field 6: Company Name */}
+              {/* Field 8 — Company name */}
               <TextInput
                 label="Name of the other company"
                 placeholder="Enter company name"
                 value={companyName}
-                onChange={setCompanyName}
+                onChange={(val) => {
+                  setCompanyName(val)
+                  if (errors.companyName) setErrors(prev => ({ ...prev, companyName: "" }))
+                }}
                 error={errors.companyName}
               />
 
-              {/* File Upload */}
-              <FileUpload
-                file={file}
-                onFileSelect={setFile}
-                onRemove={() => setFile(null)}
-                error={errors.file}
-              />
+              {/* File upload */}
+              <div className="space-y-2">
+                <label
+                  className="block font-normal"
+                  style={{ color: "#431F5D", fontSize: "14px" }}
+                >
+                  Upload their NDA
+                </label>
+                <FileUpload
+                  file={file}
+                  onFileSelect={setFile}
+                  onRemove={() => setFile(null)}
+                  error={errors.file}
+                />
+              </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               <button
                 type="submit"
                 className="w-full py-3 rounded-md font-medium text-white transition-opacity hover:opacity-90"
@@ -572,6 +963,7 @@ export default function ReviewIntakePage() {
               >
                 Review this NDA
               </button>
+
             </div>
           </div>
         </form>
