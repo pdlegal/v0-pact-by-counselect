@@ -814,7 +814,7 @@ export default function ReviewIntakePage() {
                   setCountry(val)
                   if (errors.country) setErrors(prev => ({ ...prev, country: "" }))
                 }}
-                helperText="Used to apply the right governing law."
+                helperText="Used to assess jurisdiction risk. Governing law is set by internal policies."
                 error={errors.country}
               />
 
