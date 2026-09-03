@@ -93,14 +93,17 @@ function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: num
   )
 }
 
+// Full-width flush section band
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="font-medium uppercase mt-8 mb-4 pb-2"
+      className="font-medium uppercase -mx-6 sm:-mx-8 px-6 sm:px-8 py-3 mt-8 mb-6"
       style={{
         fontSize: "11px",
-        color: "#4A4A6A",
+        color: "#431F5D",
         letterSpacing: "0.08em",
+        backgroundColor: "#F3EEF7",
+        borderTop: "0.5px solid #E2E4E8",
         borderBottom: "0.5px solid #E2E4E8"
       }}
     >
@@ -109,9 +112,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Larger, bolder question label
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block font-normal" style={{ color: "#431F5D", fontSize: "14px" }}>
+    <label
+      className="block font-medium mb-3"
+      style={{ color: "#431F5D", fontSize: "15px" }}
+    >
       {children}
     </label>
   )
@@ -119,7 +126,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 function FieldHelper({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-normal mt-1" style={{ color: "#4A4A6A", fontSize: "12px" }}>
+    <p className="font-normal mt-1.5" style={{ color: "#4A4A6A", fontSize: "12px" }}>
       {children}
     </p>
   )
@@ -230,7 +237,7 @@ function TextInput({
   error?: string
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       <FieldLabel>{label}</FieldLabel>
       <input
         type="text"
@@ -269,7 +276,7 @@ function TextArea({
   error?: string
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       <FieldLabel>{label}</FieldLabel>
       <textarea
         placeholder={placeholder}
@@ -347,7 +354,7 @@ function CountryDropdown({
   )
 
   return (
-    <div className="space-y-2 relative">
+    <div className="space-y-1 relative">
       <FieldLabel>{label}</FieldLabel>
       <div className="relative">
         <input
@@ -493,7 +500,7 @@ export default function GeneratePage() {
   const [counterpartyCountry, setCounterpartyCountry] = useState<{ name: string; code: string }>({ name: "", code: "" })
 
   // ── About your company ──
-  // Note: when auth is wired, suggest pre-populating from a saved entity list per client
+  // Note: when auth is wired, present a saved entity selector per client
   const [yourCompanyName, setYourCompanyName] = useState("")
   const [yourCompanyAddress, setYourCompanyAddress] = useState("")
   const [signatoryName, setSignatoryName] = useState("")
@@ -549,7 +556,6 @@ export default function GeneratePage() {
     setErrors(newErrors)
 
     if (Object.keys(newErrors).length === 0) {
-      // Will pass full form data to processing page once backend is wired
       router.push("/generate/processing")
     }
   }
@@ -622,157 +628,163 @@ export default function GeneratePage() {
       <div className="px-4 py-8">
         <form
           onSubmit={handleSubmit}
-          className="mx-auto w-full p-6 sm:p-8"
+          className="mx-auto w-full"
           style={{
             maxWidth: "580px",
             backgroundColor: "#FFFFFF",
             border: "0.5px solid #E2E4E8",
-            borderRadius: "10px"
+            borderRadius: "10px",
+            overflow: "hidden"
           }}
         >
-          <ProgressIndicator step={1} totalSteps={2} />
-
-          <h1 className="font-medium mb-2" style={{ fontSize: "16px", color: "#431F5D" }}>
-            {"Let's build your NDA"}
-          </h1>
-          <p className="font-normal mb-2" style={{ fontSize: "13px", color: "#4A4A6A" }}>
-            Answer a few questions and we'll draft it to {clientName}'s standard.
-          </p>
+          {/* Form header — inside card, padded */}
+          <div className="px-6 sm:px-8 pt-6 sm:pt-8">
+            <ProgressIndicator step={1} totalSteps={2} />
+            <h1 className="font-medium mb-2" style={{ fontSize: "16px", color: "#431F5D" }}>
+              {"Let's build your NDA"}
+            </h1>
+            <p className="font-normal" style={{ fontSize: "13px", color: "#4A4A6A" }}>
+              Answer a few questions and we'll draft it to {clientName}'s standard.
+            </p>
+          </div>
 
           {/* ── SECTION 1: About the agreement ── */}
           <SectionLabel>About the agreement</SectionLabel>
 
-          {/* Party type */}
-          <div className="mb-6 space-y-3">
-            <FieldLabel>Who are you sharing information with?</FieldLabel>
-            <div className="grid grid-cols-2 gap-3">
-              {partyTypes.map((type) => (
-                <RadioCard
-                  key={type}
-                  label={type}
-                  selected={partyType === type}
-                  onClick={() => { setPartyType(type); clearError("partyType") }}
-                />
-              ))}
-            </div>
-            {errors.partyType && <FieldError message={errors.partyType} />}
-          </div>
+          <div className="px-6 sm:px-8 space-y-8">
 
-          {/* Sharing direction */}
-          <div className="mb-6 space-y-3">
-            <FieldLabel>Will both sides be sharing confidential information?</FieldLabel>
-            <div className="flex flex-col gap-3">
-              {sharingOptions.map((option) => (
-                <RadioCard
-                  key={option}
-                  label={option}
-                  selected={sharingDirection === option}
-                  onClick={() => { setSharingDirection(option); clearError("sharingDirection") }}
-                  fullWidth
-                />
-              ))}
-            </div>
-            {errors.sharingDirection && <FieldError message={errors.sharingDirection} />}
-          </div>
-
-          {/* Engagement type */}
-          <div className="mb-6 space-y-3">
-            <FieldLabel>What best describes this engagement?</FieldLabel>
-            <div className="flex flex-col gap-3">
-              {engagementOptions.map((option) => (
-                <RadioCard
-                  key={option.value}
-                  label={option.label}
-                  sublabel={option.sublabel}
-                  selected={engagementType === option.value}
-                  onClick={() => handleEngagementTypeChange(option.value)}
-                  fullWidth
-                />
-              ))}
-            </div>
-            {errors.engagementType && <FieldError message={errors.engagementType} />}
-          </div>
-
-          {/* Escalation banner */}
-          {showEscalationBanner && (
-            <div
-              className="p-4 rounded-lg mb-6"
-              style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}
-            >
-              <p style={{ fontSize: "13px", color: "#E65100", lineHeight: 1.5 }}>
-                Your {clientName} attorney will review this submission before finalisation.
-              </p>
-            </div>
-          )}
-
-          {/* Information types (conditional) */}
-          {showInformationTypes && (
-            <div className="mb-6 space-y-3">
-              <div>
-                <FieldLabel>What type of information will you be sharing?</FieldLabel>
-                <FieldHelper>Select all that apply.</FieldHelper>
-              </div>
-              <div className="flex flex-col gap-3">
-                {informationOptions.map((option) => (
-                  <CheckboxCard
-                    key={option.value}
-                    label={option.label}
-                    sublabel={option.sublabel}
-                    checked={informationTypes.includes(option.value)}
-                    onChange={() => toggleInformationType(option.value)}
+            {/* Party type */}
+            <div className="space-y-3">
+              <FieldLabel>Who are you sharing information with?</FieldLabel>
+              <div className="grid grid-cols-2 gap-3">
+                {partyTypes.map((type) => (
+                  <RadioCard
+                    key={type}
+                    label={type}
+                    selected={partyType === type}
+                    onClick={() => { setPartyType(type); clearError("partyType") }}
                   />
                 ))}
               </div>
-              {errors.informationTypes && <FieldError message={errors.informationTypes} />}
-
-              {/* Clause trigger indicators */}
-              {(ipTriggered || dataPrivacyTriggered) && (
-                <div
-                  className="p-3 rounded-lg space-y-1"
-                  style={{ backgroundColor: "#F3EEF7", border: "1px solid #D1C4E9" }}
-                >
-                  <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
-                    Additional clauses will be included:
-                  </p>
-                  {ipTriggered && (
-                    <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
-                      · IP licensing clause — access is for evaluation only, ownership stays with the disclosing party
-                    </p>
-                  )}
-                  {dataPrivacyTriggered && (
-                    <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
-                      · Data privacy clause — both parties acknowledge applicable privacy laws and processing limitations
-                    </p>
-                  )}
-                </div>
-              )}
+              {errors.partyType && <FieldError message={errors.partyType} />}
             </div>
-          )}
 
-          {/* Duration */}
-          <div className="mb-6 space-y-3">
-            <FieldLabel>How long is the agreement term?</FieldLabel>
-            <DurationInput
-              value={durationValue}
-              unit={durationUnit}
-              onValueChange={(v) => { setDurationValue(v); clearError("duration") }}
-              onUnitChange={setDurationUnit}
-              error={errors.duration}
-            />
-            <FieldHelper>
-              {durationValue
-                ? `Agreement term: ${durationValue} ${durationUnit}`
-                : "Enter a number and select weeks, months, or years."
-              }
-            </FieldHelper>
-            {errors.duration && <FieldError message={errors.duration} />}
+            {/* Sharing direction */}
+            <div className="space-y-3">
+              <FieldLabel>Will both sides be sharing confidential information?</FieldLabel>
+              <div className="flex flex-col gap-3">
+                {sharingOptions.map((option) => (
+                  <RadioCard
+                    key={option}
+                    label={option}
+                    selected={sharingDirection === option}
+                    onClick={() => { setSharingDirection(option); clearError("sharingDirection") }}
+                    fullWidth
+                  />
+                ))}
+              </div>
+              {errors.sharingDirection && <FieldError message={errors.sharingDirection} />}
+            </div>
+
+            {/* Engagement type */}
+            <div className="space-y-3">
+              <FieldLabel>What best describes this engagement?</FieldLabel>
+              <div className="flex flex-col gap-3">
+                {engagementOptions.map((option) => (
+                  <RadioCard
+                    key={option.value}
+                    label={option.label}
+                    sublabel={option.sublabel}
+                    selected={engagementType === option.value}
+                    onClick={() => handleEngagementTypeChange(option.value)}
+                    fullWidth
+                  />
+                ))}
+              </div>
+              {errors.engagementType && <FieldError message={errors.engagementType} />}
+            </div>
+
+            {/* Escalation banner */}
+            {showEscalationBanner && (
+              <div
+                className="p-4 rounded-lg"
+                style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}
+              >
+                <p style={{ fontSize: "13px", color: "#E65100", lineHeight: 1.5 }}>
+                  Your {clientName} attorney will review this submission before finalisation.
+                </p>
+              </div>
+            )}
+
+            {/* Information types */}
+            {showInformationTypes && (
+              <div className="space-y-3">
+                <div>
+                  <FieldLabel>What type of information will you be sharing?</FieldLabel>
+                  <FieldHelper>Select all that apply.</FieldHelper>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {informationOptions.map((option) => (
+                    <CheckboxCard
+                      key={option.value}
+                      label={option.label}
+                      sublabel={option.sublabel}
+                      checked={informationTypes.includes(option.value)}
+                      onChange={() => toggleInformationType(option.value)}
+                    />
+                  ))}
+                </div>
+                {errors.informationTypes && <FieldError message={errors.informationTypes} />}
+
+                {(ipTriggered || dataPrivacyTriggered) && (
+                  <div
+                    className="p-3 rounded-lg space-y-1"
+                    style={{ backgroundColor: "#F3EEF7", border: "1px solid #D1C4E9" }}
+                  >
+                    <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
+                      Additional clauses will be included:
+                    </p>
+                    {ipTriggered && (
+                      <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                        · IP licensing clause — access is for evaluation only, ownership stays with the disclosing party
+                      </p>
+                    )}
+                    {dataPrivacyTriggered && (
+                      <p style={{ fontSize: "12px", color: "#4A4A6A" }}>
+                        · Data privacy clause — both parties acknowledge applicable privacy laws and processing limitations
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Duration */}
+            <div className="space-y-3">
+              <FieldLabel>How long is the agreement term?</FieldLabel>
+              <DurationInput
+                value={durationValue}
+                unit={durationUnit}
+                onValueChange={(v) => { setDurationValue(v); clearError("duration") }}
+                onUnitChange={setDurationUnit}
+                error={errors.duration}
+              />
+              <FieldHelper>
+                {durationValue
+                  ? `Agreement term: ${durationValue} ${durationUnit}`
+                  : "Enter a number and select weeks, months, or years."
+                }
+              </FieldHelper>
+              {errors.duration && <FieldError message={errors.duration} />}
+            </div>
+
           </div>
 
           {/* ── SECTION 2: About the counterparty ── */}
           <SectionLabel>About the counterparty</SectionLabel>
 
-          {/* Counterparty name */}
-          <div className="mb-6">
+          <div className="px-6 sm:px-8 space-y-6">
+
             <TextInput
               label="Name of the other company"
               placeholder="e.g. Acme Corp"
@@ -780,10 +792,7 @@ export default function GeneratePage() {
               onChange={(val) => { setCounterpartyName(val); clearError("counterpartyName") }}
               error={errors.counterpartyName}
             />
-          </div>
 
-          {/* Counterparty country */}
-          <div className="mb-6">
             <CountryDropdown
               label="Which country is the counterparty based in?"
               value={counterpartyCountry}
@@ -791,20 +800,18 @@ export default function GeneratePage() {
               helperText="Used to assess jurisdiction risk. Governing law is set by your playbook."
               error={errors.counterpartyCountry}
             />
+
           </div>
 
           {/* ── SECTION 3: About your company ── */}
           <SectionLabel>About your company</SectionLabel>
 
-          <p
-            className="font-normal mb-4"
-            style={{ fontSize: "12px", color: "#4A4A6A" }}
-          >
-            If your organisation has multiple entities, enter the details of the specific entity signing this NDA.
-          </p>
+          <div className="px-6 sm:px-8 space-y-6">
 
-          {/* Your company name */}
-          <div className="mb-6">
+            <p className="font-normal -mt-2" style={{ fontSize: "12px", color: "#4A4A6A" }}>
+              If your organisation has multiple entities, enter the details of the specific entity signing this NDA.
+            </p>
+
             <TextInput
               label="Your company's full legal name"
               placeholder="e.g. TECHNIA AB"
@@ -812,10 +819,7 @@ export default function GeneratePage() {
               onChange={(val) => { setYourCompanyName(val); clearError("yourCompanyName") }}
               error={errors.yourCompanyName}
             />
-          </div>
 
-          {/* Your company address */}
-          <div className="mb-6">
             <TextArea
               label="Your company's registered address"
               placeholder="Street, City, Postcode, Country"
@@ -823,64 +827,67 @@ export default function GeneratePage() {
               onChange={(val) => { setYourCompanyAddress(val); clearError("yourCompanyAddress") }}
               error={errors.yourCompanyAddress}
             />
-          </div>
 
-          {/* Signatory */}
-          <div className="mb-8 space-y-2">
-            <FieldLabel>Name and title of the person signing</FieldLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <input
-                  type="text"
-                  placeholder="Full name"
-                  value={signatoryName}
-                  onChange={(e) => { setSignatoryName(e.target.value); clearError("signatoryName") }}
-                  className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
-                  style={{
-                    backgroundColor: "#F7F8FA",
-                    border: errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-                    color: "#431F5D",
-                    fontSize: "14px"
-                  }}
-                  onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-                  onBlur={(e) => { e.target.style.border = errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-                />
-                {errors.signatoryName && <FieldError message={errors.signatoryName} />}
-              </div>
-              <div className="space-y-1">
-                <input
-                  type="text"
-                  placeholder="e.g. Head of Sales"
-                  value={signatoryTitle}
-                  onChange={(e) => { setSignatoryTitle(e.target.value); clearError("signatoryTitle") }}
-                  className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
-                  style={{
-                    backgroundColor: "#F7F8FA",
-                    border: errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-                    color: "#431F5D",
-                    fontSize: "14px"
-                  }}
-                  onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-                  onBlur={(e) => { e.target.style.border = errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-                />
-                {errors.signatoryTitle && <FieldError message={errors.signatoryTitle} />}
+            {/* Signatory */}
+            <div className="space-y-1">
+              <FieldLabel>Name and title of the person signing</FieldLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    placeholder="Full name"
+                    value={signatoryName}
+                    onChange={(e) => { setSignatoryName(e.target.value); clearError("signatoryName") }}
+                    className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
+                    style={{
+                      backgroundColor: "#F7F8FA",
+                      border: errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
+                      color: "#431F5D",
+                      fontSize: "14px"
+                    }}
+                    onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+                    onBlur={(e) => { e.target.style.border = errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
+                  />
+                  {errors.signatoryName && <FieldError message={errors.signatoryName} />}
+                </div>
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    placeholder="e.g. Head of Sales"
+                    value={signatoryTitle}
+                    onChange={(e) => { setSignatoryTitle(e.target.value); clearError("signatoryTitle") }}
+                    className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
+                    style={{
+                      backgroundColor: "#F7F8FA",
+                      border: errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
+                      color: "#431F5D",
+                      fontSize: "14px"
+                    }}
+                    onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+                    onBlur={(e) => { e.target.style.border = errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
+                  />
+                  {errors.signatoryTitle && <FieldError message={errors.signatoryTitle} />}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            className="w-full py-3 font-medium rounded-md transition-opacity hover:opacity-90"
-            style={{
-              background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
-              color: "#FFFFFF",
-              fontSize: "14px",
-              borderRadius: "6px"
-            }}
-          >
-            Generate my NDA
-          </button>
+            {/* Submit */}
+            <div className="pb-6 sm:pb-8 pt-2">
+              <button
+                type="submit"
+                className="w-full py-3 font-medium rounded-md transition-opacity hover:opacity-90"
+                style={{
+                  background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+                  color: "#FFFFFF",
+                  fontSize: "14px",
+                  borderRadius: "6px"
+                }}
+              >
+                Generate my NDA
+              </button>
+            </div>
+
+          </div>
         </form>
       </div>
     </main>
