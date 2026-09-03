@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 
@@ -128,7 +128,7 @@ function getStateConfig(state: OutputState, clientName: string) {
         showWarningBanner: true,
         showEscalationPanel: false,
         canSendExternally: false,
-        smallPrint: `Changes reflect ${clientName}'s agreed NDA positions. Items marked Your decision require approval from your team before the NDA is sent.`
+        smallPrint: `Changes reflect ${clientName}'s agreed NDA positions. Items marked Your decision require approval from your team before the NDA is sent. Do not send this version to the counterparty.`
       }
     case "escalation":
       return {
@@ -138,7 +138,7 @@ function getStateConfig(state: OutputState, clientName: string) {
         showWarningBanner: false,
         showEscalationPanel: true,
         canSendExternally: false,
-        smallPrint: `This document is for internal review only. Do not send this version to the counterparty. Your Counselect attorney will provide an external-ready version within 4 business hours.`
+        smallPrint: `This document is for internal review only. Do not send this version to the counterparty. Your Counselect attorney will reach out to you within 1 business day with an external-ready version.`
       }
   }
 }
@@ -181,7 +181,7 @@ function EscalationPanel() {
         className="font-normal"
         style={{ fontSize: "12px", color: "#4A4A6A", lineHeight: 1.5 }}
       >
-        Your Counselect attorney has been notified and will respond within 4 business hours with an external-ready version. The interim document below is for internal use only.
+        Your Counselect attorney has been notified and will reach out to you within 1 business day with an external-ready version. The interim document below is for internal use only.
       </p>
     </div>
   )
@@ -203,7 +203,6 @@ function InternalOnlyHeader() {
   )
 }
 
-// Dev-only state switcher — remove before launch
 function StateSwitcher({ 
   current, 
   onChange 
@@ -243,12 +242,10 @@ function StateSwitcher({
   )
 }
 
-export default function ReviewOutputPage() {
-  // Will be replaced with session data once auth is wired
+function ReviewOutputContent() {
   const userName = "Prajoy"
   const clientName = "TECHNIA"
 
-  // Read state from URL — e.g. /review/output?state=major
   const searchParams = useSearchParams()
   const stateParam = searchParams.get("state") as OutputState | null
   const [outputState, setOutputState] = useState<OutputState>(
@@ -261,7 +258,6 @@ export default function ReviewOutputPage() {
   const showInternalHeader = outputState === "major" || outputState === "escalation"
 
   const handleDownload = () => {
-    // Placeholder — will call real document download API
     console.log("Downloading document for state:", outputState)
   }
 
@@ -274,7 +270,7 @@ export default function ReviewOutputPage() {
           className="w-full max-w-[560px] rounded-lg p-6"
           style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
         >
-          {/* Dev state switcher */}
+          {/* Dev state switcher — remove before launch */}
           <StateSwitcher current={outputState} onChange={setOutputState} />
 
           {/* Internal only header for states 3 and 4 */}
@@ -308,7 +304,7 @@ export default function ReviewOutputPage() {
             style={{ height: "0.5px", backgroundColor: "#E2E4E8" }}
           />
 
-          {/* Download Button */}
+          {/* Download button */}
           <button
             onClick={handleDownload}
             className="w-full font-medium text-white transition-opacity hover:opacity-90"
@@ -379,5 +375,13 @@ export default function ReviewOutputPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function ReviewOutputPage() {
+  return (
+    <Suspense fallback={null}>
+      <ReviewOutputContent />
+    </Suspense>
   )
 }
