@@ -5,20 +5,15 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 const WEBHOOK_URL = "https://prajoyd.app.n8n.cloud/webhook/nda-upload"
+const TARGET_SECONDS = 90
 
 function PactWordmark() {
   return (
     <div className="flex items-baseline">
-      <span className="text-xl font-medium" style={{ color: "#FFFFFF" }}>
-        Pact
-      </span>
+      <span className="text-xl font-medium" style={{ color: "#FFFFFF" }}>Pact</span>
       <span
         className="inline-block rounded-full ml-0.5"
-        style={{
-          background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
-          width: "6px",
-          height: "6px"
-        }}
+        style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", width: "6px", height: "6px" }}
       />
     </div>
   )
@@ -26,10 +21,7 @@ function PactWordmark() {
 
 function NavBar() {
   return (
-    <nav
-      className="w-full px-6 py-4 flex items-center justify-between"
-      style={{ backgroundColor: "#431F5D" }}
-    >
+    <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
       <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
         Prajoy · <Link href="/" className="hover:underline">Log out</Link>
@@ -39,11 +31,40 @@ function NavBar() {
 }
 
 type StepStatus = "pending" | "active" | "complete"
+interface Step { label: string; sublabel: string; status: StepStatus }
 
-interface Step {
-  label: string
-  status: StepStatus
-}
+const STEPS: Step[] = [
+  {
+    label: "NDA received",
+    sublabel: "Your document is in the queue.",
+    status: "complete"
+  },
+  {
+    label: "Reading the counterparty's draft",
+    sublabel: "Verifying this is an NDA and extracting the text.",
+    status: "pending"
+  },
+  {
+    label: "Identifying clauses",
+    sublabel: "Mapping confidentiality, IP, term, survival, and governing law.",
+    status: "pending"
+  },
+  {
+    label: "Comparing against TECHNIA's positions",
+    sublabel: "Checking each clause against 12 playbook positions.",
+    status: "pending"
+  },
+  {
+    label: "Checking for consistency",
+    sublabel: "A second pass to catch anything missed.",
+    status: "pending"
+  },
+  {
+    label: "Preparing your risk summary",
+    sublabel: "Almost done — building your key risks table.",
+    status: "pending"
+  }
+]
 
 function ProgressStepper({ steps }: { steps: Step[] }) {
   return (
@@ -62,20 +83,70 @@ function ProgressStepper({ steps }: { steps: Step[] }) {
               }}
             />
             {index < steps.length - 1 && (
-              <div className="w-px h-6" style={{ backgroundColor: "#E2E4E8" }} />
+              <div className="w-px h-8" style={{ backgroundColor: "#E2E4E8" }} />
             )}
           </div>
-          <span
-            className="text-sm pb-4"
-            style={{
-              color: step.status === "pending" ? "#9B9B9B" : "#431F5D",
-              fontWeight: step.status === "active" ? 500 : 400
-            }}
-          >
-            {step.label}
-          </span>
+          <div className="pb-5">
+            <p
+              className="text-sm"
+              style={{
+                color: step.status === "pending" ? "#9B9B9B" : "#431F5D",
+                fontWeight: step.status === "active" ? 500 : 400
+              }}
+            >
+              {step.label}
+            </p>
+            {step.status !== "pending" && (
+              <p className="text-xs mt-0.5" style={{ color: "#9B9B9B" }}>
+                {step.sublabel}
+              </p>
+            )}
+          </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+function Countdown({ startTime, done }: { startTime: number; done: boolean }) {
+  const [secondsLeft, setSecondsLeft] = useState(TARGET_SECONDS)
+
+  useEffect(() => {
+    if (done) { setSecondsLeft(0); return }
+
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000)
+      const remaining = Math.max(0, TARGET_SECONDS - elapsed)
+      setSecondsLeft(remaining)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [startTime, done])
+
+  if (done) return null
+
+  return (
+    <div
+      className="mt-6 pt-5 flex items-center justify-between"
+      style={{ borderTop: "1px solid #F0F0F0" }}
+    >
+      <p className="text-xs" style={{ color: "#9B9B9B" }}>
+        {secondsLeft > 0
+          ? `About ${secondsLeft} second${secondsLeft !== 1 ? "s" : ""} remaining`
+          : "Almost there..."}
+      </p>
+      <div
+        className="h-1 rounded-full overflow-hidden flex-1 ml-4"
+        style={{ backgroundColor: "#F0F0F0" }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-1000"
+          style={{
+            width: `${Math.min(100, ((TARGET_SECONDS - secondsLeft) / TARGET_SECONDS) * 100)}%`,
+            background: "linear-gradient(90deg, #FB6A1B, #D2582F)"
+          }}
+        />
+      </div>
     </div>
   )
 }
@@ -86,15 +157,10 @@ function delay(ms: number) {
 
 export default function ReviewProcessingPage() {
   const router = useRouter()
-  const [steps, setSteps] = useState<Step[]>([
-    { label: "NDA received", status: "complete" },
-    { label: "Verifying document...", status: "pending" },
-    { label: "Identifying clauses", status: "pending" },
-    { label: "Comparing to your NDA standards...", status: "pending" },
-    { label: "Checking for consistency", status: "pending" },
-    { label: "Preparing your key risks table", status: "pending" }
-  ])
+  const [steps, setSteps] = useState<Step[]>(STEPS)
   const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const [startTime] = useState(Date.now())
 
   const advanceStep = (stepIndex: number, status: StepStatus) => {
     setSteps(prev => {
@@ -117,16 +183,13 @@ export default function ReviewProcessingPage() {
       }
 
       const context = JSON.parse(contextRaw)
-
-      // Convert base64 back to a File object
       const res = await fetch(fileData)
       const blob = await res.blob()
       const file = new File([blob], fileName, { type: fileType })
 
-      // Build FormData
       const formData = new FormData()
       formData.append("data", file)
-      formData.append("client_id", context.client_id || "counselect")
+      formData.append("client_id", context.client_id || "technia")
       formData.append("counterparty_name", context.counterpartyName)
       formData.append("party_type", context.partyType)
       formData.append("sharing_direction", context.sharingDirection)
@@ -134,20 +197,15 @@ export default function ReviewProcessingPage() {
       formData.append("duration", `${context.durationValue} ${context.durationUnit}`)
       formData.append("country", context.country.name)
 
-      // Animate steps while waiting
       advanceStep(1, "active")
       await delay(1500)
       advanceStep(1, "complete")
       advanceStep(2, "active")
 
-      // Make the real webhook call
       const response = await fetch(WEBHOOK_URL, { method: "POST", body: formData })
-
       if (!response.ok) throw new Error("The server returned an error. Please try again.")
-
       const result = await response.json()
 
-      // Continue animating remaining steps
       advanceStep(2, "complete")
       advanceStep(3, "active")
       await delay(800)
@@ -159,11 +217,11 @@ export default function ReviewProcessingPage() {
       await delay(600)
       advanceStep(5, "complete")
 
-      // Save result and navigate
       const data = Array.isArray(result) ? result[0] : result
       sessionStorage.setItem("review_result", JSON.stringify(data))
       sessionStorage.setItem("review_counterparty_name", context.counterpartyName)
 
+      setDone(true)
       await delay(500)
       router.push("/review/results")
 
@@ -203,20 +261,20 @@ export default function ReviewProcessingPage() {
 
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div
-          className="w-full max-w-[480px] rounded-xl p-8"
+          className="w-full max-w-[520px] rounded-xl p-8"
           style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
         >
-          <h1 className="font-medium mb-2" style={{ color: "#431F5D", fontSize: "18px" }}>
+          <h1 className="font-medium mb-1" style={{ color: "#431F5D", fontSize: "18px" }}>
             Reviewing your NDA
           </h1>
 
           {!error ? (
             <>
-              <p className="mb-8" style={{ color: "#4A4A6A", fontSize: "13px", lineHeight: 1.5 }}>
-                This usually takes under 90 seconds.<br />
+              <p className="mb-8" style={{ color: "#9B9B9B", fontSize: "13px" }}>
                 Please don&apos;t close this tab.
               </p>
               <ProgressStepper steps={steps} />
+              <Countdown startTime={startTime} done={done} />
             </>
           ) : (
             <div className="mt-4">
