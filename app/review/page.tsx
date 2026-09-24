@@ -93,7 +93,6 @@ function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: num
   )
 }
 
-// Full-width flush section band
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -112,7 +111,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Larger, bolder question label
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <label
@@ -552,28 +550,19 @@ function FileUpload({
 export default function ReviewIntakePage() {
   const router = useRouter()
 
-  // Will come from session once auth is wired
   const clientName = "TECHNIA"
 
-  // ── About the agreement ──
   const [partyType, setPartyType] = useState("")
   const [sharingDirection, setSharingDirection] = useState("")
   const [engagementType, setEngagementType] = useState<EngagementType>("")
   const [informationTypes, setInformationTypes] = useState<InformationType[]>([])
   const [durationValue, setDurationValue] = useState("")
   const [durationUnit, setDurationUnit] = useState<DurationUnit>("months")
-
-  // ── About the counterparty ──
   const [counterpartyName, setCounterpartyName] = useState("")
   const [country, setCountry] = useState<{ name: string; code: string }>({ name: "", code: "" })
-
-  // File
   const [file, setFile] = useState<File | null>(null)
-
-  // Errors
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Derived
   const showInformationTypes =
     engagementType === "exploring" ||
     engagementType === "evaluating" ||
@@ -599,11 +588,10 @@ export default function ReviewIntakePage() {
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: "" }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const newErrors: Record<string, string> = {}
-
     if (!partyType) newErrors.partyType = "Please select who you are sharing information with"
     if (!sharingDirection) newErrors.sharingDirection = "Please select the sharing direction"
     if (!engagementType) newErrors.engagementType = "Please describe this engagement"
@@ -616,10 +604,31 @@ export default function ReviewIntakePage() {
     if (!file) newErrors.file = "Please upload the NDA document"
 
     setErrors(newErrors)
+    if (Object.keys(newErrors).length > 0) return
 
-    if (Object.keys(newErrors).length === 0) {
+    // Save form context to sessionStorage
+    sessionStorage.setItem("review_context", JSON.stringify({
+      partyType,
+      sharingDirection,
+      engagementType,
+      informationTypes,
+      durationValue,
+      durationUnit,
+      counterpartyName,
+      country,
+      clientName,
+      client_id: "counselect"
+    }))
+
+    // Save file to sessionStorage as base64
+    const reader = new FileReader()
+    reader.onload = () => {
+      sessionStorage.setItem("review_file_name", file!.name)
+      sessionStorage.setItem("review_file_type", file!.type)
+      sessionStorage.setItem("review_file_data", reader.result as string)
       router.push("/review/processing")
     }
+    reader.readAsDataURL(file!)
   }
 
   const partyTypes = ["Customer", "Supplier or vendor", "Partner", "Other"]
@@ -699,7 +708,6 @@ export default function ReviewIntakePage() {
             overflow: "hidden"
           }}
         >
-          {/* Form header */}
           <div className="px-6 sm:px-8 pt-6 sm:pt-8">
             <ProgressIndicator step={1} totalSteps={2} />
             <h1 className="font-medium mb-2" style={{ color: "#431F5D", fontSize: "16px" }}>
@@ -710,12 +718,9 @@ export default function ReviewIntakePage() {
             </p>
           </div>
 
-          {/* ── SECTION 1: About the agreement ── */}
           <SectionLabel>About the agreement</SectionLabel>
 
           <div className="px-6 sm:px-8 space-y-8">
-
-            {/* Party type */}
             <div className="space-y-3">
               <FieldLabel>Who are you sharing information with?</FieldLabel>
               <div className="grid grid-cols-2 gap-3">
@@ -731,7 +736,6 @@ export default function ReviewIntakePage() {
               {errors.partyType && <FieldError message={errors.partyType} />}
             </div>
 
-            {/* Sharing direction */}
             <div className="space-y-3">
               <FieldLabel>Will both sides be sharing confidential information?</FieldLabel>
               <div className="flex flex-col gap-3">
@@ -748,7 +752,6 @@ export default function ReviewIntakePage() {
               {errors.sharingDirection && <FieldError message={errors.sharingDirection} />}
             </div>
 
-            {/* Engagement type */}
             <div className="space-y-3">
               <FieldLabel>What best describes this engagement?</FieldLabel>
               <div className="flex flex-col gap-3">
@@ -766,7 +769,6 @@ export default function ReviewIntakePage() {
               {errors.engagementType && <FieldError message={errors.engagementType} />}
             </div>
 
-            {/* Escalation banner */}
             {showEscalationBanner && (
               <div
                 className="p-4 rounded-lg"
@@ -778,7 +780,6 @@ export default function ReviewIntakePage() {
               </div>
             )}
 
-            {/* Information types */}
             {showInformationTypes && (
               <div className="space-y-3">
                 <div>
@@ -821,7 +822,6 @@ export default function ReviewIntakePage() {
               </div>
             )}
 
-            {/* Duration */}
             <div className="space-y-3">
               <FieldLabel>How long is the agreement term?</FieldLabel>
               <DurationInput
@@ -839,14 +839,11 @@ export default function ReviewIntakePage() {
               </FieldHelper>
               {errors.duration && <FieldError message={errors.duration} />}
             </div>
-
           </div>
 
-          {/* ── SECTION 2: About the counterparty ── */}
           <SectionLabel>About the counterparty</SectionLabel>
 
           <div className="px-6 sm:px-8 space-y-6">
-
             <TextInput
               label="Name of the other company"
               placeholder="e.g. Acme Corp"
@@ -863,7 +860,6 @@ export default function ReviewIntakePage() {
               error={errors.country}
             />
 
-            {/* File upload */}
             <div className="space-y-1">
               <FieldLabel>Upload their NDA</FieldLabel>
               <FileUpload
@@ -874,7 +870,6 @@ export default function ReviewIntakePage() {
               />
             </div>
 
-            {/* Submit */}
             <div className="pb-6 sm:pb-8 pt-2">
               <button
                 type="submit"
@@ -888,7 +883,6 @@ export default function ReviewIntakePage() {
                 Review this NDA
               </button>
             </div>
-
           </div>
         </form>
       </div>
