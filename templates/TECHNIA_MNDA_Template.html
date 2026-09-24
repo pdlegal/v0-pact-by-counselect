@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body {
+    font-family: Calibri, Arial, sans-serif;
+    font-size: 10pt;
+    color: #444444;
+    margin: 72pt 63pt;
+    line-height: 1.4;
+  }
+  h1.doc-title {
+    text-align: center;
+    font-size: 10pt;
+    font-weight: bold;
+    color: #444444;
+    margin-bottom: 12pt;
+  }
+  table.cover {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+  }
+  table.cover td {
+    border: 1px solid #CCCCCC;
+    padding: 5pt 7pt;
+    font-size: 9.5pt;
+    vertical-align: top;
+  }
+  table.cover td.label {
+    background-color: #E5E5EA;
+    font-weight: bold;
+    color: #444444;
+    width: 25%;
+  }
+  table.cover td.value {
+    background-color: #FFFFFF;
+  }
+  p {
+    text-align: justify;
+    margin: 0 0 6pt 0;
+  }
+  h2 {
+    font-size: 10pt;
+    font-variant: small-caps;
+    font-weight: bold;
+    color: #000000;
+    margin: 10pt 0 4pt 18pt;
+  }
+  .clause {
+    margin: 0 0 4pt 36pt;
+    text-align: justify;
+  }
+  .subclause {
+    margin: 0 0 4pt 54pt;
+    text-align: justify;
+  }
+  ol.alpha {
+    margin: 0 0 4pt 36pt;
+    padding-left: 18pt;
+    list-style-type: lower-alpha;
+  }
+  ol.alpha li {
+    margin-bottom: 4pt;
+    text-align: justify;
+  }
+  table.signature {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16pt;
+  }
+  table.signature td {
+    width: 50%;
+    padding: 4pt 6pt;
+    vertical-align: top;
+    font-size: 10pt;
+  }
+  table.signature .sig-header {
+    font-weight: bold;
+  }
+  table.signature .sig-line {
+    border-top: 1px solid #444444;
+    margin-top: 36pt;
+    padding-top: 4pt;
+    font-size: 9pt;
+    color: #666666;
+  }
+  .spacer { margin: 8pt 0; }
+</style>
+</head>
+<body>
+
+<h1 class="doc-title">Mutual Non-Disclosure Agreement</h1>
+
+<table class="cover">
+  <tr>
+    <td class="label">Company Name</td>
+    <td class="value">{{COUNTERPARTY_NAME}}</td>
+  </tr>
+  <tr>
+    <td class="label">Company Principal Place of Business</td>
+    <td class="value">{{COUNTERPARTY_ADDRESS}}</td>
+  </tr>
+  <tr>
+    <td class="label">Effective Date</td>
+    <td class="value">{{EFFECTIVE_DATE}}</td>
+  </tr>
+  <tr>
+    <td class="label">Purpose of Engagement</td>
+    <td class="value">{{PURPOSE}}</td>
+  </tr>
+</table>
+
+<div class="spacer"></div>
+
+<p>This Mutual Non-Disclosure Agreement (<strong>"Agreement"</strong>) is entered into between <strong>{{TECHNIA_ENTITY_NAME}}</strong>, a company organised under the laws of {{TECHNIA_ENTITY_COUNTRY}}, with its registered address at {{TECHNIA_ENTITY_ADDRESS}} (<strong>"TECHNIA"</strong>), and the counterparty identified in the cover table above (<strong>"Company"</strong>). Each is a <strong>"Party"</strong>; together, the <strong>"Parties"</strong>.</p>
+
+<p>The Parties are considering a business relationship and need to share confidential and proprietary information for the Purpose identified above. This Agreement governs the terms on which that information is shared.</p>
+
+<div class="spacer"></div>
+
+<!-- 1. Definitions -->
+<h2>1. Definitions</h2>
+
+<p class="subclause">1.1&nbsp;&nbsp;<strong>"Confidential Information"</strong> means all information shared by either Party in connection with the Purpose, in any form (written, verbal, visual, electronic, or otherwise).</p>
+
+<p class="subclause">1.2&nbsp;&nbsp;<strong>"Affiliates"</strong> means any entity that directly or indirectly controls, is controlled by, or is under common control with a Party.</p>
+
+<!-- 2. Confidentiality Obligations -->
+<h2>2. Confidentiality Obligations</h2>
+
+<p class="subclause">2.1&nbsp;&nbsp;Each Party shall hold the other's Confidential Information in strict confidence and use it solely for the Purpose.</p>
+
+<p class="subclause">2.2&nbsp;&nbsp;Each Party shall apply at least the same degree of care to protect the other's Confidential Information as it applies to its own, and in no case less than a reasonable standard of care.</p>
+
+<p class="subclause">2.3&nbsp;&nbsp;Access to Confidential Information shall be limited to employees and personnel with a genuine need to know. Parties shall inform such personnel of their obligations under this Agreement.</p>
+
+<p class="subclause">2.4&nbsp;&nbsp;Consultants or advisors may access Confidential Information provided they are either (a) identified to the disclosing Party in advance by name and affiliation, or (b) bound by written confidentiality obligations at least as protective as those in this Agreement. A separate NDA is not required.</p>
+
+<p class="subclause">2.5&nbsp;&nbsp;Confidential Information shall not be disclosed to any other person or entity without the prior written consent of the disclosing Party.</p>
+
+<!-- 3. Permitted Disclosures -->
+<h2>3. Permitted Disclosures</h2>
+
+<p class="clause">The obligations in Clause 2 do not apply to information that:</p>
+
+<ol class="alpha">
+  <li>is or becomes publicly available without breach of this Agreement;</li>
+  <li>was already known to the receiving Party at the time of disclosure, free of confidentiality restrictions;</li>
+  <li>is received from a third party without restriction and without breach of any obligation of confidence;</li>
+  <li>is disclosed with the prior written consent of the disclosing Party; or</li>
+  <li>is required to be disclosed by law or regulation — provided the receiving Party gives prompt written notice (where legally permitted) and cooperates with any reasonable protective steps requested by the disclosing Party.</li>
+</ol>
+
+<!-- 4. Intellectual Property -->
+<h2>4. Intellectual Property</h2>
+
+<p class="clause">Nothing in this Agreement grants either Party any licence or rights in the other's Confidential Information, except as expressly stated. Unless otherwise agreed in writing, TECHNIA shall have sole ownership of all inventions, discoveries, improvements, and derivative works arising from its own efforts, including all associated intellectual property rights. The Company shall cooperate with TECHNIA and execute such further instruments as may be necessary to give effect to this ownership.</p>
+
+<!-- 5. Reproduction and Return of Information -->
+<h2>5. Reproduction and Return of Information</h2>
+
+<p class="subclause">5.1&nbsp;&nbsp;Confidential Information shall not be reproduced without the prior written consent of the disclosing Party, except as reasonably necessary for the Purpose.</p>
+
+<p class="subclause">5.2&nbsp;&nbsp;Upon completion of the Purpose, or upon written request, each Party shall promptly destroy or return all tangible manifestations of the other's Confidential Information (including copies and reproductions). A Party may retain copies solely as required for the prosecution or defence of a dispute, provided such copies are stored securely and remain subject to this Agreement.</p>
+
+<!-- 6. Affiliates -->
+<h2>6. Affiliates</h2>
+
+<p class="clause">Each Party may share Confidential Information with its Affiliates to the extent necessary for the Purpose, provided that: (a) the receiving Party remains responsible for any breach by its Affiliates; and (b) such Affiliates are bound by obligations at least as protective as those in this Agreement.</p>
+
+<!-- 7. No Warranties -->
+<h2>7. No Warranties</h2>
+
+<p class="clause">Neither Party makes any representation or warranty as to the accuracy or completeness of Confidential Information disclosed. Neither Party, nor its officers, directors, employees, or agents, shall have any liability to the other arising from the other's use of or reliance on Confidential Information disclosed under this Agreement.</p>
+
+<!-- 8. Recruitment -->
+<h2>8. Recruitment</h2>
+
+<p class="clause">During the term of this Agreement and for one (1) year following termination, if either Party (the "Intervening Party") directly or indirectly hires an employee or contractor of the other Party (the "Original Employing Party") who worked on matters relating to the Intervening Party, the Intervening Party shall pay to the Original Employing Party a recruitment fee equal to 50% of the hired individual's annualised gross compensation, payable within five (5) days of retention. No fee is owed if the Original Employing Party terminated its relationship with the individual (other than for cause) before the Intervening Party made contact.</p>
+
+<!-- 9. Term and Survival -->
+<h2>9. Term and Survival</h2>
+
+<p class="subclause">9.1&nbsp;&nbsp;This Agreement takes effect on the Effective Date stated above and continues for three (3) years, unless terminated earlier by either Party on thirty (30) days' written notice.</p>
+
+<p class="subclause">9.2&nbsp;&nbsp;Confidentiality obligations survive termination for five (5) years from the date of last disclosure.</p>
+
+<p class="subclause">9.3&nbsp;&nbsp;Obligations with respect to trade secrets continue for as long as the information remains a trade secret.</p>
+
+<p class="subclause">9.4&nbsp;&nbsp;Ownership provisions (Clause 4) continue for as long as necessary to give them full effect.</p>
+
+<!-- 10. Remedies -->
+<h2>10. Remedies</h2>
+
+<p class="clause">The Parties acknowledge that breach of this Agreement may cause irreparable harm for which monetary damages would be an inadequate remedy. Either Party may seek injunctive or other equitable relief from a court of competent jurisdiction without the need to post a bond, in addition to any other remedies available at law.</p>
+
+<!-- 11. General -->
+<h2>11. General</h2>
+
+<p class="subclause">11.1&nbsp;&nbsp;This Agreement constitutes the entire agreement between the Parties with respect to its subject matter and supersedes all prior discussions, representations, and agreements.</p>
+
+<p class="subclause">11.2&nbsp;&nbsp;This Agreement may not be amended except by a written document signed by both Parties. Contact Legal before proposing or accepting any amendment.</p>
+
+<p class="subclause">11.3&nbsp;&nbsp;Neither Party may assign or delegate its rights or obligations under this Agreement without the prior written consent of the other Party.</p>
+
+<p class="subclause">11.4&nbsp;&nbsp;Failure to enforce any provision shall not constitute a waiver of that provision.</p>
+
+<p class="subclause">11.5&nbsp;&nbsp;This Agreement shall be governed by the substantive laws of Sweden, without regard to conflict of law rules.</p>
+
+<p class="subclause">11.6&nbsp;&nbsp;Any dispute shall first be referred to good-faith discussions between the Parties. If unresolved within thirty (30) days, either Party may submit the dispute to arbitration under the Rules for Expedited Arbitrations of the Stockholm Chamber of Commerce. The seat of arbitration shall be Stockholm, Sweden. The language shall be English. All proceedings and awards shall be confidential.</p>
+
+<div class="spacer"></div>
+
+<p>By signing below, each Party confirms it has read, understood, and agrees to be bound by this Agreement.</p>
+
+<div class="spacer"></div>
+
+<table class="signature">
+  <tr>
+    <td class="sig-header">TECHNIA</td>
+    <td class="sig-header">COMPANY</td>
+  </tr>
+  <tr>
+    <td>Name:</td>
+    <td>Name:</td>
+  </tr>
+  <tr>
+    <td>Title:</td>
+    <td>Title:</td>
+  </tr>
+  <tr>
+    <td>Date:</td>
+    <td>Date:</td>
+  </tr>
+  <tr>
+    <td>
+      Signature:<br><br><br>
+      <div class="sig-line">(Authorised Signatory)</div>
+    </td>
+    <td>
+      Signature:<br><br><br>
+      <div class="sig-line">(Authorised Signatory)</div>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
