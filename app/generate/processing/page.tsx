@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
+const TARGET_SECONDS = 45
+
 function PactWordmark() {
   return (
     <div className="flex items-baseline">
@@ -28,7 +30,30 @@ function NavBar() {
 }
 
 type StepStatus = "pending" | "active" | "complete"
-interface Step { label: string; status: StepStatus }
+interface Step { label: string; sublabel: string; status: StepStatus }
+
+const STEPS: Step[] = [
+  {
+    label: "Details received",
+    sublabel: "Your form data is ready to process.",
+    status: "complete"
+  },
+  {
+    label: "Selecting the right template",
+    sublabel: "Choosing the correct NDA structure based on your inputs.",
+    status: "pending"
+  },
+  {
+    label: "Applying TECHNIA's positions",
+    sublabel: "Populating clauses with your entity details, purpose, and governing law.",
+    status: "pending"
+  },
+  {
+    label: "Preparing your NDA",
+    sublabel: "Finalising the document and making it ready to download.",
+    status: "pending"
+  }
+]
 
 function ProgressStepper({ steps }: { steps: Step[] }) {
   return (
@@ -47,33 +72,78 @@ function ProgressStepper({ steps }: { steps: Step[] }) {
               }}
             />
             {index < steps.length - 1 && (
-              <div className="w-px h-6" style={{ backgroundColor: "#E2E4E8" }} />
+              <div className="w-px h-8" style={{ backgroundColor: "#E2E4E8" }} />
             )}
           </div>
-          <span
-            className="text-sm pb-4"
-            style={{
-              color: step.status === "pending" ? "#9B9B9B" : "#431F5D",
-              fontWeight: step.status === "active" ? 500 : 400
-            }}
-          >
-            {step.label}
-          </span>
+          <div className="pb-5">
+            <p
+              className="text-sm"
+              style={{
+                color: step.status === "pending" ? "#9B9B9B" : "#431F5D",
+                fontWeight: step.status === "active" ? 500 : 400
+              }}
+            >
+              {step.label}
+            </p>
+            {step.status !== "pending" && (
+              <p className="text-xs mt-0.5" style={{ color: "#9B9B9B" }}>
+                {step.sublabel}
+              </p>
+            )}
+          </div>
         </div>
       ))}
     </div>
   )
 }
 
+function Countdown({ startTime, done }: { startTime: number; done: boolean }) {
+  const [secondsLeft, setSecondsLeft] = useState(TARGET_SECONDS)
+
+  useEffect(() => {
+    if (done) { setSecondsLeft(0); return }
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000)
+      const remaining = Math.max(0, TARGET_SECONDS - elapsed)
+      setSecondsLeft(remaining)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [startTime, done])
+
+  if (done) return null
+
+  return (
+    <div
+      className="mt-6 pt-5 flex items-center justify-between"
+      style={{ borderTop: "1px solid #F0F0F0" }}
+    >
+      <p className="text-xs" style={{ color: "#9B9B9B" }}>
+        {secondsLeft > 0
+          ? `About ${secondsLeft} second${secondsLeft !== 1 ? "s" : ""} remaining`
+          : "Almost there..."}
+      </p>
+      <div
+        className="h-1 rounded-full overflow-hidden flex-1 ml-4"
+        style={{ backgroundColor: "#F0F0F0" }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-1000"
+          style={{
+            width: `${Math.min(100, ((TARGET_SECONDS - secondsLeft) / TARGET_SECONDS) * 100)}%`,
+            background: "linear-gradient(90deg, #FB6A1B, #D2582F)"
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function GenerateProcessingPage() {
   const router = useRouter()
-  const [steps, setSteps] = useState<Step[]>([
-    { label: "Details received", status: "complete" },
-    { label: "Selecting the right template...", status: "active" },
-    { label: "Applying your NDA positions", status: "pending" },
-    { label: "Preparing your NDA", status: "pending" },
-  ])
+  const [steps, setSteps] = useState<Step[]>(STEPS)
   const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const [startTime] = useState(Date.now())
 
   const updateStep = (index: number, status: StepStatus) => {
     setSteps(prev => {
@@ -89,7 +159,7 @@ export default function GenerateProcessingPage() {
       if (!raw) throw new Error("No form data found")
       const formData = JSON.parse(raw)
 
-      // Step 2 active → complete, step 3 active
+      updateStep(1, "active")
       setTimeout(() => {
         updateStep(1, "complete")
         updateStep(2, "active")
@@ -103,19 +173,16 @@ export default function GenerateProcessingPage() {
 
       if (!response.ok) throw new Error("Webhook call failed")
 
-      // Step 3 complete, step 4 active
       updateStep(2, "complete")
       updateStep(3, "active")
 
-      // Response is a binary .docx file — convert to base64
       const blob = await response.blob()
       const reader = new FileReader()
       reader.onloadend = () => {
         const base64 = (reader.result as string).split(",")[1]
         sessionStorage.setItem("generatedDocx", base64)
-
-        // Step 4 complete, navigate
         updateStep(3, "complete")
+        setDone(true)
         setTimeout(() => {
           router.push("/generate/output")
         }, 800)
@@ -156,25 +223,33 @@ export default function GenerateProcessingPage() {
 
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div
-          className="w-full max-w-[480px] rounded-xl p-8"
+          className="w-full max-w-[520px] rounded-xl p-8"
           style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
         >
-          <h1 className="font-medium mb-2" style={{ color: "#431F5D", fontSize: "18px" }}>
+          <h1 className="font-medium mb-1" style={{ color: "#431F5D", fontSize: "18px" }}>
             Building your NDA
           </h1>
-          <p className="mb-8" style={{ color: "#4A4A6A", fontSize: "13px", lineHeight: 1.5 }}>
-            This usually takes under 90 seconds.<br />Please don&apos;t close this tab.
-          </p>
 
-          <ProgressStepper steps={steps} />
-
-          {error && (
-            <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}>
-              <p style={{ fontSize: "13px", color: "#E65100" }}>{error}</p>
+          {!error ? (
+            <>
+              <p className="mb-8" style={{ color: "#9B9B9B", fontSize: "13px" }}>
+                Please don&apos;t close this tab.
+              </p>
+              <ProgressStepper steps={steps} />
+              <Countdown startTime={startTime} done={done} />
+            </>
+          ) : (
+            <div className="mt-4">
+              <div
+                className="p-4 rounded-lg mb-4"
+                style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}
+              >
+                <p style={{ fontSize: "13px", color: "#E65100" }}>{error}</p>
+              </div>
               <button
                 onClick={() => router.back()}
-                className="mt-2 underline"
-                style={{ fontSize: "13px", color: "#E65100" }}
+                className="w-full py-3 rounded-md font-medium text-white"
+                style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", fontSize: "14px" }}
               >
                 Go back
               </button>
