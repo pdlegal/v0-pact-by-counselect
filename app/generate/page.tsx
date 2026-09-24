@@ -534,31 +534,45 @@ export default function GeneratePage() {
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: "" }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault()
 
-    const newErrors: Record<string, string> = {}
+  const newErrors: Record<string, string> = {}
 
-    if (!partyType) newErrors.partyType = "Please select who you are sharing information with"
-    if (!sharingDirection) newErrors.sharingDirection = "Please select the sharing direction"
-    if (!engagementType) newErrors.engagementType = "Please describe this engagement"
-    if (showInformationTypes && informationTypes.length === 0) {
-      newErrors.informationTypes = "Please select at least one information type"
-    }
-    if (!durationValue) newErrors.duration = "Please enter the agreement term"
-    if (!counterpartyName.trim()) newErrors.counterpartyName = "Please enter the counterparty name"
-    if (!counterpartyCountry.code) newErrors.counterpartyCountry = "Please select a country"
-    if (!yourCompanyName.trim()) newErrors.yourCompanyName = "Please enter your company name"
-    if (!yourCompanyAddress.trim()) newErrors.yourCompanyAddress = "Please enter your company address"
-    if (!signatoryName.trim()) newErrors.signatoryName = "Please enter the signatory name"
-    if (!signatoryTitle.trim()) newErrors.signatoryTitle = "Please enter the signatory title"
-
-    setErrors(newErrors)
-
-    if (Object.keys(newErrors).length === 0) {
-      router.push("/generate/processing")
-    }
+  if (!partyType) newErrors.partyType = "Please select who you are sharing information with"
+  if (!sharingDirection) newErrors.sharingDirection = "Please select the sharing direction"
+  if (!engagementType) newErrors.engagementType = "Please describe this engagement"
+  if (showInformationTypes && informationTypes.length === 0) {
+    newErrors.informationTypes = "Please select at least one information type"
   }
+  if (!durationValue) newErrors.duration = "Please enter the agreement term"
+  if (!counterpartyName.trim()) newErrors.counterpartyName = "Please enter the counterparty name"
+  if (!counterpartyCountry.code) newErrors.counterpartyCountry = "Please select a country"
+  if (!yourCompanyName.trim()) newErrors.yourCompanyName = "Please enter your company name"
+  if (!yourCompanyAddress.trim()) newErrors.yourCompanyAddress = "Please enter your company address"
+  if (!signatoryName.trim()) newErrors.signatoryName = "Please enter the signatory name"
+  if (!signatoryTitle.trim()) newErrors.signatoryTitle = "Please enter the signatory title"
+
+  setErrors(newErrors)
+
+  if (Object.keys(newErrors).length === 0) {
+    sessionStorage.setItem("generateFormData", JSON.stringify({
+      counterparty_name: counterpartyName,
+      counterparty_address: counterpartyCountry.name,
+      effective_date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+      engagement_type: engagementType,
+      technia_entity: yourCompanyName,
+      technia_entity_address: yourCompanyAddress,
+      country: counterpartyCountry.code,
+      client_id: "technia",
+      party_type: partyType,
+      sharing_direction: sharingDirection,
+      duration: `${durationValue} ${durationUnit}`,
+      information_types: informationTypes,
+    }))
+    router.push("/generate/processing")
+  }
+}
 
   const partyTypes = ["Customer", "Supplier or vendor", "Partner", "Other"]
   const sharingOptions = [
