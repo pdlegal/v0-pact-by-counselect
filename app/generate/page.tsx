@@ -742,7 +742,15 @@ export default function GeneratePage() {
                 )}
               </div>
             )}
-
+          {/* Purpose */}
+          {engagementType && (
+            <PurposeBlock
+              value={purpose}
+              onChange={(v) => { setPurpose(v); clearError("purpose") }}
+              error={errors.purpose}
+            />
+          )}
+          {/* Duration */}
             <div className="space-y-3">
               <FieldLabel>How long is the agreement term?</FieldLabel>
               <DurationInput
@@ -835,13 +843,6 @@ export default function GeneratePage() {
                 {errors.entityAddress && <FieldError message={errors.entityAddress} />}
               </div>
             )}
-
-            {/* Purpose */}
-            <PurposeBlock
-              value={purpose}
-              onChange={(v) => { setPurpose(v); clearError("purpose") }}
-              error={errors.purpose}
-            />
 
             {/* Signatory */}
             <div className="space-y-1">
