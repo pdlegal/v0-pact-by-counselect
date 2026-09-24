@@ -31,6 +31,7 @@ interface TechniaEntity {
   country: string
   countryCode: string
   address: string
+  governingLaw: string
 }
 
 // ─────────────────────────────────────────────
@@ -38,62 +39,14 @@ interface TechniaEntity {
 // ─────────────────────────────────────────────
 
 const TECHNIA_ENTITIES: TechniaEntity[] = [
-  {
-    label: "TECHNIA AB — Sweden",
-    name: "TECHNIA AB",
-    country: "Sweden",
-    countryCode: "SE",
-    address: "Norra Stationsgatan 93, 113 64 Stockholm, Sweden"
-  },
-  {
-    label: "TECHNIA GmbH — Germany",
-    name: "TECHNIA GmbH",
-    country: "Germany",
-    countryCode: "DE",
-    address: "Am Sandfeld 11C, 76149 Karlsruhe, Germany"
-  },
-  {
-    label: "TECHNIA S.A.S. — France",
-    name: "TECHNIA S.A.S.",
-    country: "France",
-    countryCode: "FR",
-    address: "36 Boulevard de la Bastille, 75012 Paris, France"
-  },
-  {
-    label: "TECHNIA Oy — Finland",
-    name: "TECHNIA Oy",
-    country: "Finland",
-    countryCode: "FI",
-    address: "Hevosenkenkä 3, FI-02600 Espoo, Finland"
-  },
-  {
-    label: "TECHNIA B.V. — Netherlands",
-    name: "TECHNIA B.V.",
-    country: "Netherlands",
-    countryCode: "NL",
-    address: "Ringwade 31, 3439 LM Nieuwegein, Netherlands"
-  },
-  {
-    label: "TECHNIA AS — Norway",
-    name: "TECHNIA AS",
-    country: "Norway",
-    countryCode: "NO",
-    address: "Hoffsveien 1C, 0275 Oslo, Norway"
-  },
-  {
-    label: "TECHNIA Ltd. — United Kingdom",
-    name: "TECHNIA Ltd.",
-    country: "United Kingdom",
-    countryCode: "GB",
-    address: "Brunleys, Kiln Farm, Buckinghamshire, MK11 3EW Milton Keynes, United Kingdom"
-  },
-  {
-    label: "TECHNIA Slovakia s.r.o. — Slovakia",
-    name: "TECHNIA Slovakia s.r.o.",
-    country: "Slovakia",
-    countryCode: "SK",
-    address: "Pribinova 4, 811 09 Bratislava, Slovakia"
-  }
+  { label: "TECHNIA AB — Sweden", name: "TECHNIA AB", country: "Sweden", countryCode: "SE", address: "Norra Stationsgatan 93, 113 64 Stockholm, Sweden", governingLaw: "Sweden" },
+  { label: "TECHNIA GmbH — Germany", name: "TECHNIA GmbH", country: "Germany", countryCode: "DE", address: "Am Sandfeld 11C, 76149 Karlsruhe, Germany", governingLaw: "Germany" },
+  { label: "TECHNIA S.A.S. — France", name: "TECHNIA S.A.S.", country: "France", countryCode: "FR", address: "36 Boulevard de la Bastille, 75012 Paris, France", governingLaw: "France" },
+  { label: "TECHNIA Oy — Finland", name: "TECHNIA Oy", country: "Finland", countryCode: "FI", address: "Hevosenkenkä 3, FI-02600 Espoo, Finland", governingLaw: "Finland" },
+  { label: "TECHNIA B.V. — Netherlands", name: "TECHNIA B.V.", country: "Netherlands", countryCode: "NL", address: "Ringwade 31, 3439 LM Nieuwegein, Netherlands", governingLaw: "the Netherlands" },
+  { label: "TECHNIA AS — Norway", name: "TECHNIA AS", country: "Norway", countryCode: "NO", address: "Hoffsveien 1C, 0275 Oslo, Norway", governingLaw: "Norway" },
+  { label: "TECHNIA Ltd. — United Kingdom", name: "TECHNIA Ltd.", country: "United Kingdom", countryCode: "GB", address: "Brunleys, Kiln Farm, Buckinghamshire, MK11 3EW Milton Keynes, United Kingdom", governingLaw: "England and Wales" },
+  { label: "TECHNIA Slovakia s.r.o. — Slovakia", name: "TECHNIA Slovakia s.r.o.", country: "Slovakia", countryCode: "SK", address: "Pribinova 4, 811 09 Bratislava, Slovakia", governingLaw: "Slovakia" }
 ]
 
 // ─────────────────────────────────────────────
@@ -626,6 +579,7 @@ export default function GeneratePage() {
         information_types: informationTypes,
         signatory_name: signatoryName,
         signatory_title: signatoryTitle,
+        governing_law: selectedEntity!.governingLaw,
       }))
       router.push("/generate/processing")
     }
