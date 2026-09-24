@@ -132,7 +132,8 @@ export default function GenerateOutputPage() {
               color: "#FFFFFF",
               borderRadius: "6px",
               padding: "13px",
-              fontSize: "14px"
+              fontSize: "14px",
+              cursor: "pointer"
             }}
           >
             {docxBase64 ? "Download NDA (.docx)" : "Preparing your NDA..."}
