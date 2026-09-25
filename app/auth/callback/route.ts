@@ -4,15 +4,19 @@ import type { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
+  const token_hash = searchParams.get('token_hash')
+  const type = searchParams.get('type')
 
-  if (code) {
+  if (token_hash && type) {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as 'magiclink' | 'signup'
+    })
 
     if (!error && data.session) {
       const userEmail = data.session.user.email!
@@ -36,14 +40,12 @@ export async function GET(request: NextRequest) {
           .single()
 
         if (domainRecord) {
-          // Insert new user record
           await supabase.from('users').insert({
             email: userEmail,
             client_id: domainRecord.client_id
           })
         }
 
-        // Send to first-login to capture their name
         return NextResponse.redirect(`${origin}/first-login`)
       }
 
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}/first-login`)
       }
 
-      // Fully set up user — send to home
+      // Fully set up — send to home
       return NextResponse.redirect(`${origin}/home`)
     }
   }
