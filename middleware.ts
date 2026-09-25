@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -12,22 +11,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Check for session cookie
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  // Check for Supabase session cookie
+  const hasSession = request.cookies.getAll().some(cookie => 
+    cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')
+  )
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        cookie: request.headers.get('cookie') ?? ''
-      }
-    }
-  })
-
-  const { data: { session } } = await supabase.auth.getSession()
-
-  // No session — redirect to login
-  if (!session) {
+  if (!hasSession) {
     const loginUrl = new URL('/', request.url)
     return NextResponse.redirect(loginUrl)
   }
