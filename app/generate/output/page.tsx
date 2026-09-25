@@ -58,6 +58,125 @@ function StarRating() {
   )
 }
 
+function NDAPreviewCard({ formData }: { formData: Record<string, string> }) {
+  return (
+    <div
+      className="rounded-xl overflow-hidden mb-6"
+      style={{
+        border: "1px solid #E2E4E8",
+        borderLeft: "3px solid #431F5D"
+      }}
+    >
+      {/* Card header */}
+      <div
+        className="px-5 py-4 flex items-center gap-3"
+        style={{ backgroundColor: "#F3EEF7", borderBottom: "1px solid #E8E0F0" }}
+      >
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: "#431F5D" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <p className="font-medium" style={{ fontSize: "13px", color: "#431F5D" }}>
+            Mutual Non-Disclosure Agreement
+          </p>
+          <p style={{ fontSize: "11px", color: "#865596" }}>
+            Drafted to {formData.technia_entity || "TECHNIA"}'s standard
+          </p>
+        </div>
+        <div
+          className="ml-auto px-2 py-1 rounded-full"
+          style={{ backgroundColor: "#E8F5E9" }}
+        >
+          <span style={{ fontSize: "11px", color: "#1B5E20", fontWeight: 500 }}>Ready to send</span>
+        </div>
+      </div>
+
+      {/* Parties */}
+      <div
+        className="px-5 py-4 flex items-center gap-3"
+        style={{ borderBottom: "1px solid #F0F0F0" }}
+      >
+        <div className="flex-1 min-w-0">
+          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>TECHNIA entity</p>
+          <p className="font-medium truncate" style={{ fontSize: "13px", color: "#431F5D" }}>
+            {formData.technia_entity || "—"}
+          </p>
+          <p style={{ fontSize: "11px", color: "#9B9B9B" }}>
+            {formData.technia_entity_country || "—"}
+          </p>
+        </div>
+
+        {/* vs divider */}
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: "#F3EEF7" }}
+        >
+          <span style={{ fontSize: "10px", color: "#431F5D", fontWeight: 600 }}>↔</span>
+        </div>
+
+        <div className="flex-1 min-w-0 text-right">
+          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Counterparty</p>
+          <p className="font-medium truncate" style={{ fontSize: "13px", color: "#431F5D" }}>
+            {formData.counterparty_name || "—"}
+          </p>
+          <p style={{ fontSize: "11px", color: "#9B9B9B" }}>
+            {formData.counterparty_address || "—"}
+          </p>
+        </div>
+      </div>
+
+      {/* Purpose */}
+      <div
+        className="px-5 py-4"
+        style={{ borderBottom: "1px solid #F0F0F0" }}
+      >
+        <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "4px" }}>Purpose</p>
+        <p style={{ fontSize: "12px", color: "#4A4A6A", lineHeight: 1.5 }}>
+          {formData.purpose || "—"}
+        </p>
+      </div>
+
+      {/* Key terms strip */}
+      <div className="grid grid-cols-3" style={{ borderBottom: "1px solid #F0F0F0" }}>
+        <div className="px-5 py-3" style={{ borderRight: "1px solid #F0F0F0" }}>
+          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Term</p>
+          <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
+            {formData.duration || "—"}
+          </p>
+        </div>
+        <div className="px-5 py-3" style={{ borderRight: "1px solid #F0F0F0" }}>
+          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Governing law</p>
+          <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
+            {formData.governing_law || "—"}
+          </p>
+        </div>
+        <div className="px-5 py-3">
+          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Effective date</p>
+          <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
+            {formData.effective_date || "—"}
+          </p>
+        </div>
+      </div>
+
+      {/* Signatory */}
+      <div className="px-5 py-3" style={{ backgroundColor: "#FAFAFA" }}>
+        <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Signing for TECHNIA</p>
+        <p style={{ fontSize: "12px", color: "#431F5D" }}>
+          {formData.signatory_name
+            ? `${formData.signatory_name} · ${formData.signatory_title || ""}`
+            : "—"}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function GenerateOutputPage() {
   const [docxBase64, setDocxBase64] = useState<string | null>(null)
   const [formData, setFormData] = useState<Record<string, string> | null>(null)
@@ -96,63 +215,76 @@ export default function GenerateOutputPage() {
 
       <div className="px-4 py-8">
         <div
-          className="mx-auto p-6 rounded-lg"
-          style={{ maxWidth: "560px", backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
+          className="mx-auto"
+          style={{ maxWidth: "580px" }}
         >
-          <h1 className="font-medium text-center" style={{ fontSize: "20px", color: "#431F5D" }}>
-            Your NDA is ready
-          </h1>
-
-          <p className="text-center mt-2" style={{ fontSize: "13px", color: "#4A4A6A" }}>
-            Drafted to {formData?.technia_entity || "your"} standard · Mutual NDA
-          </p>
-
-          <div className="flex gap-3 mt-6 justify-center">
-            <div className="px-4 py-2 rounded-md text-center" style={{ backgroundColor: "#F3EEF7" }}>
-              <span className="text-xs font-medium" style={{ color: "#431F5D" }}>Mutual NDA</span>
-            </div>
-            <div className="px-4 py-2 rounded-md text-center" style={{ backgroundColor: "#F3EEF7" }}>
-              <span className="text-xs font-medium" style={{ color: "#431F5D" }}>
-                {formData?.duration || "Custom term"}
-              </span>
-            </div>
-            <div className="px-4 py-2 rounded-md text-center" style={{ backgroundColor: "#F3EEF7" }}>
-              <span className="text-xs font-medium" style={{ color: "#431F5D" }}>Sweden law</span>
-            </div>
+          {/* Page heading */}
+          <div className="mb-6">
+            <h1 className="font-medium" style={{ fontSize: "20px", color: "#431F5D" }}>
+              Your NDA is ready
+            </h1>
+            <p style={{ fontSize: "13px", color: "#9B9B9B", marginTop: "4px" }}>
+              Check the details below before downloading.
+            </p>
           </div>
 
-          <div className="my-6" style={{ height: "0.5px", backgroundColor: "#E2E4E8" }} />
+          {/* Preview card */}
+          {formData && <NDAPreviewCard formData={formData} />}
 
-          <button
-            onClick={handleDownloadDocx}
-            disabled={!docxBase64}
-            className="w-full font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
-            style={{
-              background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
-              color: "#FFFFFF",
-              borderRadius: "6px",
-              padding: "13px",
-              fontSize: "14px",
-              cursor: "pointer"
-            }}
+          {/* Download section */}
+          <div
+            className="rounded-xl p-5"
+            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
           >
-            {docxBase64 ? "Download NDA (.docx)" : "Preparing your NDA..."}
-          </button>
+            <p
+              className="text-center font-medium mb-4"
+              style={{ fontSize: "13px", color: "#431F5D" }}
+            >
+              Looks right? Download your NDA.
+            </p>
 
+            <button
+              onClick={handleDownloadDocx}
+              disabled={!docxBase64}
+              className="w-full font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
+              style={{
+                background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+                color: "#FFFFFF",
+                borderRadius: "6px",
+                padding: "13px",
+                fontSize: "14px",
+                cursor: docxBase64 ? "pointer" : "not-allowed"
+              }}
+            >
+              {docxBase64 ? "Download NDA (.docx)" : "Preparing your NDA..."}
+            </button>
+
+            <p
+              className="text-center mt-4"
+              style={{ fontSize: "11px", color: "#9B9B9B", lineHeight: 1.6 }}
+            >
+              Review before sending to your counterparty.
+            </p>
+          </div>
+
+          {/* Divider */}
           <div className="my-6" style={{ height: "0.5px", backgroundColor: "#E2E4E8" }} />
 
-          <p className="text-center" style={{ fontSize: "11px", color: "#4A4A6A", lineHeight: 1.6 }}>
-            This NDA has been drafted to your standard positions. Review it before sending to your counterparty.
-          </p>
+          {/* Star rating */}
+          <div
+            className="rounded-xl p-5"
+            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
+          >
+            <StarRating />
+          </div>
 
-          <div className="my-6" style={{ height: "0.5px", backgroundColor: "#E2E4E8" }} />
-
-          <StarRating />
-
+          {/* Divider */}
           <div className="my-6" style={{ height: "0.5px", backgroundColor: "#E2E4E8" }} />
 
           <div className="text-center">
-            <Link href="/home" className="underline transition-opacity hover:opacity-80"
+            <Link
+              href="/home"
+              className="underline transition-opacity hover:opacity-80"
               style={{ fontSize: "13px", color: "#431F5D" }}
             >
               Submit another NDA
