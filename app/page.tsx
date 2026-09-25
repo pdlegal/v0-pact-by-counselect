@@ -83,16 +83,35 @@ export default function LoginPage() {
       return
     }
 
-    const userEmail = data.session.user.email!
+const userEmail = data.session.user.email!
+    const userId = data.session.user.id
 
     // Check if user exists in our users table
     const { data: existingUser } = await supabase
       .from("users")
       .select("id, first_name")
-      .eq("email", userEmail)
+      .eq("id", userId)
       .single()
 
     if (!existingUser) {
+      // New user — look up client from domain
+      const domain = userEmail.split("@")[1]
+
+      const { data: domainRecord } = await supabase
+        .from("client_domains")
+        .select("client_id")
+        .eq("domain", domain)
+        .eq("active", true)
+        .single()
+
+      if (domainRecord) {
+        await supabase.from("users").insert({
+          id: userId,
+          email: userEmail,
+          client_id: domainRecord.client_id
+        })
+      }
+
       router.push("/first-login")
       return
     }
