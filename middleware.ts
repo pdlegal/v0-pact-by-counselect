@@ -11,16 +11,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Check for Supabase session cookie
-  const hasSession = request.cookies.getAll().some(cookie => 
-    cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')
-  )
-
-  if (!hasSession) {
-    const loginUrl = new URL('/', request.url)
-    return NextResponse.redirect(loginUrl)
-  }
-
+  // Allow the home and all other routes through
+  // Session is managed client-side by Supabase
   return NextResponse.next()
 }
 
