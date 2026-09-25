@@ -3,51 +3,25 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 // ─────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────
 
-type EngagementType =
-  | "exploring"
-  | "evaluating"
-  | "sharing_data"
-  | "something_else"
-  | ""
-
-type InformationType =
-  | "software"
-  | "customer_data"
-  | "employee_data"
-  | "branding"
-  | "financial"
-  | "none"
-
+type EngagementType = "exploring" | "evaluating" | "sharing_data" | "something_else" | ""
+type InformationType = "software" | "customer_data" | "employee_data" | "branding" | "financial" | "none"
 type DurationUnit = "weeks" | "months" | "years"
 
-interface TechniaEntity {
+interface ClientEntity {
+  id: string
   label: string
-  name: string
+  entity_name: string
   country: string
-  countryCode: string
+  country_code: string
   address: string
-  governingLaw: string
+  governing_law: string
 }
-
-// ─────────────────────────────────────────────
-// TECHNIA ENTITIES
-// ─────────────────────────────────────────────
-
-const TECHNIA_ENTITIES: TechniaEntity[] = [
-  { label: "TECHNIA AB — Sweden", name: "TECHNIA AB", country: "Sweden", countryCode: "SE", address: "Norra Stationsgatan 93, 113 64 Stockholm, Sweden", governingLaw: "Sweden" },
-  { label: "TECHNIA GmbH — Germany", name: "TECHNIA GmbH", country: "Germany", countryCode: "DE", address: "Am Sandfeld 11C, 76149 Karlsruhe, Germany", governingLaw: "Germany" },
-  { label: "TECHNIA S.A.S. — France", name: "TECHNIA S.A.S.", country: "France", countryCode: "FR", address: "36 Boulevard de la Bastille, 75012 Paris, France", governingLaw: "France" },
-  { label: "TECHNIA Oy — Finland", name: "TECHNIA Oy", country: "Finland", countryCode: "FI", address: "Hevosenkenkä 3, FI-02600 Espoo, Finland", governingLaw: "Finland" },
-  { label: "TECHNIA B.V. — Netherlands", name: "TECHNIA B.V.", country: "Netherlands", countryCode: "NL", address: "Ringwade 31, 3439 LM Nieuwegein, Netherlands", governingLaw: "the Netherlands" },
-  { label: "TECHNIA AS — Norway", name: "TECHNIA AS", country: "Norway", countryCode: "NO", address: "Hoffsveien 1C, 0275 Oslo, Norway", governingLaw: "Norway" },
-  { label: "TECHNIA Ltd. — United Kingdom", name: "TECHNIA Ltd.", country: "United Kingdom", countryCode: "GB", address: "Brunleys, Kiln Farm, Buckinghamshire, MK11 3EW Milton Keynes, United Kingdom", governingLaw: "England and Wales" },
-  { label: "TECHNIA Slovakia s.r.o. — Slovakia", name: "TECHNIA Slovakia s.r.o.", country: "Slovakia", countryCode: "SK", address: "Pribinova 4, 811 09 Bratislava, Slovakia", governingLaw: "Slovakia" }
-]
 
 // ─────────────────────────────────────────────
 // PURPOSE GENERATION
@@ -56,44 +30,33 @@ const TECHNIA_ENTITIES: TechniaEntity[] = [
 function generatePurpose(
   engagementType: EngagementType,
   informationTypes: InformationType[],
-  counterpartyName: string
+  counterpartyName: string,
+  clientName: string
 ): string {
   const cp = counterpartyName.trim() || "the counterparty"
+  const cn = clientName || "our company"
   const hasSoftware = informationTypes.includes("software")
   const hasCustomerData = informationTypes.includes("customer_data")
   const hasEmployeeData = informationTypes.includes("employee_data")
   const hasFinancial = informationTypes.includes("financial")
 
   if (engagementType === "exploring") {
-    if (hasSoftware)
-      return `Evaluation of proprietary software, technology, and demo environments in connection with a potential business partnership between TECHNIA and ${cp}.`
-    if (hasFinancial)
-      return `Exploration of a potential business partnership or collaboration between TECHNIA and ${cp}, involving the exchange of financial and commercial information.`
-    return `Exploration of a potential business partnership or collaboration between TECHNIA and ${cp}.`
+    if (hasSoftware) return `Evaluation of proprietary software, technology, and demo environments in connection with a potential business partnership between ${cn} and ${cp}.`
+    if (hasFinancial) return `Exploration of a potential business partnership or collaboration between ${cn} and ${cp}, involving the exchange of financial and commercial information.`
+    return `Exploration of a potential business partnership or collaboration between ${cn} and ${cp}.`
   }
-
   if (engagementType === "evaluating") {
-    if (hasSoftware)
-      return `Evaluation of software, technology, and services provided by ${cp} for potential procurement by TECHNIA.`
-    if (hasCustomerData)
-      return `Evaluation of a vendor or service provider (${cp}) for potential engagement, involving the exchange of customer data.`
-    return `Evaluation of a vendor, technology, or service offered by ${cp} for potential procurement by TECHNIA.`
+    if (hasSoftware) return `Evaluation of software, technology, and services provided by ${cp} for potential procurement by ${cn}.`
+    if (hasCustomerData) return `Evaluation of a vendor or service provider (${cp}) for potential engagement, involving the exchange of customer data.`
+    return `Evaluation of a vendor, technology, or service offered by ${cp} for potential procurement by ${cn}.`
   }
-
   if (engagementType === "sharing_data") {
-    if (hasCustomerData)
-      return `Exchange of customer and client data between TECHNIA and ${cp} in connection with a defined business purpose.`
-    if (hasEmployeeData)
-      return `Exchange of employee and HR information between TECHNIA and ${cp} in connection with a defined business purpose.`
-    if (hasFinancial)
-      return `Exchange of financial and commercial data between TECHNIA and ${cp} in connection with a defined business purpose.`
-    return `Exchange of confidential data between TECHNIA and ${cp} in connection with a defined business purpose.`
+    if (hasCustomerData) return `Exchange of customer and client data between ${cn} and ${cp} in connection with a defined business purpose.`
+    if (hasEmployeeData) return `Exchange of employee and HR information between ${cn} and ${cp} in connection with a defined business purpose.`
+    if (hasFinancial) return `Exchange of financial and commercial data between ${cn} and ${cp} in connection with a defined business purpose.`
+    return `Exchange of confidential data between ${cn} and ${cp} in connection with a defined business purpose.`
   }
-
-  if (engagementType === "something_else") {
-    return `General business discussions between TECHNIA and ${cp}.`
-  }
-
+  if (engagementType === "something_else") return `General business discussions between ${cn} and ${cp}.`
   return ""
 }
 
@@ -102,11 +65,10 @@ function generatePurpose(
 // ─────────────────────────────────────────────
 
 function getTriggeredClauses(informationTypes: InformationType[]) {
-  const ipTriggered = informationTypes.includes("software")
-  const dataPrivacyTriggered =
-    informationTypes.includes("customer_data") ||
-    informationTypes.includes("employee_data")
-  return { ipTriggered, dataPrivacyTriggered }
+  return {
+    ipTriggered: informationTypes.includes("software"),
+    dataPrivacyTriggered: informationTypes.includes("customer_data") || informationTypes.includes("employee_data")
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -117,20 +79,17 @@ function PactWordmark() {
   return (
     <div className="flex items-baseline">
       <span className="text-xl font-medium" style={{ color: "#FFFFFF" }}>Pact</span>
-      <span
-        className="inline-block rounded-full ml-0.5"
-        style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", width: "6px", height: "6px" }}
-      />
+      <span className="inline-block rounded-full ml-0.5" style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", width: "6px", height: "6px" }} />
     </div>
   )
 }
 
-function NavBar() {
+function NavBar({ firstName }: { firstName: string }) {
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
       <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
-        Prajoy · <Link href="/" className="hover:underline">Log out</Link>
+        {firstName || "..."} · <Link href="/" className="hover:underline">Log out</Link>
       </span>
     </nav>
   )
@@ -140,14 +99,9 @@ function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: num
   const progress = (step / totalSteps) * 100
   return (
     <div className="mb-6">
-      <span className="font-normal" style={{ color: "#4A4A6A", fontSize: "12px" }}>
-        Step {step} of {totalSteps}
-      </span>
+      <span className="font-normal" style={{ color: "#4A4A6A", fontSize: "12px" }}>Step {step} of {totalSteps}</span>
       <div className="mt-2 w-full h-[3px] rounded-full" style={{ backgroundColor: "#E2E4E8" }}>
-        <div
-          className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${progress}%`, background: "linear-gradient(90deg, #FB6A1B, #D2582F)" }}
-        />
+        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #FB6A1B, #D2582F)" }} />
       </div>
     </div>
   )
@@ -155,91 +109,46 @@ function ProgressIndicator({ step, totalSteps }: { step: number; totalSteps: num
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="font-medium uppercase -mx-6 sm:-mx-8 px-6 sm:px-8 py-3 mt-8 mb-6 text-center"
-      style={{
-        fontSize: "11px",
-        color: "#431F5D",
-        letterSpacing: "0.08em",
-        backgroundColor: "#F3EEF7",
-        borderTop: "0.5px solid #E2E4E8",
-        borderBottom: "0.5px solid #E2E4E8"
-      }}
-    >
+    <div className="font-medium uppercase -mx-6 sm:-mx-8 px-6 sm:px-8 py-3 mt-8 mb-6 text-center"
+      style={{ fontSize: "11px", color: "#431F5D", letterSpacing: "0.08em", backgroundColor: "#F3EEF7", borderTop: "0.5px solid #E2E4E8", borderBottom: "0.5px solid #E2E4E8" }}>
       {children}
     </div>
   )
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="block font-medium mb-3" style={{ color: "#431F5D", fontSize: "15px" }}>
-      {children}
-    </label>
-  )
+  return <label className="block font-medium mb-3" style={{ color: "#431F5D", fontSize: "15px" }}>{children}</label>
 }
 
 function FieldHelper({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-normal mt-1.5" style={{ color: "#4A4A6A", fontSize: "12px" }}>
-      {children}
-    </p>
-  )
+  return <p className="font-normal mt-1.5" style={{ color: "#4A4A6A", fontSize: "12px" }}>{children}</p>
 }
 
 function FieldError({ message }: { message: string }) {
   return <span style={{ color: "#B71C1C", fontSize: "12px" }}>{message}</span>
 }
 
-function RadioCard({
-  label, sublabel, selected, onClick, fullWidth = false
-}: {
+function RadioCard({ label, sublabel, selected, onClick, fullWidth = false }: {
   label: string; sublabel?: string; selected: boolean; onClick: () => void; fullWidth?: boolean
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`p-4 rounded-lg text-left transition-all ${fullWidth ? "w-full" : ""}`}
-      style={{
-        backgroundColor: selected ? "#F3EEF7" : "#FFFFFF",
-        border: selected ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8",
-        color: "#431F5D",
-        fontSize: "14px"
-      }}
-    >
+    <button type="button" onClick={onClick} className={`p-4 rounded-lg text-left transition-all ${fullWidth ? "w-full" : ""}`}
+      style={{ backgroundColor: selected ? "#F3EEF7" : "#FFFFFF", border: selected ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }}>
       <span className="font-normal block">{label}</span>
-      {sublabel && (
-        <span className="font-normal block mt-0.5" style={{ fontSize: "12px", color: "#4A4A6A" }}>
-          {sublabel}
-        </span>
-      )}
+      {sublabel && <span className="font-normal block mt-0.5" style={{ fontSize: "12px", color: "#4A4A6A" }}>{sublabel}</span>}
     </button>
   )
 }
 
-function CheckboxCard({
-  label, sublabel, checked, onChange
-}: {
+function CheckboxCard({ label, sublabel, checked, onChange }: {
   label: string; sublabel?: string; checked: boolean; onChange: (checked: boolean) => void
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
+    <button type="button" onClick={() => onChange(!checked)}
       className="w-full p-4 rounded-lg text-left transition-all flex items-start gap-3"
-      style={{
-        backgroundColor: checked ? "#F3EEF7" : "#FFFFFF",
-        border: checked ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8"
-      }}
-    >
-      <div
-        className="flex-shrink-0 w-4 h-4 rounded mt-0.5 flex items-center justify-center"
-        style={{
-          backgroundColor: checked ? "#431F5D" : "#FFFFFF",
-          border: checked ? "1.5px solid #431F5D" : "1.5px solid #E2E4E8"
-        }}
-      >
+      style={{ backgroundColor: checked ? "#F3EEF7" : "#FFFFFF", border: checked ? "1.5px solid #431F5D" : "0.5px solid #E2E4E8" }}>
+      <div className="flex-shrink-0 w-4 h-4 rounded mt-0.5 flex items-center justify-center"
+        style={{ backgroundColor: checked ? "#431F5D" : "#FFFFFF", border: checked ? "1.5px solid #431F5D" : "1.5px solid #E2E4E8" }}>
         {checked && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
             <path d="M1 4L3.5 6.5L9 1" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -248,110 +157,72 @@ function CheckboxCard({
       </div>
       <div>
         <span className="font-normal block" style={{ fontSize: "14px", color: "#431F5D" }}>{label}</span>
-        {sublabel && (
-          <span className="font-normal block mt-0.5" style={{ fontSize: "12px", color: "#4A4A6A" }}>{sublabel}</span>
-        )}
+        {sublabel && <span className="font-normal block mt-0.5" style={{ fontSize: "12px", color: "#4A4A6A" }}>{sublabel}</span>}
       </div>
     </button>
   )
 }
 
-function TextInput({
-  label, placeholder, value, onChange, helperText, error
-}: {
+function TextInput({ label, placeholder, value, onChange, helperText, error }: {
   label: string; placeholder?: string; value: string; onChange: (value: string) => void; helperText?: string; error?: string
 }) {
   return (
     <div className="space-y-1">
       <FieldLabel>{label}</FieldLabel>
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+      <input type="text" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)}
         className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
-        style={{
-          backgroundColor: "#F7F8FA",
-          border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-          color: "#431F5D",
-          fontSize: "14px"
-        }}
+        style={{ backgroundColor: "#F7F8FA", border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }}
         onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-      />
+        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }} />
       {helperText && !error && <FieldHelper>{helperText}</FieldHelper>}
       {error && <FieldError message={error} />}
     </div>
   )
 }
 
-function CountryDropdown({
-  label, value, onChange, helperText, error
-}: {
+function CountryDropdown({ label, value, onChange, helperText, error }: {
   label: string; value: { name: string; code: string }; onChange: (value: { name: string; code: string }) => void; helperText?: string; error?: string
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
-
   const countries = [
-    { name: "Australia", code: "AU" }, { name: "Austria", code: "AT" },
-    { name: "Belgium", code: "BE" }, { name: "Brazil", code: "BR" },
-    { name: "Canada", code: "CA" }, { name: "China", code: "CN" },
-    { name: "Denmark", code: "DK" }, { name: "Finland", code: "FI" },
-    { name: "France", code: "FR" }, { name: "Germany", code: "DE" },
-    { name: "Hong Kong", code: "HK" }, { name: "India", code: "IN" },
-    { name: "Ireland", code: "IE" }, { name: "Israel", code: "IL" },
-    { name: "Italy", code: "IT" }, { name: "Japan", code: "JP" },
-    { name: "Mexico", code: "MX" }, { name: "Netherlands", code: "NL" },
-    { name: "New Zealand", code: "NZ" }, { name: "Norway", code: "NO" },
-    { name: "Poland", code: "PL" }, { name: "Portugal", code: "PT" },
-    { name: "Singapore", code: "SG" }, { name: "South Korea", code: "KR" },
-    { name: "Spain", code: "ES" }, { name: "Sweden", code: "SE" },
-    { name: "Switzerland", code: "CH" }, { name: "Taiwan", code: "TW" },
-    { name: "United Arab Emirates", code: "AE" }, { name: "United Kingdom", code: "GB" },
-    { name: "United States", code: "US" }
+    { name: "Australia", code: "AU" }, { name: "Austria", code: "AT" }, { name: "Belgium", code: "BE" },
+    { name: "Brazil", code: "BR" }, { name: "Canada", code: "CA" }, { name: "China", code: "CN" },
+    { name: "Denmark", code: "DK" }, { name: "Finland", code: "FI" }, { name: "France", code: "FR" },
+    { name: "Germany", code: "DE" }, { name: "Hong Kong", code: "HK" }, { name: "India", code: "IN" },
+    { name: "Ireland", code: "IE" }, { name: "Israel", code: "IL" }, { name: "Italy", code: "IT" },
+    { name: "Japan", code: "JP" }, { name: "Mexico", code: "MX" }, { name: "Netherlands", code: "NL" },
+    { name: "New Zealand", code: "NZ" }, { name: "Norway", code: "NO" }, { name: "Poland", code: "PL" },
+    { name: "Portugal", code: "PT" }, { name: "Singapore", code: "SG" }, { name: "South Korea", code: "KR" },
+    { name: "Spain", code: "ES" }, { name: "Sweden", code: "SE" }, { name: "Switzerland", code: "CH" },
+    { name: "Taiwan", code: "TW" }, { name: "United Arab Emirates", code: "AE" },
+    { name: "United Kingdom", code: "GB" }, { name: "United States", code: "US" }
   ]
-
   const filtered = countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="space-y-1 relative">
       <FieldLabel>{label}</FieldLabel>
       <div className="relative">
-        <input
-          type="text"
-          placeholder="Search countries..."
+        <input type="text" placeholder="Search countries..."
           value={isOpen ? search : value.name}
           onChange={(e) => { setSearch(e.target.value); if (!isOpen) setIsOpen(true) }}
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 150)}
           className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
-          style={{
-            backgroundColor: "#F7F8FA",
-            border: error ? "1.5px solid #B71C1C" : isOpen ? "2px solid #FB6A1B" : "0.5px solid #E2E4E8",
-            color: "#431F5D",
-            fontSize: "14px"
-          }}
-        />
+          style={{ backgroundColor: "#F7F8FA", border: error ? "1.5px solid #B71C1C" : isOpen ? "2px solid #FB6A1B" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }} />
         {isOpen && (
-          <div
-            className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-lg shadow-lg z-10"
-            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}
-          >
+          <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-lg shadow-lg z-10"
+            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
             {filtered.map((country) => (
-              <button
-                key={country.code}
-                type="button"
+              <button key={country.code} type="button"
                 onClick={() => { onChange(country); setSearch(""); setIsOpen(false) }}
                 className="w-full px-4 py-2 text-left font-normal hover:bg-gray-50 transition-colors"
-                style={{ color: "#431F5D", fontSize: "14px" }}
-              >
+                style={{ color: "#431F5D", fontSize: "14px" }}>
                 {country.name}
               </button>
             ))}
-            {filtered.length === 0 && (
-              <div className="px-4 py-2 font-normal" style={{ color: "#4A4A6A", fontSize: "14px" }}>No countries found</div>
-            )}
+            {filtered.length === 0 && <div className="px-4 py-2 font-normal" style={{ color: "#4A4A6A", fontSize: "14px" }}>No countries found</div>}
           </div>
         )}
       </div>
@@ -361,52 +232,24 @@ function CountryDropdown({
   )
 }
 
-function DurationInput({
-  value, unit, onValueChange, onUnitChange, error
-}: {
+function DurationInput({ value, unit, onValueChange, onUnitChange, error }: {
   value: string; unit: DurationUnit; onValueChange: (v: string) => void; onUnitChange: (u: DurationUnit) => void; error?: string
 }) {
-  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
-    if (raw === "" || (/^\d+$/.test(raw) && parseInt(raw) > 0)) onValueChange(raw)
-  }
-
   return (
     <div className="flex gap-3">
-      <input
-        type="text"
-        inputMode="numeric"
-        value={value}
-        onChange={handleNumberInput}
-        placeholder="e.g. 12"
+      <input type="text" inputMode="numeric" value={value} placeholder="e.g. 12"
+        onChange={(e) => { const raw = e.target.value; if (raw === "" || (/^\d+$/.test(raw) && parseInt(raw) > 0)) onValueChange(raw) }}
         className="w-28 px-4 py-3 rounded-lg font-normal outline-none transition-all text-center"
-        style={{
-          backgroundColor: "#F7F8FA",
-          border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-          color: "#431F5D",
-          fontSize: "14px"
-        }}
+        style={{ backgroundColor: "#F7F8FA", border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }}
         onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-      />
-      <select
-        value={unit}
-        onChange={(e) => onUnitChange(e.target.value as DurationUnit)}
+        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }} />
+      <select value={unit} onChange={(e) => onUnitChange(e.target.value as DurationUnit)}
         className="flex-1 px-4 py-3 rounded-lg font-normal outline-none transition-all"
-        style={{
-          backgroundColor: "#F7F8FA",
-          border: "0.5px solid #E2E4E8",
-          color: "#431F5D",
-          fontSize: "14px",
-          appearance: "none",
+        style={{ backgroundColor: "#F7F8FA", border: "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px", appearance: "none",
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A4A6A' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "right 12px center",
-          paddingRight: "36px"
-        }}
+          backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: "36px" }}
         onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-        onBlur={(e) => { e.target.style.border = "0.5px solid #E2E4E8" }}
-      >
+        onBlur={(e) => { e.target.style.border = "0.5px solid #E2E4E8" }}>
         <option value="weeks">Weeks</option>
         <option value="months">Months</option>
         <option value="years">Years</option>
@@ -415,47 +258,22 @@ function DurationInput({
   )
 }
 
-// Purpose block — read-only by default, click to edit
-function PurposeBlock({
-  value, onChange, error
-}: {
-  value: string; onChange: (v: string) => void; error?: string
-}) {
+function PurposeBlock({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: string }) {
   const [editing, setEditing] = useState(false)
-
   return (
     <div className="space-y-1">
       <FieldLabel>Purpose of engagement</FieldLabel>
       <FieldHelper>Auto-generated from your selections. Click to edit if needed.</FieldHelper>
       {editing ? (
-        <textarea
-          rows={4}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={() => setEditing(false)}
-          autoFocus
+        <textarea rows={4} value={value} onChange={(e) => onChange(e.target.value)}
+          onBlur={() => setEditing(false)} autoFocus
           className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all resize-none"
-          style={{
-            backgroundColor: "#F7F8FA",
-            border: "2px solid #FB6A1B",
-            color: "#431F5D",
-            fontSize: "14px"
-          }}
-        />
+          style={{ backgroundColor: "#F7F8FA", border: "2px solid #FB6A1B", color: "#431F5D", fontSize: "14px" }} />
       ) : (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
+        <button type="button" onClick={() => setEditing(true)}
           className="w-full px-4 py-3 rounded-lg text-left transition-all"
-          style={{
-            backgroundColor: value ? "#F3EEF7" : "#F7F8FA",
-            border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-            color: value ? "#431F5D" : "#9B9B9B",
-            fontSize: "14px",
-            lineHeight: "1.5",
-            minHeight: "80px"
-          }}
-        >
+          style={{ backgroundColor: value ? "#F3EEF7" : "#F7F8FA", border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
+            color: value ? "#431F5D" : "#9B9B9B", fontSize: "14px", lineHeight: "1.5", minHeight: "80px" }}>
           {value || "Purpose will appear here once you select an engagement type above."}
         </button>
       )}
@@ -470,61 +288,88 @@ function PurposeBlock({
 
 export default function GeneratePage() {
   const router = useRouter()
-  const clientName = "TECHNIA"
 
-  // About the agreement
+  // Client data from Supabase
+  const [firstName, setFirstName] = useState("")
+  const [clientName, setClientName] = useState("")
+  const [clientId, setClientId] = useState("")
+  const [entities, setEntities] = useState<ClientEntity[]>([])
+  const [loadingClient, setLoadingClient] = useState(true)
+
+  // Form state
   const [partyType, setPartyType] = useState("")
   const [sharingDirection, setSharingDirection] = useState("")
   const [engagementType, setEngagementType] = useState<EngagementType>("")
   const [informationTypes, setInformationTypes] = useState<InformationType[]>([])
   const [durationValue, setDurationValue] = useState("")
   const [durationUnit, setDurationUnit] = useState<DurationUnit>("months")
-
-  // About the counterparty
   const [counterpartyName, setCounterpartyName] = useState("")
   const [counterpartyCountry, setCounterpartyCountry] = useState<{ name: string; code: string }>({ name: "", code: "" })
-
-  // About your company
-  const [selectedEntity, setSelectedEntity] = useState<TechniaEntity | null>(null)
+  const [selectedEntity, setSelectedEntity] = useState<ClientEntity | null>(null)
   const [entityAddress, setEntityAddress] = useState("")
-
-  // Purpose
   const [purpose, setPurpose] = useState("")
-
-  // Signatory
   const [signatoryName, setSignatoryName] = useState("")
   const [signatoryTitle, setSignatoryTitle] = useState("")
-
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Auto-generate purpose when inputs change
+  // Load client data on mount
   useEffect(() => {
-    if (engagementType && engagementType !== "something_else" && informationTypes.length === 0) return
-    if (!engagementType) return
-    const generated = generatePurpose(engagementType, informationTypes, counterpartyName)
-    setPurpose(generated)
-  }, [engagementType, informationTypes, counterpartyName])
+    async function loadClientData() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
 
-  // Auto-populate address when entity is selected
+      const { data: userData } = await supabase
+        .from("users")
+        .select("first_name, client_id")
+        .eq("id", session.user.id)
+        .single()
+
+      if (!userData) return
+      setFirstName(userData.first_name || "")
+      setClientId(userData.client_id)
+
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("display_name")
+        .eq("id", userData.client_id)
+        .single()
+
+      if (clientData) setClientName(clientData.display_name || "")
+
+      const { data: entityData } = await supabase
+        .from("client_entities")
+        .select("id, label, entity_name, country, country_code, address, governing_law")
+        .eq("client_id", userData.client_id)
+        .eq("active", true)
+        .order("entity_name")
+
+      if (entityData) setEntities(entityData)
+      setLoadingClient(false)
+    }
+
+    loadClientData()
+  }, [])
+
+  // Auto-generate purpose
+  useEffect(() => {
+    if (!engagementType) return
+    if (engagementType !== "something_else" && informationTypes.length === 0) return
+    setPurpose(generatePurpose(engagementType, informationTypes, counterpartyName, clientName))
+  }, [engagementType, informationTypes, counterpartyName, clientName])
+
   const handleEntitySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const entity = TECHNIA_ENTITIES.find(en => en.name === e.target.value) || null
+    const entity = entities.find(en => en.entity_name === e.target.value) || null
     setSelectedEntity(entity)
     setEntityAddress(entity ? entity.address : "")
     clearError("selectedEntity")
   }
 
-  const showInformationTypes =
-    engagementType === "exploring" ||
-    engagementType === "evaluating" ||
-    engagementType === "sharing_data"
-
+  const showInformationTypes = ["exploring", "evaluating", "sharing_data"].includes(engagementType)
   const showEscalationBanner = engagementType === "something_else"
   const { ipTriggered, dataPrivacyTriggered } = getTriggeredClauses(informationTypes)
 
   const toggleInformationType = (type: InformationType) => {
-    setInformationTypes(prev =>
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    )
+    setInformationTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
     if (errors.informationTypes) setErrors(prev => ({ ...prev, informationTypes: "" }))
   }
 
@@ -541,45 +386,39 @@ export default function GeneratePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
-
     if (!partyType) newErrors.partyType = "Please select who you are sharing information with"
     if (!sharingDirection) newErrors.sharingDirection = "Please select the sharing direction"
     if (!engagementType) newErrors.engagementType = "Please describe this engagement"
-    if (showInformationTypes && informationTypes.length === 0) {
-      newErrors.informationTypes = "Please select at least one information type"
-    }
+    if (showInformationTypes && informationTypes.length === 0) newErrors.informationTypes = "Please select at least one information type"
     if (!durationValue) newErrors.duration = "Please enter the agreement term"
     if (!counterpartyName.trim()) newErrors.counterpartyName = "Please enter the counterparty name"
     if (!counterpartyCountry.code) newErrors.counterpartyCountry = "Please select a country"
-    if (!selectedEntity) newErrors.selectedEntity = "Please select your TECHNIA entity"
+    if (!selectedEntity) newErrors.selectedEntity = "Please select your entity"
     if (!entityAddress.trim()) newErrors.entityAddress = "Please enter your registered address"
     if (!purpose.trim()) newErrors.purpose = "Please enter the purpose of this engagement"
     if (!signatoryName.trim()) newErrors.signatoryName = "Please enter the signatory name"
     if (!signatoryTitle.trim()) newErrors.signatoryTitle = "Please enter the signatory title"
-
     setErrors(newErrors)
 
     if (Object.keys(newErrors).length === 0) {
       sessionStorage.setItem("generateFormData", JSON.stringify({
         counterparty_name: counterpartyName,
         counterparty_address: counterpartyCountry.name,
-        effective_date: new Date().toLocaleDateString("en-GB", {
-          day: "numeric", month: "long", year: "numeric"
-        }),
+        effective_date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
         engagement_type: engagementType,
-        purpose: purpose,
-        technia_entity: selectedEntity!.name,
+        purpose,
+        technia_entity: selectedEntity!.entity_name,
         technia_entity_address: entityAddress,
         technia_entity_country: selectedEntity!.country,
         country: counterpartyCountry.code,
-        client_id: "technia",
+        client_id: clientId,
         party_type: partyType,
         sharing_direction: sharingDirection,
         duration: `${durationValue} ${durationUnit}`,
         information_types: informationTypes,
         signatory_name: signatoryName,
         signatory_title: signatoryTitle,
-        governing_law: selectedEntity!.governingLaw,
+        governing_law: selectedEntity!.governing_law,
       }))
       router.push("/generate/processing")
     }
@@ -604,30 +443,19 @@ export default function GeneratePage() {
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>
-      <NavBar />
+      <NavBar firstName={firstName} />
       <div className="px-4 py-8">
-        <form
-          onSubmit={handleSubmit}
-          className="mx-auto w-full"
-          style={{
-            maxWidth: "580px",
-            backgroundColor: "#FFFFFF",
-            border: "0.5px solid #E2E4E8",
-            borderRadius: "10px",
-            overflow: "hidden"
-          }}
-        >
+        <form onSubmit={handleSubmit} className="mx-auto w-full"
+          style={{ maxWidth: "580px", backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8", borderRadius: "10px", overflow: "hidden" }}>
+
           <div className="px-6 sm:px-8 pt-6 sm:pt-8">
             <ProgressIndicator step={1} totalSteps={2} />
-            <h1 className="font-medium mb-2" style={{ fontSize: "16px", color: "#431F5D" }}>
-              {"Let's build your NDA"}
-            </h1>
+            <h1 className="font-medium mb-2" style={{ fontSize: "16px", color: "#431F5D" }}>{"Let's build your NDA"}</h1>
             <p className="font-normal" style={{ fontSize: "13px", color: "#4A4A6A" }}>
-              Answer a few questions and we'll draft it to {clientName}'s standard.
+              Answer a few questions and we'll draft it to {clientName || "your company"}'s standard.
             </p>
           </div>
 
-          {/* SECTION 1: About the agreement */}
           <SectionLabel>About the agreement</SectionLabel>
           <div className="px-6 sm:px-8 space-y-8">
 
@@ -668,7 +496,7 @@ export default function GeneratePage() {
             {showEscalationBanner && (
               <div className="p-4 rounded-lg" style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}>
                 <p style={{ fontSize: "13px", color: "#E65100", lineHeight: 1.5 }}>
-                  Your {clientName} attorney will review this submission before finalisation.
+                  Your {clientName || "company"} attorney will review this submission before finalisation.
                 </p>
               </div>
             )}
@@ -696,22 +524,16 @@ export default function GeneratePage() {
                 )}
               </div>
             )}
-          {/* Purpose */}
-          {engagementType && (
-            <PurposeBlock
-              value={purpose}
-              onChange={(v) => { setPurpose(v); clearError("purpose") }}
-              error={errors.purpose}
-            />
-          )}
-          {/* Duration */}
+
+            {engagementType && (
+              <PurposeBlock value={purpose} onChange={(v) => { setPurpose(v); clearError("purpose") }} error={errors.purpose} />
+            )}
+
             <div className="space-y-3">
               <FieldLabel>How long is the agreement term?</FieldLabel>
-              <DurationInput
-                value={durationValue} unit={durationUnit}
+              <DurationInput value={durationValue} unit={durationUnit}
                 onValueChange={(v) => { setDurationValue(v); clearError("duration") }}
-                onUnitChange={setDurationUnit} error={errors.duration}
-              />
+                onUnitChange={setDurationUnit} error={errors.duration} />
               <FieldHelper>
                 {durationValue ? `Agreement term: ${durationValue} ${durationUnit}` : "Enter a number and select weeks, months, or years."}
               </FieldHelper>
@@ -720,136 +542,90 @@ export default function GeneratePage() {
 
           </div>
 
-          {/* SECTION 2: About the counterparty */}
           <SectionLabel>About the counterparty</SectionLabel>
           <div className="px-6 sm:px-8 space-y-6">
-            <TextInput
-              label="Name of the other company"
-              placeholder="e.g. Acme Corp"
-              value={counterpartyName}
-              onChange={(val) => { setCounterpartyName(val); clearError("counterpartyName") }}
-              error={errors.counterpartyName}
-            />
-            <CountryDropdown
-              label="Which country is the counterparty based in?"
-              value={counterpartyCountry}
-              onChange={(val) => { setCounterpartyCountry(val); clearError("counterpartyCountry") }}
+            <TextInput label="Name of the other company" placeholder="e.g. Acme Corp"
+              value={counterpartyName} onChange={(val) => { setCounterpartyName(val); clearError("counterpartyName") }}
+              error={errors.counterpartyName} />
+            <CountryDropdown label="Which country is the counterparty based in?"
+              value={counterpartyCountry} onChange={(val) => { setCounterpartyCountry(val); clearError("counterpartyCountry") }}
               helperText="Used to assess jurisdiction risk. Governing law is set by your playbook."
-              error={errors.counterpartyCountry}
-            />
+              error={errors.counterpartyCountry} />
           </div>
 
-          {/* SECTION 3: About your company */}
           <SectionLabel>About your company</SectionLabel>
           <div className="px-6 sm:px-8 space-y-6">
 
             <p className="font-normal -mt-2" style={{ fontSize: "12px", color: "#4A4A6A" }}>
-              Select the TECHNIA entity signing this NDA. The registered address will auto-populate and can be edited if needed.
+              Select the {clientName || "company"} entity signing this NDA. The registered address will auto-populate and can be edited if needed.
             </p>
 
-            {/* Entity selector */}
             <div className="space-y-1">
-              <FieldLabel>TECHNIA entity</FieldLabel>
-              <select
-                value={selectedEntity?.name || ""}
-                onChange={handleEntitySelect}
-                className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
-                style={{
-                  backgroundColor: "#F7F8FA",
-                  border: errors.selectedEntity ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-                  color: selectedEntity ? "#431F5D" : "#9B9B9B",
-                  fontSize: "14px",
-                  appearance: "none",
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A4A6A' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 12px center",
-                  paddingRight: "36px"
-                }}
-                onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-                onBlur={(e) => { e.target.style.border = errors.selectedEntity ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-              >
-                <option value="">Select entity...</option>
-                {TECHNIA_ENTITIES.map((entity) => (
-                  <option key={entity.name} value={entity.name}>{entity.label}</option>
-                ))}
-              </select>
+              <FieldLabel>{clientName || "Company"} entity</FieldLabel>
+              {loadingClient ? (
+                <div className="w-full px-4 py-3 rounded-lg font-normal"
+                  style={{ backgroundColor: "#F7F8FA", border: "0.5px solid #E2E4E8", color: "#9B9B9B", fontSize: "14px" }}>
+                  Loading entities...
+                </div>
+              ) : (
+                <select value={selectedEntity?.entity_name || ""} onChange={handleEntitySelect}
+                  className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
+                  style={{ backgroundColor: "#F7F8FA", border: errors.selectedEntity ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
+                    color: selectedEntity ? "#431F5D" : "#9B9B9B", fontSize: "14px", appearance: "none",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A4A6A' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: "36px" }}
+                  onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
+                  onBlur={(e) => { e.target.style.border = errors.selectedEntity ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}>
+                  <option value="">Select entity...</option>
+                  {entities.map((entity) => (
+                    <option key={entity.id} value={entity.entity_name}>{entity.label}</option>
+                  ))}
+                </select>
+              )}
               {errors.selectedEntity && <FieldError message={errors.selectedEntity} />}
             </div>
 
-            {/* Address — auto-populated, editable */}
             {selectedEntity && (
               <div className="space-y-1">
                 <FieldLabel>Registered address</FieldLabel>
-                <textarea
-                  rows={3}
-                  value={entityAddress}
+                <textarea rows={3} value={entityAddress}
                   onChange={(e) => { setEntityAddress(e.target.value); clearError("entityAddress") }}
                   className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all resize-none"
-                  style={{
-                    backgroundColor: "#F7F8FA",
-                    border: errors.entityAddress ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-                    color: "#431F5D",
-                    fontSize: "14px"
-                  }}
+                  style={{ backgroundColor: "#F7F8FA", border: errors.entityAddress ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }}
                   onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-                  onBlur={(e) => { e.target.style.border = errors.entityAddress ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-                />
+                  onBlur={(e) => { e.target.style.border = errors.entityAddress ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }} />
                 {errors.entityAddress && <FieldError message={errors.entityAddress} />}
               </div>
             )}
 
-            {/* Signatory */}
             <div className="space-y-1">
               <FieldLabel>Name and title of the person signing</FieldLabel>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <input
-                    type="text"
-                    placeholder="Full name"
-                    value={signatoryName}
+                  <input type="text" placeholder="Full name" value={signatoryName}
                     onChange={(e) => { setSignatoryName(e.target.value); clearError("signatoryName") }}
                     className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
-                    style={{
-                      backgroundColor: "#F7F8FA",
-                      border: errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-                      color: "#431F5D", fontSize: "14px"
-                    }}
+                    style={{ backgroundColor: "#F7F8FA", border: errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }}
                     onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-                    onBlur={(e) => { e.target.style.border = errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-                  />
+                    onBlur={(e) => { e.target.style.border = errors.signatoryName ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }} />
                   {errors.signatoryName && <FieldError message={errors.signatoryName} />}
                 </div>
                 <div className="space-y-1">
-                  <input
-                    type="text"
-                    placeholder="e.g. Head of Sales"
-                    value={signatoryTitle}
+                  <input type="text" placeholder="e.g. Head of Sales" value={signatoryTitle}
                     onChange={(e) => { setSignatoryTitle(e.target.value); clearError("signatoryTitle") }}
                     className="w-full px-4 py-3 rounded-lg font-normal outline-none transition-all"
-                    style={{
-                      backgroundColor: "#F7F8FA",
-                      border: errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8",
-                      color: "#431F5D", fontSize: "14px"
-                    }}
+                    style={{ backgroundColor: "#F7F8FA", border: errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }}
                     onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-                    onBlur={(e) => { e.target.style.border = errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }}
-                  />
+                    onBlur={(e) => { e.target.style.border = errors.signatoryTitle ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }} />
                   {errors.signatoryTitle && <FieldError message={errors.signatoryTitle} />}
                 </div>
               </div>
             </div>
 
             <div className="pb-6 sm:pb-8 pt-2">
-              <button
-                type="submit"
+              <button type="submit"
                 className="w-full py-3 font-medium rounded-md transition-opacity hover:opacity-90"
-                style={{
-                  background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
-                  color: "#FFFFFF",
-                  fontSize: "14px",
-                  borderRadius: "6px"
-                }}
-              >
+                style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", color: "#FFFFFF", fontSize: "14px", borderRadius: "6px" }}>
                 Generate my NDA
               </button>
             </div>
