@@ -34,12 +34,13 @@ export default function LoginPage() {
 
   const prefixRef = useRef<HTMLSpanElement>(null)
   const hereRef = useRef<HTMLSpanElement>(null)
+  const dotRef = useRef<HTMLSpanElement>(null)
   const cursorRef = useRef<HTMLSpanElement>(null)
   const underlineRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const prefixStr = "Every deal starts\u00A0"
-    const hereStr = "here."
+    const hereStr = "here"
     let pi = 0
     let hi = 0
     let t1: NodeJS.Timeout, t2: NodeJS.Timeout, t3: NodeJS.Timeout
@@ -62,21 +63,24 @@ export default function LoginPage() {
         hi++
         t2 = setTimeout(typeHere, 90)
       } else {
-        t3 = setTimeout(showUnderline, 80)
+        t3 = setTimeout(showDotAndUnderline, 80)
       }
     }
 
-    function showUnderline() {
-      if (underlineRef.current) {
-        underlineRef.current.style.transition = "width 0.5s ease"
-        underlineRef.current.style.width = "100%"
-      }
+    function showDotAndUnderline() {
+      if (dotRef.current) dotRef.current.style.opacity = "1"
       setTimeout(() => {
-        if (cursorRef.current) {
-          cursorRef.current.style.animation = "none"
-          cursorRef.current.style.opacity = "0"
+        if (underlineRef.current) {
+          underlineRef.current.style.transition = "width 0.5s ease"
+          underlineRef.current.style.width = "100%"
         }
-      }, 520)
+        setTimeout(() => {
+          if (cursorRef.current) {
+            cursorRef.current.style.animation = "none"
+            cursorRef.current.style.opacity = "0"
+          }
+        }, 520)
+      }, 80)
     }
 
     const startTimer = setTimeout(typePrefix, 1400)
@@ -174,6 +178,7 @@ export default function LoginPage() {
         .stage-1 { animation: fadeUp 0.6s ease forwards; opacity: 0; }
         .stage-3 { animation: fadeUp 0.6s ease forwards 0.3s; opacity: 0; }
         .stage-4 { animation: fadeUp 0.6s ease forwards 0.45s; opacity: 0; }
+        .stage-5 { animation: fadeUp 0.6s ease forwards 0.6s; opacity: 0; }
         .headline-wrap { opacity: 0; animation: fadeIn 0.01s forwards 1.2s; }
         .cursor { animation: blink 0.75s step-end infinite; }
       `}</style>
@@ -194,6 +199,12 @@ export default function LoginPage() {
             ref={hereRef}
             style={{ fontSize: "34px", fontWeight: 600, color: "#EF7043", letterSpacing: "-0.02em" }}
           />
+          <span
+            ref={dotRef}
+            style={{ fontSize: "34px", fontWeight: 600, color: "#FFFFFF", letterSpacing: "-0.02em", opacity: 0 }}
+          >
+            .
+          </span>
           <span
             ref={cursorRef}
             className="cursor"
@@ -318,6 +329,14 @@ export default function LoginPage() {
         style={{ fontSize: "11px", color: "rgba(255,255,255,0.22)", maxWidth: "280px", lineHeight: 1.7 }}
       >
         Access is by invitation only. Contact your Counselect account manager if you need access.
+      </p>
+
+      {/* Copyright */}
+      <p
+        className="stage-5 text-center mt-2"
+        style={{ fontSize: "11px", color: "rgba(255,255,255,0.15)", maxWidth: "320px", lineHeight: 1.7 }}
+      >
+        &copy; 2026. Counselect Services Private Limited. All rights reserved.
       </p>
     </main>
   )
