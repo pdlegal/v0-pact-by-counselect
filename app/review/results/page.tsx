@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 function PactWordmark() {
   return (
@@ -16,11 +17,13 @@ function PactWordmark() {
   )
 }
 
-function NavBar() {
+function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
     <nav className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
-      <span className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>Prajoy</span>
+      <span className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>
+        {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""}
+      </span>
     </nav>
   )
 }
@@ -49,10 +52,8 @@ function RiskBadge({ type }: { type: "minor" | "major" | "escalation" }) {
   }
   const labels = { minor: "Minor", major: "Major", escalation: "Escalation" }
   return (
-    <span
-      className="px-2 py-0.5 text-xs font-medium rounded-full"
-      style={{ backgroundColor: styles[type].bg, color: styles[type].color }}
-    >
+    <span className="px-2 py-0.5 text-xs font-medium rounded-full"
+      style={{ backgroundColor: styles[type].bg, color: styles[type].color }}>
       {labels[type]}
     </span>
   )
@@ -65,23 +66,18 @@ function StatusBadge({ status }: { status: DeviationStatus }) {
     rejected: { bg: "#FFEBEE", color: "#B71C1C" }
   }
   return (
-    <span
-      className="px-2 py-0.5 text-xs font-medium rounded-full"
-      style={{ backgroundColor: styles[status].bg, color: styles[status].color }}
-    >
+    <span className="px-2 py-0.5 text-xs font-medium rounded-full"
+      style={{ backgroundColor: styles[status].bg, color: styles[status].color }}>
       {status === "accepted" ? "Accepted" : "Rejected"}
     </span>
   )
 }
 
 function DeviationCard({
-  deviation,
-  onStatusChange,
-  onDeclarationChange,
-  onApprovalFieldChange,
-  onShowApprovalForm
+  deviation, clientName, onStatusChange, onDeclarationChange, onApprovalFieldChange, onShowApprovalForm
 }: {
   deviation: Deviation
+  clientName: string
   onStatusChange: (id: number, status: DeviationStatus) => void
   onDeclarationChange?: (id: number, checked: boolean) => void
   onApprovalFieldChange?: (id: number, field: "approvedBy" | "approvalDate", value: string) => void
@@ -93,6 +89,7 @@ function DeviationCard({
     ? (deviation.declarationChecked && deviation.approvedBy?.trim() && deviation.approvalDate?.trim())
     : true
   const showApprovalForm = isMajor && deviation.showApprovalForm
+  const displayName = clientName || "your company"
 
   return (
     <div
@@ -127,15 +124,8 @@ function DeviationCard({
       {/* Side-by-side positions */}
       {!isEscalation && (
         <div className="grid grid-cols-2" style={{ borderBottom: "1px solid #F0F0F0" }}>
-          {/* Counterparty position */}
-          <div
-            className="p-4"
-            style={{ borderRight: "1px solid #F0F0F0", backgroundColor: "#FFFBF5" }}
-          >
-            <p
-              className="text-xs font-medium uppercase mb-2"
-              style={{ color: "#E65100", letterSpacing: "0.06em" }}
-            >
+          <div className="p-4" style={{ borderRight: "1px solid #F0F0F0", backgroundColor: "#FFFBF5" }}>
+            <p className="text-xs font-medium uppercase mb-2" style={{ color: "#E65100", letterSpacing: "0.06em" }}>
               Counterparty
             </p>
             <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>
@@ -143,7 +133,6 @@ function DeviationCard({
             </p>
           </div>
 
-          {/* Delta indicator */}
           <div className="relative">
             <div
               className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center z-10"
@@ -151,14 +140,9 @@ function DeviationCard({
             >
               <span style={{ color: "#FFFFFF", fontSize: "9px", fontWeight: 600 }}>vs</span>
             </div>
-
-            {/* TECHNIA standard position */}
             <div className="p-4" style={{ backgroundColor: "#F8F5FF" }}>
-              <p
-                className="text-xs font-medium uppercase mb-2"
-                style={{ color: "#431F5D", letterSpacing: "0.06em" }}
-              >
-                TECHNIA standard
+              <p className="text-xs font-medium uppercase mb-2" style={{ color: "#431F5D", letterSpacing: "0.06em" }}>
+                {displayName} standard
               </p>
               <p className="text-xs leading-relaxed" style={{ color: "#431F5D" }}>
                 {deviation.standard || "—"}
@@ -170,9 +154,7 @@ function DeviationCard({
 
       {/* Issue description */}
       <div className="px-4 py-3">
-        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>
-          {deviation.reason}
-        </p>
+        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
       </div>
 
       {/* Major deviation approval form */}
@@ -227,10 +209,7 @@ function DeviationCard({
 
       {/* Action buttons */}
       {!isEscalation && (
-        <div
-          className="px-4 py-3 flex items-center justify-end gap-2"
-          style={{ borderTop: "1px solid #F0F0F0" }}
-        >
+        <div className="px-4 py-3 flex items-center justify-end gap-2" style={{ borderTop: "1px solid #F0F0F0" }}>
           <button
             onClick={() => {
               if (isMajor) onShowApprovalForm?.(deviation.id, false)
@@ -244,7 +223,7 @@ function DeviationCard({
               cursor: "pointer"
             }}
           >
-            Reject — apply TECHNIA position
+            Reject — apply {displayName} position
           </button>
           <button
             onClick={() => {
@@ -276,6 +255,13 @@ function DeviationCard({
 
 export default function DeviationTablePage() {
   const router = useRouter()
+
+  // Client data from Supabase
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [clientName, setClientName] = useState("")
+
+  // Review data from sessionStorage
   const [deviations, setDeviations] = useState<Deviation[]>([])
   const [documentSummary, setDocumentSummary] = useState("")
   const [overallRiskLevel, setOverallRiskLevel] = useState("")
@@ -284,6 +270,35 @@ export default function DeviationTablePage() {
   const [counterpartyName, setCounterpartyName] = useState("")
   const [loaded, setLoaded] = useState(false)
 
+  // Load client data from Supabase
+  useEffect(() => {
+    async function loadClientData() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("first_name, last_name, client_id")
+        .eq("id", session.user.id)
+        .single()
+
+      if (!userData) return
+      setFirstName(userData.first_name || "")
+      setLastName(userData.last_name || "")
+
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("display_name")
+        .eq("id", userData.client_id)
+        .single()
+
+      if (clientData) setClientName(clientData.display_name || "")
+    }
+
+    loadClientData()
+  }, [])
+
+  // Load review results from sessionStorage
   useEffect(() => {
     const raw = sessionStorage.getItem("review_result")
     const name = sessionStorage.getItem("review_counterparty_name")
@@ -347,11 +362,14 @@ export default function DeviationTablePage() {
   const minorDeviations = deviations.filter(d => d.type === "minor")
   const majorDeviations = deviations.filter(d => d.type === "major")
   const escalations = deviations.filter(d => d.type === "escalation")
+  const displayName = clientName || "your company"
 
   const handleNotifyLegal = () => {
     const clauseList = escalations.map(d => `- ${d.title}: ${d.counterparty}`).join('\n')
     const emailSubject = encodeURIComponent("NDA Review — Escalation Required")
-    const emailBody = encodeURIComponent(`Dear Legal Team,\n\nAn NDA review has identified the following clause(s) that require legal review:\n\n${clauseList}\n\nPlease review and provide a version ready to send to the counterparty.\n\nThank you.`)
+    const emailBody = encodeURIComponent(
+      `Dear Legal Team,\n\nAn NDA review has identified the following clause(s) that require legal review:\n\n${clauseList}\n\nPlease review and provide a version ready to send to the counterparty.\n\nThank you.`
+    )
     window.location.href = `mailto:legal@counselect.com?subject=${emailSubject}&body=${emailBody}`
   }
 
@@ -359,7 +377,7 @@ export default function DeviationTablePage() {
     const emailSubject = encodeURIComponent("Approval Required: Major NDA Deviations")
     const emailBody = encodeURIComponent(
       `Dear Business Head,\n\nI am requesting your approval for the following major deviations identified in an NDA review:\n\n${majorDeviationsForApproval.map(d =>
-        `Clause: ${d.title}\nCounterparty position: ${d.counterparty}\nTECHNIA standard: ${d.standard}\nReason: ${d.reason}`
+        `Clause: ${d.title}\nCounterparty position: ${d.counterparty}\n${displayName} standard: ${d.standard}\nReason: ${d.reason}`
       ).join('\n\n')}\n\nPlease confirm your approval by replying to this email.\n\nThank you.`
     )
     window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`
@@ -375,7 +393,7 @@ export default function DeviationTablePage() {
   if (!loaded) {
     return (
       <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
-        <NavBar />
+        <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
         <div className="flex-1 flex items-center justify-center">
           <p style={{ color: "#4A4A6A", fontSize: "13px" }}>Loading results...</p>
         </div>
@@ -385,18 +403,16 @@ export default function DeviationTablePage() {
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>
-      <NavBar />
+      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
       <div className="max-w-3xl mx-auto px-4 py-6">
 
         {/* Header */}
         <div className="mb-6">
           <h1 className="font-medium mb-1" style={{ color: "#431F5D", fontSize: "20px" }}>
-            NDA reviewed against TECHNIA's playbook
+            {`NDA reviewed against ${displayName}'s playbook`}
           </h1>
-          <p style={{ color: "#4A4A6A", fontSize: "13px" }}>
-            {counterpartyName}
-          </p>
+          <p style={{ color: "#4A4A6A", fontSize: "13px" }}>{counterpartyName}</p>
         </div>
 
         {/* Summary strip */}
@@ -405,10 +421,8 @@ export default function DeviationTablePage() {
           style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
         >
           <div className="flex items-center gap-2">
-            <span
-              className="px-3 py-1 rounded-full text-xs font-medium"
-              style={{ backgroundColor: overallRiskBg, color: overallRiskColor }}
-            >
+            <span className="px-3 py-1 rounded-full text-xs font-medium"
+              style={{ backgroundColor: overallRiskBg, color: overallRiskColor }}>
               {overallRiskLevel} risk
             </span>
           </div>
@@ -437,10 +451,7 @@ export default function DeviationTablePage() {
 
         {/* Document summary */}
         {documentSummary && (
-          <div
-            className="p-4 rounded-xl mb-6"
-            style={{ backgroundColor: "#F3EEF7", border: "1px solid #E8E0F0" }}
-          >
+          <div className="p-4 rounded-xl mb-6" style={{ backgroundColor: "#F3EEF7", border: "1px solid #E8E0F0" }}>
             <p className="text-xs font-medium mb-1" style={{ color: "#431F5D" }}>Summary</p>
             <p className="text-sm leading-relaxed" style={{ color: "#4A4A6A" }}>{documentSummary}</p>
           </div>
@@ -449,14 +460,11 @@ export default function DeviationTablePage() {
         {/* Minor deviations */}
         {minorDeviations.length > 0 && (
           <div className="mb-6">
-            <h2
-              className="text-xs font-medium uppercase mb-3"
-              style={{ color: "#E65100", letterSpacing: "0.08em" }}
-            >
+            <h2 className="text-xs font-medium uppercase mb-3" style={{ color: "#E65100", letterSpacing: "0.08em" }}>
               Minor deviations — {minorDeviations.length}
             </h2>
             {minorDeviations.map(d => (
-              <DeviationCard key={d.id} deviation={d}
+              <DeviationCard key={d.id} deviation={d} clientName={clientName}
                 onStatusChange={handleStatusChange}
                 onDeclarationChange={handleDeclarationChange}
                 onApprovalFieldChange={handleApprovalFieldChange}
@@ -470,24 +478,19 @@ export default function DeviationTablePage() {
         {majorDeviations.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h2
-                className="text-xs font-medium uppercase"
-                style={{ color: "#B71C1C", letterSpacing: "0.08em" }}
-              >
+              <h2 className="text-xs font-medium uppercase" style={{ color: "#B71C1C", letterSpacing: "0.08em" }}>
                 Major deviations — {majorDeviations.length}
               </h2>
               {majorDeviationsForApproval.length > 0 && (
-                <button
-                  onClick={handleRequestApproval}
+                <button onClick={handleRequestApproval}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: "#431F5D", color: "#FFFFFF" }}
-                >
+                  style={{ backgroundColor: "#431F5D", color: "#FFFFFF" }}>
                   Request approval
                 </button>
               )}
             </div>
             {majorDeviations.map(d => (
-              <DeviationCard key={d.id} deviation={d}
+              <DeviationCard key={d.id} deviation={d} clientName={clientName}
                 onStatusChange={handleStatusChange}
                 onDeclarationChange={handleDeclarationChange}
                 onApprovalFieldChange={handleApprovalFieldChange}
@@ -500,25 +503,20 @@ export default function DeviationTablePage() {
         {/* Escalations */}
         {escalations.length > 0 && (
           <div className="mb-6">
-            <h2
-              className="text-xs font-medium uppercase mb-3"
-              style={{ color: "#4A4A6A", letterSpacing: "0.08em" }}
-            >
+            <h2 className="text-xs font-medium uppercase mb-3" style={{ color: "#4A4A6A", letterSpacing: "0.08em" }}>
               Requires attorney review — {escalations.length}
             </h2>
             {escalations.map(d => (
-              <DeviationCard key={d.id} deviation={d}
+              <DeviationCard key={d.id} deviation={d} clientName={clientName}
                 onStatusChange={handleStatusChange}
                 onDeclarationChange={handleDeclarationChange}
                 onApprovalFieldChange={handleApprovalFieldChange}
                 onShowApprovalForm={handleShowApprovalForm}
               />
             ))}
-            <button
-              onClick={handleNotifyLegal}
+            <button onClick={handleNotifyLegal}
               className="w-full py-3 rounded-xl font-medium mt-2 transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#431F5D", color: "#FFFFFF", fontSize: "14px" }}
-            >
+              style={{ backgroundColor: "#431F5D", color: "#FFFFFF", fontSize: "14px" }}>
               Notify legal
             </button>
           </div>
