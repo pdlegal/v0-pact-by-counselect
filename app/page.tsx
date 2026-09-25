@@ -34,13 +34,12 @@ export default function LoginPage() {
 
   const prefixRef = useRef<HTMLSpanElement>(null)
   const hereRef = useRef<HTMLSpanElement>(null)
-  const dotRef = useRef<HTMLSpanElement>(null)
   const cursorRef = useRef<HTMLSpanElement>(null)
   const underlineRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const prefixStr = "Every deal starts\u00A0"
-    const hereStr = "here"
+    const hereStr = "here."
     let pi = 0
     let hi = 0
     let t1: NodeJS.Timeout, t2: NodeJS.Timeout, t3: NodeJS.Timeout
@@ -63,18 +62,16 @@ export default function LoginPage() {
         hi++
         t2 = setTimeout(typeHere, 90)
       } else {
-        t3 = setTimeout(showUnderlineAndDot, 80)
+        t3 = setTimeout(showUnderline, 80)
       }
     }
 
-    function showUnderlineAndDot() {
+    function showUnderline() {
       if (underlineRef.current) {
         underlineRef.current.style.transition = "width 0.5s ease"
         underlineRef.current.style.width = "100%"
       }
       setTimeout(() => {
-        if (dotRef.current) dotRef.current.style.opacity = "1"
-        // Stop cursor blinking after animation completes
         if (cursorRef.current) {
           cursorRef.current.style.animation = "none"
           cursorRef.current.style.opacity = "0"
@@ -198,12 +195,6 @@ export default function LoginPage() {
             style={{ fontSize: "34px", fontWeight: 600, color: "#EF7043", letterSpacing: "-0.02em" }}
           />
           <span
-            ref={dotRef}
-            style={{ fontSize: "34px", fontWeight: 600, color: "#FFFFFF", letterSpacing: "-0.02em", opacity: 0 }}
-          >
-            .
-          </span>
-          <span
             ref={cursorRef}
             className="cursor"
             style={{
@@ -216,8 +207,7 @@ export default function LoginPage() {
             }}
           />
         </div>
-        {/* Full sentence underline */}
-        <div style={{ position: "relative", height: "3px", marginTop: "6px" }}>
+        <div style={{ position: "relative", height: "3px", marginTop: "10px" }}>
           <div
             ref={underlineRef}
             style={{
