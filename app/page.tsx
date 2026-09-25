@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
@@ -40,7 +39,7 @@ export default function LoginPage() {
   const underlineRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const prefixStr = "Every deal starts "
+    const prefixStr = "Every deal starts\u00A0"
     const hereStr = "here"
     let pi = 0
     let hi = 0
@@ -75,6 +74,11 @@ export default function LoginPage() {
       }
       setTimeout(() => {
         if (dotRef.current) dotRef.current.style.opacity = "1"
+        // Stop cursor blinking after animation completes
+        if (cursorRef.current) {
+          cursorRef.current.style.animation = "none"
+          cursorRef.current.style.opacity = "0"
+        }
       }, 520)
     }
 
@@ -167,11 +171,13 @@ export default function LoginPage() {
           0%, 100% { opacity: 1 }
           50% { opacity: 0 }
         }
+        @keyframes fadeIn {
+          from { opacity: 0 } to { opacity: 1 }
+        }
         .stage-1 { animation: fadeUp 0.6s ease forwards; opacity: 0; }
         .stage-3 { animation: fadeUp 0.6s ease forwards 0.3s; opacity: 0; }
         .stage-4 { animation: fadeUp 0.6s ease forwards 0.45s; opacity: 0; }
         .headline-wrap { opacity: 0; animation: fadeIn 0.01s forwards 1.2s; }
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         .cursor { animation: blink 0.75s step-end infinite; }
       `}</style>
 
@@ -182,7 +188,7 @@ export default function LoginPage() {
 
       {/* Animated headline */}
       <div className="headline-wrap mb-10 text-center">
-        <div className="flex items-end justify-center whitespace-nowrap" style={{ lineHeight: 1 }}>
+        <div className="flex items-end justify-center" style={{ lineHeight: 1 }}>
           <span
             ref={prefixRef}
             style={{ fontSize: "34px", fontWeight: 600, color: "#FFFFFF", letterSpacing: "-0.02em" }}
