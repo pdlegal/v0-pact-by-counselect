@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { supabase } from "@/lib/supabase"
 
 function PactWordmark() {
   return (
@@ -45,6 +46,20 @@ export default function FirstLoginPage() {
   const [lastName, setLastName] = useState("")
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [userEmail, setUserEmail] = useState("")
+
+  useEffect(() => {
+    // Get the current session to retrieve the user's email
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push("/")
+        return
+      }
+      setUserEmail(session.user.email!)
+    }
+    getSession()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,11 +73,23 @@ export default function FirstLoginPage() {
 
     setIsSubmitting(true)
 
-    // Will call /api/auth/update-name once backend is wired
-    // For now, simulate and redirect
-    setTimeout(() => {
-      router.push("/home")
-    }, 500)
+    // Save name to the users table
+    const { error } = await supabase
+      .from("users")
+      .update({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        last_login_at: new Date().toISOString()
+      })
+      .eq("email", userEmail)
+
+    if (error) {
+      setErrors({ firstName: "Something went wrong. Please try again." })
+      setIsSubmitting(false)
+      return
+    }
+
+    router.push("/home")
   }
 
   return (
@@ -78,12 +105,10 @@ export default function FirstLoginPage() {
           borderRadius: "10px"
         }}
       >
-        {/* Wordmark */}
         <div className="flex justify-center mb-8">
           <PactWordmark />
         </div>
 
-        {/* Heading */}
         <h1
           className="font-medium text-center mb-2"
           style={{ color: "#431F5D", fontSize: "18px" }}
@@ -97,10 +122,8 @@ export default function FirstLoginPage() {
           Before we get started, what is your name?
         </p>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* First name */}
           <div className="space-y-1">
             <label
               className="block font-normal"
@@ -140,7 +163,6 @@ export default function FirstLoginPage() {
             )}
           </div>
 
-          {/* Last name */}
           <div className="space-y-1">
             <label
               className="block font-normal"
@@ -179,7 +201,6 @@ export default function FirstLoginPage() {
             )}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -196,7 +217,6 @@ export default function FirstLoginPage() {
           </button>
         </form>
 
-        {/* Footer note */}
         <p
           className="text-center mt-6"
           style={{ color: "#9B9B9B", fontSize: "11px", lineHeight: 1.6 }}
