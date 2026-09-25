@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 function PactWordmark() {
   return (
@@ -43,27 +43,54 @@ function PactWordmark() {
   )
 }
 
-type FormState = "default" | "success" | "error"
+type FormState = "default" | "success" | "error" | "loading"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [formState, setFormState] = useState<FormState>("default")
   const [submittedEmail, setSubmittedEmail] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Simulate domain validation - reject free email providers for demo
+    setFormState("loading")
+
     const domain = email.split("@")[1]?.toLowerCase()
-    const blockedDomains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com"]
-    const isBlocked = blockedDomains.some(blocked => domain === blocked)
-    
-    if (isBlocked) {
+
+    // Check domain against Supabase client_domains table
+    const { data: domainRecord, error: domainError } = await supabase
+      .from("client_domains")
+      .select("client_id")
+      .eq("domain", domain)
+      .eq("active", true)
+      .single()
+
+    if (domainError || !domainRecord) {
+      setErrorMessage(
+        "This email domain is not registered on Pact. Contact your Counselect account manager to get access."
+      )
       setFormState("error")
-    } else {
-      setSubmittedEmail(email)
-      setFormState("success")
+      return
     }
+
+    // Domain is registered — send magic link
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+
+    if (authError) {
+      setErrorMessage(
+        "Something went wrong sending your login link. Please try again."
+      )
+      setFormState("error")
+      return
+    }
+
+    setSubmittedEmail(email)
+    setFormState("success")
   }
 
   return (
@@ -127,6 +154,7 @@ export default function LoginPage() {
                 }}
                 placeholder="you@yourcompany.com"
                 required
+                disabled={formState === "loading"}
                 className="w-full px-4 py-3 text-sm outline-none transition-all"
                 style={{
                   backgroundColor: "#F7F8FA",
@@ -146,7 +174,7 @@ export default function LoginPage() {
 
               {formState === "error" && (
                 <div 
-                  className="px-3 py-3 mt-3 leading-relaxed"
+                  className="mt-3 leading-relaxed"
                   style={{
                     backgroundColor: "#FFEBEE",
                     color: "#B71C1C",
@@ -155,13 +183,14 @@ export default function LoginPage() {
                     padding: "10px 12px"
                   }}
                 >
-                  This email domain is not registered on Pact. Contact your Counselect account manager to get access.
+                  {errorMessage}
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full py-3 font-medium mt-3 transition-opacity hover:opacity-90"
+                disabled={formState === "loading"}
+                className="w-full py-3 font-medium mt-3 transition-opacity hover:opacity-90 disabled:opacity-60"
                 style={{
                   background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
                   color: "#FFFFFF",
@@ -169,7 +198,7 @@ export default function LoginPage() {
                   fontSize: "14px"
                 }}
               >
-                Send me a login link
+                {formState === "loading" ? "Checking..." : "Send me a login link"}
               </button>
             </form>
 
@@ -179,14 +208,6 @@ export default function LoginPage() {
             >
               {"We'll send a one-click link — no password needed."}
             </p>
-
-            <Link
-              href="/home"
-              className="block text-center mt-6 text-sm font-medium transition-opacity hover:opacity-80"
-              style={{ color: "#431F5D" }}
-            >
-              Skip to homepage (dev)
-            </Link>
           </>
         )}
       </div>
