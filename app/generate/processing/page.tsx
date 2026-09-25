@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 const TARGET_SECONDS = 45
 
@@ -18,12 +19,12 @@ function PactWordmark() {
   )
 }
 
-function NavBar() {
+function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
       <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
-        Prajoy · <Link href="/" className="hover:underline">Log out</Link>
+        {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""} · <Link href="/" className="hover:underline">Log out</Link>
       </span>
     </nav>
   )
@@ -32,28 +33,30 @@ function NavBar() {
 type StepStatus = "pending" | "active" | "complete"
 interface Step { label: string; sublabel: string; status: StepStatus }
 
-const STEPS: Step[] = [
-  {
-    label: "Details received",
-    sublabel: "Your form data is ready to process.",
-    status: "complete"
-  },
-  {
-    label: "Selecting the right template",
-    sublabel: "Choosing the correct NDA structure based on your inputs.",
-    status: "pending"
-  },
-  {
-    label: "Applying TECHNIA's positions",
-    sublabel: "Populating clauses with your entity details, purpose, and governing law.",
-    status: "pending"
-  },
-  {
-    label: "Preparing your NDA",
-    sublabel: "Finalising the document and making it ready to download.",
-    status: "pending"
-  }
-]
+function buildSteps(clientName: string): Step[] {
+  return [
+    {
+      label: "Details received",
+      sublabel: "Your form data is ready to process.",
+      status: "complete"
+    },
+    {
+      label: "Selecting the right template",
+      sublabel: "Choosing the correct NDA structure based on your inputs.",
+      status: "pending"
+    },
+    {
+      label: `Applying ${clientName || "your company"}'s positions`,
+      sublabel: "Populating clauses with your entity details, purpose, and governing law.",
+      status: "pending"
+    },
+    {
+      label: "Preparing your NDA",
+      sublabel: "Finalising the document and making it ready to download.",
+      status: "pending"
+    }
+  ]
+}
 
 function ProgressStepper({ steps }: { steps: Step[] }) {
   return (
@@ -113,19 +116,13 @@ function Countdown({ startTime, done }: { startTime: number; done: boolean }) {
   if (done) return null
 
   return (
-    <div
-      className="mt-6 pt-5 flex items-center justify-between"
-      style={{ borderTop: "1px solid #F0F0F0" }}
-    >
+    <div className="mt-6 pt-5 flex items-center justify-between" style={{ borderTop: "1px solid #F0F0F0" }}>
       <p className="text-xs" style={{ color: "#9B9B9B" }}>
         {secondsLeft > 0
           ? `About ${secondsLeft} second${secondsLeft !== 1 ? "s" : ""} remaining`
           : "Almost there..."}
       </p>
-      <div
-        className="h-1 rounded-full overflow-hidden flex-1 ml-4"
-        style={{ backgroundColor: "#F0F0F0" }}
-      >
+      <div className="h-1 rounded-full overflow-hidden flex-1 ml-4" style={{ backgroundColor: "#F0F0F0" }}>
         <div
           className="h-full rounded-full transition-all duration-1000"
           style={{
@@ -140,10 +137,45 @@ function Countdown({ startTime, done }: { startTime: number; done: boolean }) {
 
 export default function GenerateProcessingPage() {
   const router = useRouter()
-  const [steps, setSteps] = useState<Step[]>(STEPS)
+
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [clientName, setClientName] = useState("")
+  const [steps, setSteps] = useState<Step[]>(buildSteps(""))
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [startTime] = useState(Date.now())
+
+  // Load client data and rebuild steps with client name
+  useEffect(() => {
+    async function loadClientData() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("first_name, last_name, client_id")
+        .eq("id", session.user.id)
+        .single()
+
+      if (!userData) return
+      setFirstName(userData.first_name || "")
+      setLastName(userData.last_name || "")
+
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("display_name")
+        .eq("id", userData.client_id)
+        .single()
+
+      if (clientData) {
+        setClientName(clientData.display_name || "")
+        setSteps(buildSteps(clientData.display_name || ""))
+      }
+    }
+
+    loadClientData()
+  }, [])
 
   const updateStep = (index: number, status: StepStatus) => {
     setSteps(prev => {
@@ -219,7 +251,7 @@ export default function GenerateProcessingPage() {
         .animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
       `}</style>
 
-      <NavBar />
+      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div
