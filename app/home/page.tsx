@@ -17,7 +17,7 @@ function PactWordmark({ variant = "light" }: { variant?: "light" | "dark" }) {
   )
 }
 
-function NavBar({ firstName }: { firstName: string }) {
+function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <div className="flex flex-col">
@@ -31,7 +31,7 @@ function NavBar({ firstName }: { firstName: string }) {
           My requests
         </Link>
         <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
-          {firstName || "..."} · <Link href="/" className="hover:underline">Log out</Link>
+          {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""} · <Link href="/" className="hover:underline">Log out</Link>
         </span>
       </div>
     </nav>
@@ -97,6 +97,7 @@ function HeroSection({ clientName }: { clientName: string }) {
 
 export default function HomePage() {
   const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
 
   useEffect(() => {
@@ -106,12 +107,13 @@ export default function HomePage() {
 
       const { data: userData } = await supabase
         .from("users")
-        .select("first_name, client_id")
+        .select("first_name, last_name, client_id")
         .eq("id", session.user.id)
         .single()
 
       if (!userData) return
       setFirstName(userData.first_name || "")
+      setLastName(userData.last_name || "")
 
       const { data: clientData } = await supabase
         .from("clients")
@@ -127,7 +129,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#431F5D" }}>
-      <NavBar firstName={firstName} />
+      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
       <HeroSection clientName={clientName} />
     </main>
   )
