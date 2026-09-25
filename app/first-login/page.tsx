@@ -46,17 +46,16 @@ export default function FirstLoginPage() {
   const [lastName, setLastName] = useState("")
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [userEmail, setUserEmail] = useState("")
+  const [userId, setUserId] = useState("")
 
   useEffect(() => {
-    // Get the current session to retrieve the user's email
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push("/")
         return
       }
-      setUserEmail(session.user.email!)
+      setUserId(session.user.id)
     }
     getSession()
   }, [router])
@@ -73,7 +72,7 @@ export default function FirstLoginPage() {
 
     setIsSubmitting(true)
 
-    // Save name to the users table
+    // Update user record using auth UID
     const { error } = await supabase
       .from("users")
       .update({
@@ -81,7 +80,7 @@ export default function FirstLoginPage() {
         last_name: lastName.trim(),
         last_login_at: new Date().toISOString()
       })
-      .eq("email", userEmail)
+      .eq("id", userId)
 
     if (error) {
       setErrors({ firstName: "Something went wrong. Please try again." })
@@ -123,7 +122,6 @@ export default function FirstLoginPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           <div className="space-y-1">
             <label
               className="block font-normal"
