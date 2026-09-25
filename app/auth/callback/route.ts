@@ -4,24 +4,25 @@ import type { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const token_hash = searchParams.get('token_hash') || searchParams.get('token')
-  const type = searchParams.get('type')
+  const code = searchParams.get('code')
 
-  if (token_hash && type) {
+  if (code) {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          flowType: 'pkce'
+        }
+      }
     )
 
-    const { data, error } = await supabase.auth.verifyOtp({
-      token_hash,
-      type: type as 'magiclink' | 'signup'
-    })
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error && data.session) {
       const userEmail = data.session.user.email!
 
-      // Check if this user already exists in our users table
+      // Check if user exists in our users table
       const { data: existingUser } = await supabase
         .from('users')
         .select('id, first_name')
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
         .single()
 
       if (!existingUser) {
-        // New user — look up their client from the domain registry
+        // New user — look up client from domain
         const domain = userEmail.split('@')[1]
 
         const { data: domainRecord } = await supabase
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}/first-login`)
       }
 
-      // Returning user — check if name is captured
+      // Returning user — check name is captured
       if (!existingUser.first_name) {
         return NextResponse.redirect(`${origin}/first-login`)
       }
