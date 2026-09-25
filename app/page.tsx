@@ -11,14 +11,14 @@ function PactWordmark() {
       <div className="flex items-baseline">
         <span
           className="text-2xl font-medium"
-          style={{ color: "#431F5D" }}
+          style={{ color: "#865596" }}
         >
           Pact
         </span>
         <span
           className="inline-block rounded-full ml-0.5"
           style={{
-            background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+            background: "linear-gradient(135deg, #EF7043, #D2582F)",
             width: "8px",
             height: "8px"
           }}
@@ -55,7 +55,6 @@ export default function LoginPage() {
 
     const domain = email.split("@")[1]?.toLowerCase()
 
-    // Check domain against client_domains table
     const { data: domainRecord, error: domainError } = await supabase
       .from("client_domains")
       .select("client_id")
@@ -71,7 +70,6 @@ export default function LoginPage() {
       return
     }
 
-    // Sign in with email and password
     const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -83,10 +81,9 @@ export default function LoginPage() {
       return
     }
 
-const userEmail = data.session.user.email!
+    const userEmail = data.session.user.email!
     const userId = data.session.user.id
 
-    // Check if user exists in our users table
     const { data: existingUser } = await supabase
       .from("users")
       .select("id, first_name")
@@ -94,7 +91,6 @@ const userEmail = data.session.user.email!
       .single()
 
     if (!existingUser) {
-      // New user — look up client from domain
       const domain = userEmail.split("@")[1]
 
       const { data: domainRecord } = await supabase
@@ -126,27 +122,55 @@ const userEmail = data.session.user.email!
 
   return (
     <main
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: "#F7F8FA" }}
+      className="min-h-screen flex flex-col items-center justify-center px-4"
+      style={{ backgroundColor: "#E5E5EA" }}
     >
+      {/* Hero text above the card */}
+      <div className="text-center mb-8">
+        <h1
+          className="font-semibold mb-2"
+          style={{
+            color: "#865596",
+            fontSize: "clamp(28px, 5vw, 36px)",
+            letterSpacing: "-0.01em"
+          }}
+        >
+          Every deal starts here.
+        </h1>
+        <p
+          className="font-normal"
+          style={{ color: "#4A4A6A", fontSize: "15px" }}
+        >
+          Trusted counsel, from the very first signature.
+        </p>
+      </div>
+
+      {/* Login card */}
       <div
         className="w-full max-w-[380px] px-8 py-10"
         style={{
           backgroundColor: "#FFFFFF",
-          border: "0.5px solid #E2E4E8",
-          borderRadius: "10px"
+          border: "0.5px solid #E5E5EA",
+          borderRadius: "10px",
+          boxShadow: "0 2px 16px rgba(0,0,0,0.06)"
         }}
       >
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6">
           <PactWordmark />
         </div>
 
-        <h1
-          className="font-medium text-center mb-2"
-          style={{ color: "#431F5D", fontSize: "18px" }}
+        {/* Divider */}
+        <div
+          className="mb-6"
+          style={{ height: "0.5px", backgroundColor: "#E5E5EA" }}
+        />
+
+        <h2
+          className="font-medium text-center mb-1"
+          style={{ color: "#865596", fontSize: "16px" }}
         >
           Sign in to Pact
-        </h1>
+        </h2>
         <p
           className="text-center mb-6"
           style={{ color: "#4A4A6A", fontSize: "13px" }}
@@ -169,16 +193,16 @@ const userEmail = data.session.user.email!
               className="w-full px-4 py-3 text-sm outline-none transition-all"
               style={{
                 backgroundColor: "#F7F8FA",
-                border: "0.5px solid #E2E4E8",
+                border: "0.5px solid #E5E5EA",
                 borderRadius: "6px",
                 color: "#431F5D"
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = "#FB6A1B"
-                e.target.style.boxShadow = "0 0 0 2px rgba(251, 106, 27, 0.2)"
+                e.target.style.borderColor = "#EF7043"
+                e.target.style.boxShadow = "0 0 0 2px rgba(239, 112, 67, 0.2)"
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = "#E2E4E8"
+                e.target.style.borderColor = "#E5E5EA"
                 e.target.style.boxShadow = "none"
               }}
             />
@@ -196,16 +220,16 @@ const userEmail = data.session.user.email!
               className="w-full px-4 py-3 text-sm outline-none transition-all"
               style={{
                 backgroundColor: "#F7F8FA",
-                border: "0.5px solid #E2E4E8",
+                border: "0.5px solid #E5E5EA",
                 borderRadius: "6px",
                 color: "#431F5D"
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = "#FB6A1B"
-                e.target.style.boxShadow = "0 0 0 2px rgba(251, 106, 27, 0.2)"
+                e.target.style.borderColor = "#EF7043"
+                e.target.style.boxShadow = "0 0 0 2px rgba(239, 112, 67, 0.2)"
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = "#E2E4E8"
+                e.target.style.borderColor = "#E5E5EA"
                 e.target.style.boxShadow = "none"
               }}
             />
@@ -231,7 +255,7 @@ const userEmail = data.session.user.email!
             disabled={formState === "loading"}
             className="w-full py-3 font-medium mt-4 transition-opacity hover:opacity-90 disabled:opacity-60"
             style={{
-              background: "linear-gradient(135deg, #FB6A1B, #D2582F)",
+              background: "linear-gradient(135deg, #EF7043, #D2582F)",
               color: "#FFFFFF",
               borderRadius: "6px",
               fontSize: "14px"
@@ -242,7 +266,7 @@ const userEmail = data.session.user.email!
         </form>
 
         <p
-          className="text-center mt-4"
+          className="text-center mt-5"
           style={{ color: "#9B9B9B", fontSize: "11px" }}
         >
           Access is by invitation only. Contact your Counselect account manager if you need access.
