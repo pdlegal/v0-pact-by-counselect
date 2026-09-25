@@ -84,12 +84,12 @@ function PactWordmark() {
   )
 }
 
-function NavBar({ firstName }: { firstName: string }) {
+function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
       <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
-        {firstName || "..."} · <Link href="/" className="hover:underline">Log out</Link>
+        {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""} · <Link href="/" className="hover:underline">Log out</Link>
       </span>
     </nav>
   )
@@ -291,6 +291,7 @@ export default function GeneratePage() {
 
   // Client data from Supabase
   const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
   const [clientId, setClientId] = useState("")
   const [entities, setEntities] = useState<ClientEntity[]>([])
@@ -320,12 +321,13 @@ export default function GeneratePage() {
 
       const { data: userData } = await supabase
         .from("users")
-        .select("first_name, client_id")
+        .select("first_name, last_name, client_id")
         .eq("id", session.user.id)
         .single()
 
       if (!userData) return
       setFirstName(userData.first_name || "")
+      setLastName(userData.last_name || "")
       setClientId(userData.client_id)
 
       const { data: clientData } = await supabase
@@ -443,7 +445,7 @@ export default function GeneratePage() {
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>
-      <NavBar firstName={firstName} />
+      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
       <div className="px-4 py-8">
         <form onSubmit={handleSubmit} className="mx-auto w-full"
           style={{ maxWidth: "580px", backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8", borderRadius: "10px", overflow: "hidden" }}>
