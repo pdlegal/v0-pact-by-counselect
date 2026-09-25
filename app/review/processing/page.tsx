@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 const WEBHOOK_URL = "https://prajoyd.app.n8n.cloud/webhook/nda-upload"
 const TARGET_SECONDS = 90
@@ -19,12 +20,12 @@ function PactWordmark() {
   )
 }
 
-function NavBar() {
+function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
       <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
-        Prajoy · <Link href="/" className="hover:underline">Log out</Link>
+        {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""} · <Link href="/" className="hover:underline">Log out</Link>
       </span>
     </nav>
   )
@@ -33,38 +34,40 @@ function NavBar() {
 type StepStatus = "pending" | "active" | "complete"
 interface Step { label: string; sublabel: string; status: StepStatus }
 
-const STEPS: Step[] = [
-  {
-    label: "NDA received",
-    sublabel: "Your document is in the queue.",
-    status: "complete"
-  },
-  {
-    label: "Reading the counterparty's draft",
-    sublabel: "Verifying this is an NDA and extracting the text.",
-    status: "pending"
-  },
-  {
-    label: "Identifying clauses",
-    sublabel: "Mapping confidentiality, IP, term, survival, and governing law.",
-    status: "pending"
-  },
-  {
-    label: "Comparing against TECHNIA's positions",
-    sublabel: "Checking each clause against 12 playbook positions.",
-    status: "pending"
-  },
-  {
-    label: "Checking for consistency",
-    sublabel: "A second pass to catch anything missed.",
-    status: "pending"
-  },
-  {
-    label: "Preparing your risk summary",
-    sublabel: "Almost done — building your key risks table.",
-    status: "pending"
-  }
-]
+function buildSteps(clientName: string): Step[] {
+  return [
+    {
+      label: "NDA received",
+      sublabel: "Your document is in the queue.",
+      status: "complete"
+    },
+    {
+      label: "Reading the counterparty's draft",
+      sublabel: "Verifying this is an NDA and extracting the text.",
+      status: "pending"
+    },
+    {
+      label: "Identifying clauses",
+      sublabel: "Mapping confidentiality, IP, term, survival, and governing law.",
+      status: "pending"
+    },
+    {
+      label: `Comparing against ${clientName || "your company"}'s positions`,
+      sublabel: "Checking each clause against the playbook positions.",
+      status: "pending"
+    },
+    {
+      label: "Checking for consistency",
+      sublabel: "A second pass to catch anything missed.",
+      status: "pending"
+    },
+    {
+      label: "Preparing your risk summary",
+      sublabel: "Almost done — building your key risks table.",
+      status: "pending"
+    }
+  ]
+}
 
 function ProgressStepper({ steps }: { steps: Step[] }) {
   return (
@@ -113,32 +116,24 @@ function Countdown({ startTime, done }: { startTime: number; done: boolean }) {
 
   useEffect(() => {
     if (done) { setSecondsLeft(0); return }
-
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000)
       const remaining = Math.max(0, TARGET_SECONDS - elapsed)
       setSecondsLeft(remaining)
     }, 1000)
-
     return () => clearInterval(interval)
   }, [startTime, done])
 
   if (done) return null
 
   return (
-    <div
-      className="mt-6 pt-5 flex items-center justify-between"
-      style={{ borderTop: "1px solid #F0F0F0" }}
-    >
+    <div className="mt-6 pt-5 flex items-center justify-between" style={{ borderTop: "1px solid #F0F0F0" }}>
       <p className="text-xs" style={{ color: "#9B9B9B" }}>
         {secondsLeft > 0
           ? `About ${secondsLeft} second${secondsLeft !== 1 ? "s" : ""} remaining`
           : "Almost there..."}
       </p>
-      <div
-        className="h-1 rounded-full overflow-hidden flex-1 ml-4"
-        style={{ backgroundColor: "#F0F0F0" }}
-      >
+      <div className="h-1 rounded-full overflow-hidden flex-1 ml-4" style={{ backgroundColor: "#F0F0F0" }}>
         <div
           className="h-full rounded-full transition-all duration-1000"
           style={{
@@ -157,10 +152,45 @@ function delay(ms: number) {
 
 export default function ReviewProcessingPage() {
   const router = useRouter()
-  const [steps, setSteps] = useState<Step[]>(STEPS)
+
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [clientName, setClientName] = useState("")
+  const [steps, setSteps] = useState<Step[]>(buildSteps(""))
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [startTime] = useState(Date.now())
+
+  // Load client data and rebuild steps with client name
+  useEffect(() => {
+    async function loadClientData() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("first_name, last_name, client_id")
+        .eq("id", session.user.id)
+        .single()
+
+      if (!userData) return
+      setFirstName(userData.first_name || "")
+      setLastName(userData.last_name || "")
+
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("display_name")
+        .eq("id", userData.client_id)
+        .single()
+
+      if (clientData) {
+        setClientName(clientData.display_name || "")
+        setSteps(buildSteps(clientData.display_name || ""))
+      }
+    }
+
+    loadClientData()
+  }, [])
 
   const advanceStep = (stepIndex: number, status: StepStatus) => {
     setSteps(prev => {
@@ -189,7 +219,7 @@ export default function ReviewProcessingPage() {
 
       const formData = new FormData()
       formData.append("data", file)
-      formData.append("client_id", context.client_id || "technia")
+      formData.append("client_id", context.client_id)
       formData.append("counterparty_name", context.counterpartyName)
       formData.append("party_type", context.partyType)
       formData.append("sharing_direction", context.sharingDirection)
@@ -257,13 +287,11 @@ export default function ReviewProcessingPage() {
         }
       `}</style>
 
-      <NavBar />
+      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
       <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div
-          className="w-full max-w-[520px] rounded-xl p-8"
-          style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
-        >
+        <div className="w-full max-w-[520px] rounded-xl p-8"
+          style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}>
           <h1 className="font-medium mb-1" style={{ color: "#431F5D", fontSize: "18px" }}>
             Reviewing your NDA
           </h1>
@@ -278,17 +306,14 @@ export default function ReviewProcessingPage() {
             </>
           ) : (
             <div className="mt-4">
-              <div
-                className="p-4 rounded-lg mb-4"
-                style={{ backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2" }}
-              >
+              <div className="p-4 rounded-lg mb-4"
+                style={{ backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2" }}>
                 <p style={{ color: "#B71C1C", fontSize: "13px" }}>{error}</p>
               </div>
               <button
                 onClick={() => router.push("/review")}
                 className="w-full py-3 rounded-md font-medium text-white"
-                style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", fontSize: "14px" }}
-              >
+                style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", fontSize: "14px" }}>
                 Go back and resubmit
               </button>
             </div>
