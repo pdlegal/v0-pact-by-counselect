@@ -263,7 +263,7 @@ function DeviationCard({
           <button
             onClick={() => {
               if (isMajor) onShowApprovalForm?.(deviation.id, false)
-              onStatusChange(deviation.id, deviation.status === "rejected" ? "pending" : "rejected")
+              onStatusChange(deviation.id, "rejected")
             }}
             className="px-4 py-2 text-xs font-medium rounded-lg transition-colors"
             style={{
