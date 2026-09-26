@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 function PactWordmark() {
   return (
@@ -15,12 +16,12 @@ function PactWordmark() {
   )
 }
 
-function NavBar() {
+function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
     <nav className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
       <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
-        Prajoy · <Link href="/" className="hover:underline">Log out</Link>
+        {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""} · <Link href="/" className="hover:underline">Log out</Link>
       </span>
     </nav>
   )
@@ -58,14 +59,13 @@ function StarRating() {
   )
 }
 
-function NDAPreviewCard({ formData }: { formData: Record<string, string> }) {
+function NDAPreviewCard({ formData, clientName }: { formData: Record<string, string>; clientName: string }) {
+  const displayName = clientName || "your company"
+
   return (
     <div
       className="rounded-xl overflow-hidden mb-6"
-      style={{
-        border: "1px solid #E2E4E8",
-        borderLeft: "3px solid #431F5D"
-      }}
+      style={{ border: "1px solid #E2E4E8", borderLeft: "3px solid #431F5D" }}
     >
       {/* Card header */}
       <div
@@ -86,24 +86,18 @@ function NDAPreviewCard({ formData }: { formData: Record<string, string> }) {
             Mutual Non-Disclosure Agreement
           </p>
           <p style={{ fontSize: "11px", color: "#865596" }}>
-            Drafted to {formData.technia_entity || "TECHNIA"}'s standard
+            Drafted to {formData.technia_entity || displayName}'s standard
           </p>
         </div>
-        <div
-          className="ml-auto px-2 py-1 rounded-full"
-          style={{ backgroundColor: "#E8F5E9" }}
-        >
+        <div className="ml-auto px-2 py-1 rounded-full" style={{ backgroundColor: "#E8F5E9" }}>
           <span style={{ fontSize: "11px", color: "#1B5E20", fontWeight: 500 }}>Ready to send</span>
         </div>
       </div>
 
       {/* Parties */}
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ borderBottom: "1px solid #F0F0F0" }}
-      >
+      <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid #F0F0F0" }}>
         <div className="flex-1 min-w-0">
-          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>TECHNIA entity</p>
+          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>{displayName} entity</p>
           <p className="font-medium truncate" style={{ fontSize: "13px", color: "#431F5D" }}>
             {formData.technia_entity || "—"}
           </p>
@@ -112,7 +106,6 @@ function NDAPreviewCard({ formData }: { formData: Record<string, string> }) {
           </p>
         </div>
 
-        {/* vs divider */}
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: "#F3EEF7" }}
@@ -132,10 +125,7 @@ function NDAPreviewCard({ formData }: { formData: Record<string, string> }) {
       </div>
 
       {/* Purpose */}
-      <div
-        className="px-5 py-4"
-        style={{ borderBottom: "1px solid #F0F0F0" }}
-      >
+      <div className="px-5 py-4" style={{ borderBottom: "1px solid #F0F0F0" }}>
         <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "4px" }}>Purpose</p>
         <p style={{ fontSize: "12px", color: "#4A4A6A", lineHeight: 1.5 }}>
           {formData.purpose || "—"}
@@ -166,7 +156,9 @@ function NDAPreviewCard({ formData }: { formData: Record<string, string> }) {
 
       {/* Signatory */}
       <div className="px-5 py-3" style={{ backgroundColor: "#FAFAFA" }}>
-        <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Signing for TECHNIA</p>
+        <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>
+          Signing for {displayName}
+        </p>
         <p style={{ fontSize: "12px", color: "#431F5D" }}>
           {formData.signatory_name
             ? `${formData.signatory_name} · ${formData.signatory_title || ""}`
@@ -178,6 +170,9 @@ function NDAPreviewCard({ formData }: { formData: Record<string, string> }) {
 }
 
 export default function GenerateOutputPage() {
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [clientName, setClientName] = useState("")
   const [docxBase64, setDocxBase64] = useState<string | null>(null)
   const [formData, setFormData] = useState<Record<string, string> | null>(null)
 
@@ -186,6 +181,33 @@ export default function GenerateOutputPage() {
     const raw = sessionStorage.getItem("generateFormData")
     if (base64) setDocxBase64(base64)
     if (raw) setFormData(JSON.parse(raw))
+  }, [])
+
+  useEffect(() => {
+    async function loadClientData() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("first_name, last_name, client_id")
+        .eq("id", session.user.id)
+        .single()
+
+      if (!userData) return
+      setFirstName(userData.first_name || "")
+      setLastName(userData.last_name || "")
+
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("display_name")
+        .eq("id", userData.client_id)
+        .single()
+
+      if (clientData) setClientName(clientData.display_name || "")
+    }
+
+    loadClientData()
   }, [])
 
   const handleDownloadDocx = () => {
@@ -211,14 +233,11 @@ export default function GenerateOutputPage() {
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>
-      <NavBar />
+      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
       <div className="px-4 py-8">
-        <div
-          className="mx-auto"
-          style={{ maxWidth: "580px" }}
-        >
-          {/* Page heading */}
+        <div className="mx-auto" style={{ maxWidth: "580px" }}>
+
           <div className="mb-6">
             <h1 className="font-medium" style={{ fontSize: "20px", color: "#431F5D" }}>
               Your NDA is ready
@@ -228,18 +247,13 @@ export default function GenerateOutputPage() {
             </p>
           </div>
 
-          {/* Preview card */}
-          {formData && <NDAPreviewCard formData={formData} />}
+          {formData && <NDAPreviewCard formData={formData} clientName={clientName} />}
 
-          {/* Download section */}
           <div
             className="rounded-xl p-5"
             style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
           >
-            <p
-              className="text-center font-medium mb-4"
-              style={{ fontSize: "13px", color: "#431F5D" }}
-            >
+            <p className="text-center font-medium mb-4" style={{ fontSize: "13px", color: "#431F5D" }}>
               Looks right? Download your NDA.
             </p>
 
@@ -259,18 +273,13 @@ export default function GenerateOutputPage() {
               {docxBase64 ? "Download NDA (.docx)" : "Preparing your NDA..."}
             </button>
 
-            <p
-              className="text-center mt-4"
-              style={{ fontSize: "11px", color: "#9B9B9B", lineHeight: 1.6 }}
-            >
+            <p className="text-center mt-4" style={{ fontSize: "11px", color: "#9B9B9B", lineHeight: 1.6 }}>
               Review before sending to your counterparty.
             </p>
           </div>
 
-          {/* Divider */}
           <div className="my-6" style={{ height: "0.5px", backgroundColor: "#E2E4E8" }} />
 
-          {/* Star rating */}
           <div
             className="rounded-xl p-5"
             style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
@@ -278,7 +287,6 @@ export default function GenerateOutputPage() {
             <StarRating />
           </div>
 
-          {/* Divider */}
           <div className="my-6" style={{ height: "0.5px", backgroundColor: "#E2E4E8" }} />
 
           <div className="text-center">
