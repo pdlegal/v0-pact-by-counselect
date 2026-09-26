@@ -37,6 +37,7 @@ interface Deviation {
   counterparty: string
   standard: string
   reason: string
+  suggestedChange: string
   status: DeviationStatus
   declarationChecked?: boolean
   approvedBy?: string
@@ -73,6 +74,49 @@ function StatusBadge({ status }: { status: DeviationStatus }) {
   )
 }
 
+function SuggestedChangeBlock({ suggestedChange }: { suggestedChange: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(suggestedChange)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="px-4 pb-4" style={{ borderTop: "1px solid #F0F0F0", paddingTop: "12px" }}>
+      <p className="text-xs font-medium uppercase mb-3" style={{ color: "#431F5D", letterSpacing: "0.06em" }}>
+        Suggested change
+      </p>
+
+      {/* Suggested change text with copy button */}
+      <div
+        className="rounded-lg p-3 mb-3 flex items-start gap-3"
+        style={{ backgroundColor: "#F0FAF4", border: "0.5px solid #A5D6B7" }}
+      >
+        <p className="text-xs leading-relaxed flex-1" style={{ color: "#1B5E20" }}>
+          {suggestedChange}
+        </p>
+        <button
+          onClick={handleCopy}
+          className="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+          style={{
+            backgroundColor: copied ? "#1B5E20" : "#FFFFFF",
+            color: copied ? "#FFFFFF" : "#1B5E20",
+            border: "0.5px solid #A5D6B7"
+          }}
+        >
+          {copied ? "Copied ✓" : "Copy"}
+        </button>
+      </div>
+
+      <p className="text-xs mb-2" style={{ color: "#9B9B9B" }}>
+        Apply this change to the counterparty draft, then share the updated version for signature.
+      </p>
+    </div>
+  )
+}
+
 function DeviationCard({
   deviation, clientName, onStatusChange, onDeclarationChange, onApprovalFieldChange, onShowApprovalForm
 }: {
@@ -90,6 +134,7 @@ function DeviationCard({
     : true
   const showApprovalForm = isMajor && deviation.showApprovalForm
   const displayName = clientName || "your company"
+  const isRejected = deviation.status === "rejected"
 
   return (
     <div
@@ -153,14 +198,19 @@ function DeviationCard({
       )}
 
       {/* Issue description */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-3" style={{ borderBottom: "1px solid #F0F0F0" }}>
         <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
       </div>
 
+      {/* Suggested change — shown when rejected */}
+      {isRejected && deviation.suggestedChange && (
+        <SuggestedChangeBlock suggestedChange={deviation.suggestedChange} />
+      )}
+
       {/* Major deviation approval form */}
       {showApprovalForm && (
-        <div className="px-4 pb-3">
-          <div className="p-3 rounded-lg" style={{ backgroundColor: "#F7F8FA" }}>
+        <div className="px-4 pb-3" style={{ borderTop: "1px solid #F0F0F0" }}>
+          <div className="p-3 rounded-lg mt-3" style={{ backgroundColor: "#F7F8FA" }}>
             <p className="text-xs mb-3 font-medium" style={{ color: "#431F5D" }}>
               To accept this major deviation, please provide approval details:
             </p>
@@ -213,17 +263,17 @@ function DeviationCard({
           <button
             onClick={() => {
               if (isMajor) onShowApprovalForm?.(deviation.id, false)
-              onStatusChange(deviation.id, "rejected")
+              onStatusChange(deviation.id, deviation.status === "rejected" ? "pending" : "rejected")
             }}
             className="px-4 py-2 text-xs font-medium rounded-lg transition-colors"
             style={{
-              backgroundColor: deviation.status === "rejected" ? "#FFEBEE" : "#F7F8FA",
-              color: deviation.status === "rejected" ? "#B71C1C" : "#4A4A6A",
-              border: deviation.status === "rejected" ? "1px solid #FFCDD2" : "1px solid #E2E4E8",
+              backgroundColor: isRejected ? "#FFEBEE" : "#F7F8FA",
+              color: isRejected ? "#B71C1C" : "#4A4A6A",
+              border: isRejected ? "1px solid #FFCDD2" : "1px solid #E2E4E8",
               cursor: "pointer"
             }}
           >
-            Reject — apply {displayName} position
+            {isRejected ? "Rejected" : "Reject"}
           </button>
           <button
             onClick={() => {
@@ -244,8 +294,8 @@ function DeviationCard({
             }}
           >
             {isMajor && !showApprovalForm && deviation.status === "pending"
-              ? "Accept — provide approval"
-              : "Accept"}
+              ? "Accept with approval"
+              : "Accept as is"}
           </button>
         </div>
       )}
@@ -256,12 +306,9 @@ function DeviationCard({
 export default function DeviationTablePage() {
   const router = useRouter()
 
-  // Client data from Supabase
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
-
-  // Review data from sessionStorage
   const [deviations, setDeviations] = useState<Deviation[]>([])
   const [documentSummary, setDocumentSummary] = useState("")
   const [overallRiskLevel, setOverallRiskLevel] = useState("")
@@ -270,7 +317,6 @@ export default function DeviationTablePage() {
   const [counterpartyName, setCounterpartyName] = useState("")
   const [loaded, setLoaded] = useState(false)
 
-  // Load client data from Supabase
   useEffect(() => {
     async function loadClientData() {
       const { data: { session } } = await supabase.auth.getSession()
@@ -298,7 +344,6 @@ export default function DeviationTablePage() {
     loadClientData()
   }, [])
 
-  // Load review results from sessionStorage
   useEffect(() => {
     const raw = sessionStorage.getItem("review_result")
     const name = sessionStorage.getItem("review_counterparty_name")
@@ -312,8 +357,12 @@ export default function DeviationTablePage() {
     setCounterpartyName(name || "Counterparty")
 
     const issues: Deviation[] = (data.issues || []).map((item: {
-      risk: string; clause: string; issue: string
-      counterparty_position?: string; standard_position?: string
+      risk: string
+      clause: string
+      issue: string
+      counterparty_position?: string
+      standard_position?: string
+      suggested_change?: string
     }, index: number) => ({
       id: index + 1,
       type: item.risk === "MAJOR" ? "major" : "minor",
@@ -321,6 +370,7 @@ export default function DeviationTablePage() {
       counterparty: item.counterparty_position || "",
       standard: item.standard_position || "",
       reason: item.issue,
+      suggestedChange: item.suggested_change || "",
       status: "pending" as DeviationStatus,
       declarationChecked: false
     }))
@@ -414,6 +464,11 @@ export default function DeviationTablePage() {
           </h1>
           <p style={{ color: "#4A4A6A", fontSize: "13px" }}>{counterpartyName}</p>
         </div>
+
+        {/* Instruction line */}
+        <p className="mb-6" style={{ fontSize: "13px", color: "#4A4A6A" }}>
+          Review each deviation. For items you reject, a suggested change will appear for you to apply to the counterparty draft.
+        </p>
 
         {/* Summary strip */}
         <div
@@ -534,7 +589,7 @@ export default function DeviationTablePage() {
         {allActioned && onlyMinorDeviations && (
           <div className="p-4 rounded-xl mb-4" style={{ backgroundColor: "#E8F5E9", border: "1px solid #C8E6C9" }}>
             <p style={{ color: "#1B5E20", fontSize: "13px" }}>
-              All deviations reviewed. This version is ready to send to the counterparty.
+              All deviations reviewed. Apply the suggested changes to the counterparty draft before sending.
             </p>
           </div>
         )}
@@ -554,9 +609,9 @@ export default function DeviationTablePage() {
           }}
         >
           {hasEscalation
-            ? "Download unavailable — awaiting legal review"
+            ? "Awaiting legal review"
             : allActioned
-              ? "Download reviewed NDA (.docx)"
+              ? "Mark as complete"
               : "Action all deviations to unlock"
           }
         </button>
