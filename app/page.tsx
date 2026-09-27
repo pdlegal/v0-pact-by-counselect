@@ -119,48 +119,8 @@ export default function LoginPage() {
       setFormState("error")
       return
     }
-    
-    const userEmail = data.session.user.email!
-    const userId = data.session.user.id
-    
-    // Set session explicitly before querying
-    await supabase.auth.setSession({
-      access_token: data.session.access_token,
-      refresh_token: data.session.refresh_token
-    })
-    
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("id, first_name")
-      .eq("id", userId)
-      .single()
 
-    if (!existingUser) {
-      const domain = userEmail.split("@")[1]
-      const { data: domainRecord } = await supabase
-        .from("client_domains")
-        .select("client_id")
-        .eq("domain", domain)
-        .eq("active", true)
-        .single()
-
-      if (domainRecord) {
-        await supabase.from("users").insert({
-          id: userId,
-          email: userEmail,
-          client_id: domainRecord.client_id
-        })
-      }
-
-      router.push("/first-login")
-      return
-    }
-
-    if (!existingUser.first_name) {
-      router.push("/first-login")
-      return
-    }
-
+    // Session is established — let /home handle user record check and first-login redirect
     router.push("/home")
   }
 
