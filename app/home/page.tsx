@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 function PactWordmark({ variant = "light" }: { variant?: "light" | "dark" }) {
@@ -101,6 +102,7 @@ function HeroSection({ clientName }: { clientName: string }) {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
@@ -109,7 +111,7 @@ export default function HomePage() {
   useEffect(() => {
     async function loadClientData() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) { router.push("/"); return }
 
       const { data: userData } = await supabase
         .from("users")
@@ -117,7 +119,34 @@ export default function HomePage() {
         .eq("id", session.user.id)
         .single()
 
-      if (!userData) return
+      // No user record — new user, create it and redirect to first-login
+      if (!userData) {
+        const domain = session.user.email!.split("@")[1]
+        const { data: domainRecord } = await supabase
+          .from("client_domains")
+          .select("client_id")
+          .eq("domain", domain)
+          .eq("active", true)
+          .single()
+
+        if (domainRecord) {
+          await supabase.from("users").insert({
+            id: session.user.id,
+            email: session.user.email!,
+            client_id: domainRecord.client_id
+          })
+        }
+
+        router.push("/first-login")
+        return
+      }
+
+      // User exists but hasn't set their name yet
+      if (!userData.first_name) {
+        router.push("/first-login")
+        return
+      }
+
       setFirstName(userData.first_name || "")
       setLastName(userData.last_name || "")
       setIsAdmin(userData.role === "admin")
@@ -132,7 +161,7 @@ export default function HomePage() {
     }
 
     loadClientData()
-  }, [])
+  }, [router])
 
   return (
     <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#431F5D" }}>
