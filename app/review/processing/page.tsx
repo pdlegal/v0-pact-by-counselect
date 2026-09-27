@@ -36,36 +36,12 @@ interface Step { label: string; sublabel: string; status: StepStatus }
 
 function buildSteps(clientName: string): Step[] {
   return [
-    {
-      label: "NDA received",
-      sublabel: "Your document is in the queue.",
-      status: "complete"
-    },
-    {
-      label: "Reading the counterparty's draft",
-      sublabel: "Verifying this is an NDA and extracting the text.",
-      status: "pending"
-    },
-    {
-      label: "Identifying clauses",
-      sublabel: "Mapping confidentiality, IP, term, survival, and governing law.",
-      status: "pending"
-    },
-    {
-      label: `Comparing against ${clientName || "your company"}'s positions`,
-      sublabel: "Checking each clause against the playbook positions.",
-      status: "pending"
-    },
-    {
-      label: "Checking for consistency",
-      sublabel: "A second pass to catch anything missed.",
-      status: "pending"
-    },
-    {
-      label: "Preparing your risk summary",
-      sublabel: "Almost done — building your key risks table.",
-      status: "pending"
-    }
+    { label: "NDA received", sublabel: "Your document is in the queue.", status: "complete" },
+    { label: "Reading the counterparty's draft", sublabel: "Verifying this is an NDA and extracting the text.", status: "pending" },
+    { label: "Identifying clauses", sublabel: "Mapping confidentiality, IP, term, survival, and governing law.", status: "pending" },
+    { label: `Comparing against ${clientName || "your company"}'s positions`, sublabel: "Checking each clause against the playbook positions.", status: "pending" },
+    { label: "Checking for consistency", sublabel: "A second pass to catch anything missed.", status: "pending" },
+    { label: "Preparing your risk summary", sublabel: "Almost done — building your key risks table.", status: "pending" }
   ]
 }
 
@@ -78,31 +54,17 @@ function ProgressStepper({ steps }: { steps: Step[] }) {
             <div
               className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${step.status === "active" ? "animate-pulse-dot" : ""}`}
               style={{
-                background: step.status === "complete"
-                  ? "#431F5D"
-                  : step.status === "active"
-                  ? "linear-gradient(135deg, #FB6A1B, #D2582F)"
-                  : "#E2E4E8"
+                background: step.status === "complete" ? "#431F5D" : step.status === "active" ? "linear-gradient(135deg, #FB6A1B, #D2582F)" : "#E2E4E8"
               }}
             />
-            {index < steps.length - 1 && (
-              <div className="w-px h-8" style={{ backgroundColor: "#E2E4E8" }} />
-            )}
+            {index < steps.length - 1 && <div className="w-px h-8" style={{ backgroundColor: "#E2E4E8" }} />}
           </div>
           <div className="pb-5">
-            <p
-              className="text-sm"
-              style={{
-                color: step.status === "pending" ? "#9B9B9B" : "#431F5D",
-                fontWeight: step.status === "active" ? 500 : 400
-              }}
-            >
+            <p className="text-sm" style={{ color: step.status === "pending" ? "#9B9B9B" : "#431F5D", fontWeight: step.status === "active" ? 500 : 400 }}>
               {step.label}
             </p>
             {step.status !== "pending" && (
-              <p className="text-xs mt-0.5" style={{ color: "#9B9B9B" }}>
-                {step.sublabel}
-              </p>
+              <p className="text-xs mt-0.5" style={{ color: "#9B9B9B" }}>{step.sublabel}</p>
             )}
           </div>
         </div>
@@ -129,17 +91,12 @@ function Countdown({ startTime, done }: { startTime: number; done: boolean }) {
   return (
     <div className="mt-6 pt-5 flex items-center justify-between" style={{ borderTop: "1px solid #F0F0F0" }}>
       <p className="text-xs" style={{ color: "#9B9B9B" }}>
-        {secondsLeft > 0
-          ? `About ${secondsLeft} second${secondsLeft !== 1 ? "s" : ""} remaining`
-          : "Almost there..."}
+        {secondsLeft > 0 ? `About ${secondsLeft} second${secondsLeft !== 1 ? "s" : ""} remaining` : "Almost there..."}
       </p>
       <div className="h-1 rounded-full overflow-hidden flex-1 ml-4" style={{ backgroundColor: "#F0F0F0" }}>
         <div
           className="h-full rounded-full transition-all duration-1000"
-          style={{
-            width: `${Math.min(100, ((TARGET_SECONDS - secondsLeft) / TARGET_SECONDS) * 100)}%`,
-            background: "linear-gradient(90deg, #FB6A1B, #D2582F)"
-          }}
+          style={{ width: `${Math.min(100, ((TARGET_SECONDS - secondsLeft) / TARGET_SECONDS) * 100)}%`, background: "linear-gradient(90deg, #FB6A1B, #D2582F)" }}
         />
       </div>
     </div>
@@ -156,16 +113,19 @@ export default function ReviewProcessingPage() {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
+  const [clientId, setClientId] = useState("")
+  const [userId, setUserId] = useState("")
   const [steps, setSteps] = useState<Step[]>(buildSteps(""))
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [startTime] = useState(Date.now())
 
-  // Load client data and rebuild steps with client name
   useEffect(() => {
     async function loadClientData() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
+
+      setUserId(session.user.id)
 
       const { data: userData } = await supabase
         .from("users")
@@ -176,6 +136,7 @@ export default function ReviewProcessingPage() {
       if (!userData) return
       setFirstName(userData.first_name || "")
       setLastName(userData.last_name || "")
+      setClientId(userData.client_id)
 
       const { data: clientData } = await supabase
         .from("clients")
@@ -213,6 +174,28 @@ export default function ReviewProcessingPage() {
       }
 
       const context = JSON.parse(contextRaw)
+
+      // Generate submission ID
+      const submissionId = crypto.randomUUID()
+
+      // Store submission ID in sessionStorage for results page to use
+      sessionStorage.setItem("review_submission_id", submissionId)
+
+      // Insert submission row — processing started
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await supabase.from("submissions").insert({
+          id: submissionId,
+          client_id: context.client_id,
+          user_id: session.user.id,
+          flow: "review",
+          status: "processing",
+          counterparty_name: context.counterpartyName,
+          purpose: context.engagementType,
+          claude_model: "claude-sonnet-4-5"
+        })
+      }
+
       const res = await fetch(fileData)
       const blob = await res.blob()
       const file = new File([blob], fileName, { type: fileType })
@@ -248,6 +231,27 @@ export default function ReviewProcessingPage() {
       advanceStep(5, "complete")
 
       const data = Array.isArray(result) ? result[0] : result
+
+      // Determine output state and escalation flag
+      const hasEscalation = data.escalate_to && data.escalate_to !== "none"
+      const outputState = hasEscalation
+        ? "escalation"
+        : data.overall_risk_level === "MAJOR"
+        ? "major"
+        : data.overall_risk_level === "MINOR"
+        ? "minor"
+        : "compliant"
+
+      // Update submission row — processing complete
+      if (session) {
+        await supabase.from("submissions").update({
+          status: "complete",
+          output_state: outputState,
+          escalation_flag: hasEscalation,
+          completed_at: new Date().toISOString()
+        }).eq("id", submissionId)
+      }
+
       sessionStorage.setItem("review_result", JSON.stringify(data))
       sessionStorage.setItem("review_counterparty_name", context.counterpartyName)
 
@@ -282,16 +286,13 @@ export default function ReviewProcessingPage() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
-        .animate-pulse-dot {
-          animation: pulse-dot 1.5s ease-in-out infinite;
-        }
+        .animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
       `}</style>
 
       <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
       <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-[520px] rounded-xl p-8"
-          style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}>
+        <div className="w-full max-w-[520px] rounded-xl p-8" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}>
           <h1 className="font-medium mb-1" style={{ color: "#431F5D", fontSize: "18px" }}>
             Reviewing your NDA
           </h1>
@@ -306,8 +307,7 @@ export default function ReviewProcessingPage() {
             </>
           ) : (
             <div className="mt-4">
-              <div className="p-4 rounded-lg mb-4"
-                style={{ backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2" }}>
+              <div className="p-4 rounded-lg mb-4" style={{ backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2" }}>
                 <p style={{ color: "#B71C1C", fontSize: "13px" }}>{error}</p>
               </div>
               <button
