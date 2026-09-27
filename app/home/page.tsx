@@ -17,7 +17,7 @@ function PactWordmark({ variant = "light" }: { variant?: "light" | "dark" }) {
   )
 }
 
-function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
+function NavBar({ firstName, lastName, clientName, isAdmin }: { firstName: string; lastName: string; clientName: string; isAdmin: boolean }) {
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <div className="flex flex-col">
@@ -30,6 +30,11 @@ function NavBar({ firstName, lastName, clientName }: { firstName: string; lastNa
         <Link href="/pending" className="text-xs font-normal hover:underline" style={{ color: "rgba(255,255,255,0.65)" }}>
           My requests
         </Link>
+        {isAdmin && (
+          <Link href="/admin" className="text-xs font-normal hover:underline" style={{ color: "#EF7043" }}>
+            Admin
+          </Link>
+        )}
         <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
           {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""} · <Link href="/" className="hover:underline">Log out</Link>
         </span>
@@ -99,6 +104,7 @@ export default function HomePage() {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     async function loadClientData() {
@@ -107,13 +113,14 @@ export default function HomePage() {
 
       const { data: userData } = await supabase
         .from("users")
-        .select("first_name, last_name, client_id")
+        .select("first_name, last_name, client_id, role")
         .eq("id", session.user.id)
         .single()
 
       if (!userData) return
       setFirstName(userData.first_name || "")
       setLastName(userData.last_name || "")
+      setIsAdmin(userData.role === "admin")
 
       const { data: clientData } = await supabase
         .from("clients")
@@ -129,7 +136,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#431F5D" }}>
-      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
+      <NavBar firstName={firstName} lastName={lastName} clientName={clientName} isAdmin={isAdmin} />
       <HeroSection clientName={clientName} />
     </main>
   )
