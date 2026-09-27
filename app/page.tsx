@@ -119,10 +119,16 @@ export default function LoginPage() {
       setFormState("error")
       return
     }
-
+    
     const userEmail = data.session.user.email!
     const userId = data.session.user.id
-
+    
+    // Set session explicitly before querying
+    await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token
+    })
+    
     const { data: existingUser } = await supabase
       .from("users")
       .select("id, first_name")
