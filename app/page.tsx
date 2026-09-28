@@ -99,8 +99,12 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   const domain = email.split("@")[1]?.toLowerCase()
 
-  const domainResponse = await fetch(`/api/check-domain?domain=${domain}`)
-  const domainRecord = domainResponse.ok ? await domainResponse.json() : null
+  const { data: domainRecord } = await supabase
+    .from("client_domains")
+    .select("client_id")
+    .eq("domain", domain)
+    .eq("active", true)
+    .maybeSingle()
 
   if (!domainRecord) {
     setErrorMessage("This email domain is not registered on Pact. Contact your Counselect account manager to get access.")
