@@ -93,36 +93,31 @@ export default function LoginPage() {
     }
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setFormState("loading")
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setFormState("loading")
 
-    const domain = email.split("@")[1]?.toLowerCase()
+  const domain = email.split("@")[1]?.toLowerCase()
 
-    const { data: domainRecord, error: domainError } = await supabase
-      .from("client_domains")
-      .select("client_id")
-      .eq("domain", domain)
-      .eq("active", true)
-      .maybeSingle()
+  const domainResponse = await fetch(`/api/check-domain?domain=${domain}`)
+  const domainRecord = domainResponse.ok ? await domainResponse.json() : null
 
-    if (domainError || !domainRecord) {
-      setErrorMessage("This email domain is not registered on Pact. Contact your Counselect account manager to get access.")
-      setFormState("error")
-      return
-    }
-
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (signInError || !data.session) {
-      setErrorMessage("Incorrect email or password. Please try again.")
-      setFormState("error")
-      return
-    }
-
-    // Session is established — let /home handle user record check and first-login redirect
-    router.push("/home")
+  if (!domainRecord) {
+    setErrorMessage("This email domain is not registered on Pact. Contact your Counselect account manager to get access.")
+    setFormState("error")
+    return
   }
+
+  const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+
+  if (signInError || !data.session) {
+    setErrorMessage("Incorrect email or password. Please try again.")
+    setFormState("error")
+    return
+  }
+
+  router.push("/home")
+}
 
   return (
     <main
