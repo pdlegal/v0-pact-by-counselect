@@ -104,7 +104,7 @@ export default function LoginPage() {
       .select("client_id")
       .eq("domain", domain)
       .eq("active", true)
-      .single()
+      .maybeSingle()
 
     if (domainError || !domainRecord) {
       setErrorMessage("This email domain is not registered on Pact. Contact your Counselect account manager to get access.")
