@@ -37,21 +37,16 @@ interface Deviation {
   counterparty: string
   standard: string
   reason: string
-  suggestedChange: string
   status: DeviationStatus
-  declarationChecked?: boolean
-  approvedBy?: string
-  approvalDate?: string
-  showApprovalForm?: boolean
 }
 
 function RiskBadge({ type }: { type: "minor" | "major" | "escalation" }) {
   const styles = {
-    minor: { bg: "#FFF3E0", color: "#E65100" },
-    major: { bg: "#FFEBEE", color: "#B71C1C" },
-    escalation: { bg: "#F5F5F5", color: "#4A4A6A" }
+    minor:      { bg: "#FAEEDA", color: "#854F0B" },
+    major:      { bg: "#FCEBEB", color: "#A32D2D" },
+    escalation: { bg: "#EEEDFE", color: "#534AB7" },
   }
-  const labels = { minor: "Minor", major: "Major", escalation: "Escalation" }
+  const labels = { minor: "Minor", major: "Major", escalation: "Escalated" }
   return (
     <span className="px-2 py-0.5 text-xs font-medium rounded-full"
       style={{ backgroundColor: styles[type].bg, color: styles[type].color }}>
@@ -60,250 +55,123 @@ function RiskBadge({ type }: { type: "minor" | "major" | "escalation" }) {
   )
 }
 
-function StatusBadge({ status }: { status: DeviationStatus }) {
-  if (status === "pending") return null
-  const styles = {
-    accepted: { bg: "#E8F5E9", color: "#1B5E20" },
-    rejected: { bg: "#FFEBEE", color: "#B71C1C" }
-  }
-  return (
-    <span className="px-2 py-0.5 text-xs font-medium rounded-full"
-      style={{ backgroundColor: styles[status].bg, color: styles[status].color }}>
-      {status === "accepted" ? "Accepted" : "Rejected"}
-    </span>
-  )
-}
-
-function SuggestedChangeBlock({ suggestedChange }: { suggestedChange: string }) {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(suggestedChange)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <div className="px-4 pb-4" style={{ borderTop: "1px solid #F0F0F0", paddingTop: "12px" }}>
-      <p className="text-xs font-medium uppercase mb-3" style={{ color: "#431F5D", letterSpacing: "0.06em" }}>
-        Suggested change
-      </p>
-      <div
-        className="rounded-lg p-3 mb-3 flex items-start gap-3"
-        style={{ backgroundColor: "#F0FAF4", border: "0.5px solid #A5D6B7" }}
-      >
-        <p className="text-xs leading-relaxed flex-1" style={{ color: "#1B5E20" }}>
-          {suggestedChange}
-        </p>
-        <button
-          onClick={handleCopy}
-          className="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
-          style={{
-            backgroundColor: copied ? "#1B5E20" : "#FFFFFF",
-            color: copied ? "#FFFFFF" : "#1B5E20",
-            border: "0.5px solid #A5D6B7"
-          }}
-        >
-          {copied ? "Copied ✓" : "Copy"}
-        </button>
-      </div>
-      <p className="text-xs mb-2" style={{ color: "#9B9B9B" }}>
-        Apply this change to the counterparty draft, then share the updated version for signature.
-      </p>
-    </div>
-  )
-}
-
-function DeviationCard({
-  deviation, clientName, onStatusChange, onDeclarationChange, onApprovalFieldChange, onShowApprovalForm
+function MinorDeviationRow({
+  deviation, clientName, onStatusChange,
 }: {
   deviation: Deviation
   clientName: string
   onStatusChange: (id: number, status: DeviationStatus) => void
-  onDeclarationChange?: (id: number, checked: boolean) => void
-  onApprovalFieldChange?: (id: number, field: "approvedBy" | "approvalDate", value: string) => void
-  onShowApprovalForm?: (id: number, show: boolean) => void
 }) {
-  const isEscalation = deviation.type === "escalation"
-  const isMajor = deviation.type === "major"
-  const canAcceptMajor = isMajor
-    ? (deviation.declarationChecked && deviation.approvedBy?.trim() && deviation.approvalDate?.trim())
-    : true
-  const showApprovalForm = isMajor && deviation.showApprovalForm
   const displayName = clientName || "your company"
+  const isAccepted = deviation.status === "accepted"
   const isRejected = deviation.status === "rejected"
 
   return (
-    <div
-      className="rounded-xl mb-4 overflow-hidden"
-      style={{
-        border: deviation.type === "major"
-          ? "1.5px solid #FFCDD2"
-          : deviation.type === "escalation"
-          ? "1.5px solid #FB6A1B"
-          : "1.5px solid #FFE0B2",
-        backgroundColor: "#FFFFFF"
-      }}
-    >
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{
-          backgroundColor: deviation.type === "major" ? "#FFF5F5" : deviation.type === "escalation" ? "#FFF8F5" : "#FFFBF5"
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
-          <RiskBadge type={deviation.type} />
-          <StatusBadge status={deviation.status} />
+    <div className="rounded-xl mb-3 overflow-hidden"
+      style={{ border: "0.5px solid #E2E4E8", backgroundColor: "#FFFFFF" }}>
+      <div className="px-4 py-3 flex items-center gap-2"
+        style={{ borderBottom: "0.5px solid #F0F0F0", backgroundColor: "#FFFBF5" }}>
+        <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
+        <RiskBadge type="minor" />
+      </div>
+      <div className="grid grid-cols-2" style={{ borderBottom: "0.5px solid #F0F0F0" }}>
+        <div className="p-3" style={{ borderRight: "0.5px solid #F0F0F0" }}>
+          <p className="text-xs font-medium uppercase mb-1" style={{ color: "#854F0B", letterSpacing: "0.06em" }}>Counterparty</p>
+          <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.counterparty || "—"}</p>
+        </div>
+        <div className="p-3">
+          <p className="text-xs font-medium uppercase mb-1" style={{ color: "#431F5D", letterSpacing: "0.06em" }}>{displayName} standard</p>
+          <p className="text-xs leading-relaxed" style={{ color: "#431F5D" }}>{deviation.standard || "—"}</p>
         </div>
       </div>
-
-      {!isEscalation && (
-        <div className="grid grid-cols-2" style={{ borderBottom: "1px solid #F0F0F0" }}>
-          <div className="p-4" style={{ borderRight: "1px solid #F0F0F0", backgroundColor: "#FFFBF5" }}>
-            <p className="text-xs font-medium uppercase mb-2" style={{ color: "#E65100", letterSpacing: "0.06em" }}>Counterparty</p>
-            <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.counterparty || "—"}</p>
-          </div>
-          <div className="relative">
-            <div
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center z-10"
-              style={{ backgroundColor: "#431F5D" }}
-            >
-              <span style={{ color: "#FFFFFF", fontSize: "9px", fontWeight: 600 }}>vs</span>
-            </div>
-            <div className="p-4" style={{ backgroundColor: "#F8F5FF" }}>
-              <p className="text-xs font-medium uppercase mb-2" style={{ color: "#431F5D", letterSpacing: "0.06em" }}>{displayName} standard</p>
-              <p className="text-xs leading-relaxed" style={{ color: "#431F5D" }}>{deviation.standard || "—"}</p>
-            </div>
-          </div>
+      <div className="px-4 py-3 flex items-center justify-between gap-3"
+        style={{ borderTop: "0.5px solid #F0F0F0" }}>
+        <p className="text-xs leading-relaxed flex-1" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={() => onStatusChange(deviation.id, "rejected")}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg"
+            style={{
+              backgroundColor: isRejected ? "#FCEBEB" : "#F7F8FA",
+              color: isRejected ? "#A32D2D" : "#4A4A6A",
+              border: isRejected ? "0.5px solid #F7C1C1" : "0.5px solid #E2E4E8",
+            }}>
+            Reject
+          </button>
+          <button
+            onClick={() => onStatusChange(deviation.id, "accepted")}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg"
+            style={{
+              backgroundColor: isAccepted ? "#EAF3DE" : "#431F5D",
+              color: isAccepted ? "#3B6D11" : "#FFFFFF",
+              border: isAccepted ? "0.5px solid #C0DD97" : "none",
+            }}>
+            Accept
+          </button>
         </div>
-      )}
-
-      <div className="px-4 py-3" style={{ borderBottom: "1px solid #F0F0F0" }}>
-        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
       </div>
-
-      {isRejected && deviation.suggestedChange && (
-        <SuggestedChangeBlock suggestedChange={deviation.suggestedChange} />
-      )}
-
-      {showApprovalForm && (
-        <div className="px-4 pb-3" style={{ borderTop: "1px solid #F0F0F0" }}>
-          <div className="p-3 rounded-lg mt-3" style={{ backgroundColor: "#F7F8FA" }}>
-            <p className="text-xs mb-3 font-medium" style={{ color: "#431F5D" }}>
-              To accept this major deviation, please provide approval details:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="block text-xs mb-1" style={{ color: "#4A4A6A" }}>
-                  Approved by <span style={{ color: "#B71C1C" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={deviation.approvedBy || ""}
-                  onChange={(e) => onApprovalFieldChange?.(deviation.id, "approvedBy", e.target.value)}
-                  placeholder="Name of approver"
-                  className="w-full px-3 py-2 text-xs rounded-md"
-                  style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8", color: "#431F5D" }}
-                />
-              </div>
-              <div>
-                <label className="block text-xs mb-1" style={{ color: "#4A4A6A" }}>
-                  Date approved <span style={{ color: "#B71C1C" }}>*</span>
-                </label>
-                <input
-                  type="date"
-                  value={deviation.approvalDate || ""}
-                  onChange={(e) => onApprovalFieldChange?.(deviation.id, "approvalDate", e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-md"
-                  style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8", color: "#431F5D" }}
-                />
-              </div>
-            </div>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={deviation.declarationChecked || false}
-                onChange={(e) => onDeclarationChange?.(deviation.id, e.target.checked)}
-                className="mt-0.5 w-4 h-4"
-                style={{ accentColor: "#FB6A1B" }}
-              />
-              <span className="text-xs" style={{ color: "#4A4A6A" }}>
-                I confirm I have received the necessary approval to accept this deviation.
-              </span>
-            </label>
-          </div>
-        </div>
-      )}
-
-      {!isEscalation && (
-        <div className="px-4 py-3 flex items-center justify-end gap-2" style={{ borderTop: "1px solid #F0F0F0" }}>
-          <button
-            onClick={() => {
-              if (isMajor) onShowApprovalForm?.(deviation.id, false)
-              onStatusChange(deviation.id, "rejected")
-            }}
-            className="px-4 py-2 text-xs font-medium rounded-lg transition-colors"
-            style={{
-              backgroundColor: isRejected ? "#FFEBEE" : "#F7F8FA",
-              color: isRejected ? "#B71C1C" : "#4A4A6A",
-              border: isRejected ? "1px solid #FFCDD2" : "1px solid #E2E4E8",
-              cursor: "pointer"
-            }}
-          >
-            {isRejected ? "Rejected" : "Reject"}
-          </button>
-          <button
-            onClick={() => {
-              if (isMajor && !showApprovalForm) {
-                onShowApprovalForm?.(deviation.id, true)
-              } else if (!isMajor || canAcceptMajor) {
-                onStatusChange(deviation.id, "accepted")
-              }
-            }}
-            disabled={Boolean(isMajor && showApprovalForm && !canAcceptMajor)}
-            className="px-4 py-2 text-xs font-medium rounded-lg transition-colors"
-            style={{
-              backgroundColor: deviation.status === "accepted" ? "#E8F5E9" : "#431F5D",
-              color: deviation.status === "accepted" ? "#1B5E20" : "#FFFFFF",
-              border: deviation.status === "accepted" ? "1px solid #C8E6C9" : "none",
-              opacity: (isMajor && showApprovalForm && !canAcceptMajor) ? 0.5 : 1,
-              cursor: (isMajor && showApprovalForm && !canAcceptMajor) ? "not-allowed" : "pointer"
-            }}
-          >
-            {isMajor && !showApprovalForm && deviation.status === "pending"
-              ? "Accept with approval"
-              : "Accept as is"}
-          </button>
-        </div>
-      )}
     </div>
   )
 }
 
-export default function DeviationTablePage() {
+function FlaggedRow({ deviation }: { deviation: Deviation }) {
+  return (
+    <div className="rounded-xl mb-3 overflow-hidden"
+      style={{
+        border: deviation.type === "escalation" ? "0.5px solid #CECBF6" : "0.5px solid #F7C1C1",
+        backgroundColor: "#FFFFFF",
+      }}>
+      <div className="px-4 py-3 flex items-center gap-2"
+        style={{
+          borderBottom: "0.5px solid #F0F0F0",
+          backgroundColor: deviation.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
+        }}>
+        <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
+        <RiskBadge type={deviation.type} />
+        <span className="ml-auto text-xs"
+          style={{ color: deviation.type === "escalation" ? "#534AB7" : "#A32D2D" }}>
+          {deviation.type === "escalation" ? "Attorney assessment required" : "Flagged to legal"}
+        </span>
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
+        {deviation.counterparty && (
+          <p className="text-xs mt-2" style={{ color: "#9B9B9B" }}>
+            <span className="font-medium">Counterparty position:</span> {deviation.counterparty}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+type PageState = "green" | "amber" | "red"
+
+export default function ResultsPage() {
   const router = useRouter()
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
-  const [clientId, setClientId] = useState("")
   const [userEmail, setUserEmail] = useState("")
-  const sessionRef = useRef<{ userId: string; clientId: string; userEmail: string; firstName: string; lastName: string; clientName: string } | null>(null)
+  const sessionRef = useRef<{
+    userId: string; clientId: string; userEmail: string
+    firstName: string; lastName: string; clientName: string
+  } | null>(null)
 
   const [deviations, setDeviations] = useState<Deviation[]>([])
   const [documentSummary, setDocumentSummary] = useState("")
-  const [overallRiskLevel, setOverallRiskLevel] = useState("")
   const [mutualOrUnilateral, setMutualOrUnilateral] = useState("")
-  const [escalateTo, setEscalateTo] = useState("")
   const [counterpartyName, setCounterpartyName] = useState("")
   const [submissionId, setSubmissionId] = useState("")
+  const [detailOpen, setDetailOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const notifyFiredRef = useRef(false)
 
   useEffect(() => {
     async function loadClientData() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) { router.push("/"); return }
 
       const { data: userData } = await supabase
         .from("users")
@@ -314,7 +182,6 @@ export default function DeviationTablePage() {
       if (!userData) return
       setFirstName(userData.first_name || "")
       setLastName(userData.last_name || "")
-      setClientId(userData.client_id)
       setUserEmail(session.user.email || "")
 
       const { data: clientData } = await supabase
@@ -326,19 +193,17 @@ export default function DeviationTablePage() {
       const resolvedClientName = clientData?.display_name || ""
       if (clientData) setClientName(resolvedClientName)
 
-      // Store in ref for use in audit log writes
       sessionRef.current = {
         userId: session.user.id,
         clientId: userData.client_id,
         userEmail: session.user.email || "",
         firstName: userData.first_name || "",
         lastName: userData.last_name || "",
-        clientName: resolvedClientName
+        clientName: resolvedClientName,
       }
     }
-
     loadClientData()
-  }, [])
+  }, [router])
 
   useEffect(() => {
     const raw = sessionStorage.getItem("review_result")
@@ -350,52 +215,45 @@ export default function DeviationTablePage() {
 
     const data = JSON.parse(raw)
     setDocumentSummary(data.document_summary || "")
-    setOverallRiskLevel(data.overall_risk_level || "")
     setMutualOrUnilateral(data.mutual_or_unilateral || "")
-    setEscalateTo(data.escalate_to || "none")
     setCounterpartyName(name || "Counterparty")
 
     const issues: Deviation[] = (data.issues || []).map((item: {
       risk: string; clause: string; issue: string
-      counterparty_position?: string; standard_position?: string; suggested_change?: string
+      counterparty_position?: string; standard_position?: string
     }, index: number) => ({
       id: index + 1,
-      type: item.risk === "MAJOR" ? "major" : "minor",
+      type: item.risk === "MAJOR" ? "major" : item.risk === "ESCALATION" ? "escalation" : "minor",
       title: item.clause,
       counterparty: item.counterparty_position || "",
       standard: item.standard_position || "",
       reason: item.issue,
-      suggestedChange: item.suggested_change || "",
       status: "pending" as DeviationStatus,
-      declarationChecked: false
     }))
 
     setDeviations(issues)
     setLoaded(true)
   }, [router])
 
-  // Write to audit log when a deviation is actioned
   const writeAuditLog = async (deviation: Deviation, action: DeviationStatus) => {
     if (!sessionRef.current || !submissionId || action === "pending") return
-    const { userId, clientId, userEmail, firstName, lastName, clientName: cn } = sessionRef.current
-
+    const { userId, clientId, userEmail: ue, firstName: fn, lastName: ln, clientName: cn } = sessionRef.current
     await supabase.from("audit_log").insert({
       submission_id: submissionId,
       client_id: clientId,
       user_id: userId,
-      user_email: userEmail,
-      user_name: `${firstName} ${lastName}`.trim(),
+      user_email: ue,
+      user_name: `${fn} ${ln}`.trim(),
       client_name: cn,
       clause_type: deviation.title,
       deviation_severity: deviation.type,
-      action_taken: action
+      action_taken: action,
     })
   }
 
   const handleStatusChange = (id: number, status: DeviationStatus) => {
     setDeviations(prev => prev.map(d => {
       if (d.id === id) {
-        // Write to audit log asynchronously
         writeAuditLog({ ...d, status }, status)
         return { ...d, status }
       }
@@ -403,59 +261,81 @@ export default function DeviationTablePage() {
     }))
   }
 
-  const handleDeclarationChange = (id: number, checked: boolean) =>
-    setDeviations(prev => prev.map(d => d.id === id ? { ...d, declarationChecked: checked } : d))
+  const minorDeviations = useMemo(() => deviations.filter(d => d.type === "minor"), [deviations])
+  const majorDeviations = useMemo(() => deviations.filter(d => d.type === "major"), [deviations])
+  const escalations     = useMemo(() => deviations.filter(d => d.type === "escalation"), [deviations])
 
-  const handleApprovalFieldChange = (id: number, field: "approvedBy" | "approvalDate", value: string) =>
-    setDeviations(prev => prev.map(d => d.id === id ? { ...d, [field]: value } : d))
+  const hasMinors     = minorDeviations.length > 0
+  const hasMajors     = majorDeviations.length > 0
+  const hasEscalation = escalations.length > 0
+  const allActioned   = minorDeviations.every(d => d.status !== "pending")
+  const totalClauses  = deviations.length
+  const displayName   = clientName || "your company"
 
-  const handleShowApprovalForm = (id: number, show: boolean) =>
-    setDeviations(prev => prev.map(d => d.id === id ? { ...d, showApprovalForm: show } : d))
+  const pageState: PageState =
+    hasEscalation ? "red" :
+    hasMajors     ? "amber" :
+    "green"
 
-  const actionableDeviations = deviations.filter(d => d.type !== "escalation")
-  const actionedCount = actionableDeviations.filter(d => d.status !== "pending").length
-  const totalActionable = actionableDeviations.length
-  const allActioned = actionedCount === totalActionable && totalActionable > 0
-  const hasMajorAccepted = deviations.some(d => d.type === "major" && d.status === "accepted")
-  const hasEscalation = deviations.some(d => d.type === "escalation")
-  const onlyMinorDeviations = !deviations.some(d => d.type === "major" || d.type === "escalation")
-
-  const majorDeviationsForApproval = deviations.filter(
-    d => d.type === "major" && (d.status === "pending" || d.showApprovalForm)
-  )
-
-  const summaryStats = useMemo(() => ({
-    minor: deviations.filter(d => d.type === "minor").length,
-    major: deviations.filter(d => d.type === "major").length,
-    escalation: deviations.filter(d => d.type === "escalation").length
-  }), [deviations])
-
-  const minorDeviations = deviations.filter(d => d.type === "minor")
-  const majorDeviations = deviations.filter(d => d.type === "major")
-  const escalations = deviations.filter(d => d.type === "escalation")
-  const displayName = clientName || "your company"
-
-  const handleNotifyLegal = () => {
-    const clauseList = escalations.map(d => `- ${d.title}: ${d.counterparty}`).join('\n')
-    const emailSubject = encodeURIComponent("NDA Review — Escalation Required")
-    const emailBody = encodeURIComponent(
-      `Dear Legal Team,\n\nAn NDA review has identified the following clause(s) that require legal review:\n\n${clauseList}\n\nPlease review and provide a version ready to send to the counterparty.\n\nThank you.`
+  // Auto-notify legal — escalations
+  useEffect(() => {
+    if (!loaded || !hasEscalation || notifyFiredRef.current) return
+    notifyFiredRef.current = true
+    const clauseList = escalations.map(d => `- ${d.title}: ${d.counterparty || d.reason}`).join("\n")
+    const subject = encodeURIComponent(`NDA Review — Attorney Review Required · ${counterpartyName}`)
+    const body = encodeURIComponent(
+      `Dear Legal Team,\n\nAn NDA review for ${counterpartyName} has identified the following clause(s) that require attorney review:\n\n${clauseList}\n\nSubmission ID: ${submissionId}\n\nPlease review and provide a finalised version for external distribution.\n\nThank you.`
     )
-    window.location.href = `mailto:legal@counselect.com?subject=${emailSubject}&body=${emailBody}`
+    window.location.href = `mailto:legal@counselect.com?subject=${subject}&body=${body}`
+  }, [loaded, hasEscalation, escalations, counterpartyName, submissionId])
+
+  // Auto-notify legal — major deviations
+  useEffect(() => {
+    if (!loaded || !hasMajors || hasEscalation || notifyFiredRef.current) return
+    notifyFiredRef.current = true
+    const clauseList = majorDeviations.map(d => `- ${d.title}: ${d.counterparty || d.reason}`).join("\n")
+    const subject = encodeURIComponent(`NDA Review — Major Deviations · ${counterpartyName}`)
+    const body = encodeURIComponent(
+      `Dear Legal Team,\n\nAn NDA review for ${counterpartyName} has identified the following major deviations from ${clientName}'s standard positions:\n\n${clauseList}\n\nSubmission ID: ${submissionId}\n\nPlease review and advise.\n\nThank you.`
+    )
+    window.location.href = `mailto:legal@counselect.com?subject=${subject}&body=${body}`
+  }, [loaded, hasMajors, hasEscalation, majorDeviations, counterpartyName, submissionId, clientName])
+
+  const heroConfig = {
+    green: {
+      iconBg: "#EAF3DE", iconColor: "#3B6D11",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      ),
+      verdict: "Ready to send",
+      sub: `No issues found — this NDA is ready to go to ${counterpartyName}.`,
+    },
+    amber: {
+      iconBg: "#FAEEDA", iconColor: "#854F0B",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      ),
+      verdict: "Waiting on legal — don't send yet",
+      sub: `${majorDeviations.length} clause${majorDeviations.length > 1 ? "s fall" : " falls"} outside ${displayName}'s standard positions. Your Counselect attorney has been notified and will respond within 4 hours.`,
+    },
+    red: {
+      iconBg: "#FCEBEB", iconColor: "#A32D2D",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      ),
+      verdict: "Do not send — attorney review needed",
+      sub: `One or more clauses couldn't be assessed against ${displayName}'s standards. Your Counselect attorney has been notified and will send a finalised version within 4 hours.`,
+    },
   }
 
-  const handleRequestApproval = () => {
-    const emailSubject = encodeURIComponent("Approval Required: Major NDA Deviations")
-    const emailBody = encodeURIComponent(
-      `Dear Business Head,\n\nI am requesting your approval for the following major deviations identified in an NDA review:\n\n${majorDeviationsForApproval.map(d =>
-        `Clause: ${d.title}\nCounterparty position: ${d.counterparty}\n${displayName} standard: ${d.standard}\nReason: ${d.reason}`
-      ).join('\n\n')}\n\nPlease confirm your approval by replying to this email.\n\nThank you.`
-    )
-    window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`
-  }
-
-  const overallRiskColor = overallRiskLevel === "MAJOR" ? "#B71C1C" : overallRiskLevel === "MINOR" ? "#E65100" : "#1B5E20"
-  const overallRiskBg = overallRiskLevel === "MAJOR" ? "#FFEBEE" : overallRiskLevel === "MINOR" ? "#FFF3E0" : "#E8F5E9"
+  const hero = heroConfig[pageState]
 
   if (!loaded) {
     return (
@@ -472,155 +352,176 @@ export default function DeviationTablePage() {
     <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>
       <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-8">
 
-        <div className="mb-6">
-          <h1 className="font-medium mb-1" style={{ color: "#431F5D", fontSize: "20px" }}>
-            {`NDA reviewed against ${displayName}'s playbook`}
-          </h1>
-          <p style={{ color: "#4A4A6A", fontSize: "13px" }}>{counterpartyName}</p>
+        {/* Hero */}
+        <div className="rounded-xl p-6 mb-4"
+          style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
+          <div className="flex items-start gap-4 mb-5">
+            <div className="rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ width: 48, height: 48, backgroundColor: hero.iconBg, color: hero.iconColor }}>
+              {hero.icon}
+            </div>
+            <div>
+              <h1 className="font-medium mb-1" style={{ fontSize: "20px", color: "#431F5D" }}>
+                {hero.verdict}
+              </h1>
+              <p style={{ fontSize: "14px", color: "#4A4A6A", lineHeight: 1.6 }}>{hero.sub}</p>
+              <p className="mt-2" style={{ fontSize: "12px", color: "#9B9B9B" }}>
+                {counterpartyName}
+                {mutualOrUnilateral ? ` · ${mutualOrUnilateral}` : ""}
+                {` · Reviewed against ${displayName}'s NDA standards`}
+              </p>
+            </div>
+          </div>
+
+          {/* Amber notice */}
+          {pageState === "amber" && (
+            <div className="rounded-lg px-4 py-3 mb-5 flex gap-3"
+              style={{ backgroundColor: "#FAEEDA", border: "0.5px solid #FAC775" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p style={{ fontSize: "13px", color: "#633806", lineHeight: 1.5 }}>
+                The internal draft below is for reference only. Do not send to the counterparty until your attorney clears it.
+              </p>
+            </div>
+          )}
+
+          {/* Red notice */}
+          {pageState === "red" && (
+            <div className="rounded-lg px-4 py-3 mb-5 flex gap-3"
+              style={{ backgroundColor: "#FCEBEB", border: "0.5px solid #F7C1C1" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+              </svg>
+              <p style={{ fontSize: "13px", color: "#791F1F", lineHeight: 1.5 }}>
+                Do not send this NDA to the counterparty. Your attorney will provide the external-ready version.
+              </p>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-3 flex-wrap">
+            {pageState === "green" && allActioned && (
+              <a
+                href={sessionStorage.getItem("review_document_url") || "#"}
+                download
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm"
+                style={{ backgroundColor: "#EF7043", color: "#FFFFFF" }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download NDA
+              </a>
+            )}
+            {pageState === "green" && !allActioned && hasMinors && (
+              <p className="text-xs self-center" style={{ color: "#9B9B9B" }}>
+                Action all minor deviations to enable download.
+              </p>
+            )}
+            {(pageState === "amber" || pageState === "red") && (
+              <a
+                href={sessionStorage.getItem("review_document_url") || "#"}
+                download
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm"
+                style={{ backgroundColor: "#F7F8FA", color: "#4A4A6A", border: "0.5px solid #E2E4E8" }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download internal draft
+              </a>
+            )}
+            <Link href="/home"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
+              style={{ color: "#4A4A6A", border: "0.5px solid #E2E4E8", backgroundColor: "#F7F8FA" }}>
+              Back to home
+            </Link>
+          </div>
         </div>
 
-        <p className="mb-6" style={{ fontSize: "13px", color: "#4A4A6A" }}>
-          Review each deviation. For items you reject, a suggested change will appear for you to apply to the counterparty draft.
+        {/* Minor deviations — green state, shown above fold */}
+        {pageState === "green" && hasMinors && (
+          <div className="rounded-xl p-5 mb-4"
+            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs font-medium uppercase"
+                style={{ color: "#854F0B", letterSpacing: "0.08em" }}>
+                Minor deviations — {minorDeviations.length}
+              </h2>
+              <span className="text-xs" style={{ color: "#9B9B9B" }}>
+                {minorDeviations.filter(d => d.status !== "pending").length} of {minorDeviations.length} actioned
+              </span>
+            </div>
+            {minorDeviations.map(d => (
+              <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} onStatusChange={handleStatusChange} />
+            ))}
+          </div>
+        )}
+
+        {/* Collapsible detail — amber / red states */}
+        {(pageState === "amber" || pageState === "red") && totalClauses > 0 && (
+          <div className="rounded-xl overflow-hidden mb-4"
+            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
+            <button
+              onClick={() => setDetailOpen(o => !o)}
+              className="w-full flex items-center justify-between px-5 py-3 text-left"
+              style={{ background: "none", border: "none", cursor: "pointer" }}>
+              <span style={{ fontSize: "13px", color: "#4A4A6A" }}>
+                See what was reviewed ({totalClauses} clause{totalClauses > 1 ? "s" : ""}
+                {hasMajors ? ` — ${majorDeviations.length} flagged` : ""}
+                {hasEscalation ? ` — ${escalations.length} escalated` : ""})
+              </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9B9B9B"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transform: detailOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {detailOpen && (
+              <div className="px-5 pb-4" style={{ borderTop: "0.5px solid #F0F0F0" }}>
+                {hasMinors && (
+                  <div className="mt-4">
+                    <p className="text-xs font-medium uppercase mb-2"
+                      style={{ color: "#854F0B", letterSpacing: "0.08em" }}>
+                      Minor deviations — {minorDeviations.length}
+                    </p>
+                    {minorDeviations.map(d => (
+                      <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} onStatusChange={handleStatusChange} />
+                    ))}
+                  </div>
+                )}
+                {hasMajors && (
+                  <div className="mt-4">
+                    <p className="text-xs font-medium uppercase mb-2"
+                      style={{ color: "#A32D2D", letterSpacing: "0.08em" }}>
+                      Major deviations — {majorDeviations.length}
+                    </p>
+                    {majorDeviations.map(d => <FlaggedRow key={d.id} deviation={d} />)}
+                  </div>
+                )}
+                {hasEscalation && (
+                  <div className="mt-4">
+                    <p className="text-xs font-medium uppercase mb-2"
+                      style={{ color: "#534AB7", letterSpacing: "0.08em" }}>
+                      Escalated — {escalations.length}
+                    </p>
+                    {escalations.map(d => <FlaggedRow key={d.id} deviation={d} />)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Footer */}
+        <p className="text-center" style={{ fontSize: "12px", color: "#9B9B9B" }}>
+          Reviewed against {displayName}'s NDA standards · Pact by Counselect
         </p>
 
-        <div
-          className="rounded-xl p-4 mb-6 flex flex-wrap items-center gap-4"
-          style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E4E8" }}
-        >
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-medium"
-              style={{ backgroundColor: overallRiskBg, color: overallRiskColor }}>
-              {overallRiskLevel} risk
-            </span>
-          </div>
-          <div className="h-4 w-px" style={{ backgroundColor: "#E2E4E8" }} />
-          <span className="text-xs" style={{ color: "#4A4A6A" }}>
-            <strong style={{ color: "#E65100" }}>{summaryStats.minor}</strong> minor
-          </span>
-          <span className="text-xs" style={{ color: "#4A4A6A" }}>
-            <strong style={{ color: "#B71C1C" }}>{summaryStats.major}</strong> major
-          </span>
-          {summaryStats.escalation > 0 && (
-            <span className="text-xs" style={{ color: "#4A4A6A" }}>
-              <strong>{summaryStats.escalation}</strong> escalation
-            </span>
-          )}
-          <div className="h-4 w-px" style={{ backgroundColor: "#E2E4E8" }} />
-          {mutualOrUnilateral && (
-            <span className="text-xs" style={{ color: "#4A4A6A" }}>{mutualOrUnilateral}</span>
-          )}
-          <div className="ml-auto">
-            <span className="text-xs" style={{ color: "#4A4A6A" }}>
-              {actionedCount} of {totalActionable} actioned
-            </span>
-          </div>
-        </div>
-
-        {documentSummary && (
-          <div className="p-4 rounded-xl mb-6" style={{ backgroundColor: "#F3EEF7", border: "1px solid #E8E0F0" }}>
-            <p className="text-xs font-medium mb-1" style={{ color: "#431F5D" }}>Summary</p>
-            <p className="text-sm leading-relaxed" style={{ color: "#4A4A6A" }}>{documentSummary}</p>
-          </div>
-        )}
-
-        {minorDeviations.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-xs font-medium uppercase mb-3" style={{ color: "#E65100", letterSpacing: "0.08em" }}>
-              Minor deviations — {minorDeviations.length}
-            </h2>
-            {minorDeviations.map(d => (
-              <DeviationCard key={d.id} deviation={d} clientName={clientName}
-                onStatusChange={handleStatusChange}
-                onDeclarationChange={handleDeclarationChange}
-                onApprovalFieldChange={handleApprovalFieldChange}
-                onShowApprovalForm={handleShowApprovalForm}
-              />
-            ))}
-          </div>
-        )}
-
-        {majorDeviations.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-medium uppercase" style={{ color: "#B71C1C", letterSpacing: "0.08em" }}>
-                Major deviations — {majorDeviations.length}
-              </h2>
-              {majorDeviationsForApproval.length > 0 && (
-                <button onClick={handleRequestApproval}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: "#431F5D", color: "#FFFFFF" }}>
-                  Request approval
-                </button>
-              )}
-            </div>
-            {majorDeviations.map(d => (
-              <DeviationCard key={d.id} deviation={d} clientName={clientName}
-                onStatusChange={handleStatusChange}
-                onDeclarationChange={handleDeclarationChange}
-                onApprovalFieldChange={handleApprovalFieldChange}
-                onShowApprovalForm={handleShowApprovalForm}
-              />
-            ))}
-          </div>
-        )}
-
-        {escalations.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-xs font-medium uppercase mb-3" style={{ color: "#4A4A6A", letterSpacing: "0.08em" }}>
-              Requires attorney review — {escalations.length}
-            </h2>
-            {escalations.map(d => (
-              <DeviationCard key={d.id} deviation={d} clientName={clientName}
-                onStatusChange={handleStatusChange}
-                onDeclarationChange={handleDeclarationChange}
-                onApprovalFieldChange={handleApprovalFieldChange}
-                onShowApprovalForm={handleShowApprovalForm}
-              />
-            ))}
-            <button onClick={handleNotifyLegal}
-              className="w-full py-3 rounded-xl font-medium mt-2 transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#431F5D", color: "#FFFFFF", fontSize: "14px" }}>
-              Notify legal
-            </button>
-          </div>
-        )}
-
-        {hasMajorAccepted && !hasEscalation && (
-          <div className="p-4 rounded-xl mb-4" style={{ backgroundColor: "#FFF3E0", border: "1px solid #FFE0B2" }}>
-            <p style={{ color: "#E65100", fontSize: "13px" }}>
-              This document contains major deviations. Ensure approvals are documented before sending.
-            </p>
-          </div>
-        )}
-
-        {allActioned && onlyMinorDeviations && (
-          <div className="p-4 rounded-xl mb-4" style={{ backgroundColor: "#E8F5E9", border: "1px solid #C8E6C9" }}>
-            <p style={{ color: "#1B5E20", fontSize: "13px" }}>
-              All deviations reviewed. Apply the suggested changes to the counterparty draft before sending.
-            </p>
-          </div>
-        )}
-
-        <button
-          disabled={!allActioned || hasEscalation}
-          onClick={() => allActioned && !hasEscalation && router.push("/review/output")}
-          className="w-full py-3 rounded-xl font-medium transition-all mt-2"
-          style={{
-            background: (allActioned && !hasEscalation) ? "linear-gradient(135deg, #FB6A1B, #D2582F)" : "#E2E4E8",
-            color: (allActioned && !hasEscalation) ? "#FFFFFF" : "#9B9B9B",
-            cursor: (allActioned && !hasEscalation) ? "pointer" : "not-allowed",
-            fontSize: "14px"
-          }}
-        >
-          {hasEscalation
-            ? "Awaiting legal review"
-            : allActioned
-              ? "Mark as complete"
-              : "Action all deviations to unlock"
-          }
-        </button>
       </div>
     </main>
   )
