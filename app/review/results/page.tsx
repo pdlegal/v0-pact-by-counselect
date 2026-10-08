@@ -7,21 +7,19 @@ import { supabase } from "@/lib/supabase"
 
 function PactWordmark() {
   return (
-    <div className="flex items-baseline">
+    <div className="flex items-center gap-1">
       <span className="font-medium text-xl" style={{ color: "#FFFFFF" }}>Pact</span>
-      <span
-        className="inline-block rounded-full ml-0.5"
-        style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", width: "6px", height: "6px" }}
-      />
+      <span className="inline-block rounded-full"
+        style={{ background: "#EF7043", width: "6px", height: "6px", marginBottom: "4px" }} />
     </div>
   )
 }
 
 function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
-    <nav className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: "#431F5D" }}>
+    <nav className="flex items-center justify-between px-5 py-3" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
-      <span className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>
+      <span className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
         {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""}
       </span>
     </nav>
@@ -35,79 +33,6 @@ interface Deviation {
   counterparty: string
   standard: string
   reason: string
-}
-
-function MinorDeviationRow({
-  deviation, clientName,
-}: {
-  deviation: Deviation
-  clientName: string
-}) {
-  const displayName = clientName || "your company"
-
-  return (
-    <div className="rounded-xl mb-3 overflow-hidden"
-      style={{ border: "0.5px solid #E2E4E8", backgroundColor: "#FFFFFF" }}>
-      <div className="px-4 py-3 flex items-center gap-2"
-        style={{ borderBottom: "0.5px solid #F0F0F0", backgroundColor: "#FFFBF5" }}>
-        <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
-        <span className="px-2 py-0.5 text-xs font-medium rounded-full"
-          style={{ backgroundColor: "#FAEEDA", color: "#854F0B" }}>
-          Minor
-        </span>
-      </div>
-      <div className="grid grid-cols-2" style={{ borderBottom: "0.5px solid #F0F0F0" }}>
-        <div className="p-3" style={{ borderRight: "0.5px solid #F0F0F0" }}>
-          <p className="text-xs font-medium uppercase mb-1" style={{ color: "#854F0B", letterSpacing: "0.06em" }}>Counterparty</p>
-          <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.counterparty || "—"}</p>
-        </div>
-        <div className="p-3">
-          <p className="text-xs font-medium uppercase mb-1" style={{ color: "#431F5D", letterSpacing: "0.06em" }}>{displayName} standard</p>
-          <p className="text-xs leading-relaxed" style={{ color: "#431F5D" }}>{deviation.standard || "—"}</p>
-        </div>
-      </div>
-      <div className="px-4 py-3" style={{ borderTop: "0.5px solid #F0F0F0" }}>
-        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
-      </div>
-    </div>
-  )
-}
-
-function FlaggedRow({ deviation }: { deviation: Deviation }) {
-  return (
-    <div className="rounded-xl mb-3 overflow-hidden"
-      style={{
-        border: deviation.type === "escalation" ? "0.5px solid #CECBF6" : "0.5px solid #F7C1C1",
-        backgroundColor: "#FFFFFF",
-      }}>
-      <div className="px-4 py-3 flex items-center gap-2"
-        style={{
-          borderBottom: "0.5px solid #F0F0F0",
-          backgroundColor: deviation.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
-        }}>
-        <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
-        <span className="px-2 py-0.5 text-xs font-medium rounded-full"
-          style={{
-            backgroundColor: deviation.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
-            color: deviation.type === "escalation" ? "#534AB7" : "#A32D2D"
-          }}>
-          {deviation.type === "escalation" ? "Escalated" : "Major"}
-        </span>
-        <span className="ml-auto text-xs"
-          style={{ color: deviation.type === "escalation" ? "#534AB7" : "#A32D2D" }}>
-          {deviation.type === "escalation" ? "Attorney assessment required" : "Flagged to legal"}
-        </span>
-      </div>
-      <div className="px-4 py-3">
-        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
-        {deviation.counterparty && (
-          <p className="text-xs mt-2" style={{ color: "#9B9B9B" }}>
-            <span className="font-medium">Counterparty position:</span> {deviation.counterparty}
-          </p>
-        )}
-      </div>
-    </div>
-  )
 }
 
 type PageState = "green" | "amber" | "red"
@@ -127,7 +52,6 @@ export default function ResultsPage() {
   const [mutualOrUnilateral, setMutualOrUnilateral] = useState("")
   const [counterpartyName, setCounterpartyName] = useState("")
   const [submissionId, setSubmissionId] = useState("")
-  const [detailOpen, setDetailOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const notifyFiredRef = useRef(false)
 
@@ -215,10 +139,7 @@ export default function ResultsPage() {
     const fileData = sessionStorage.getItem("review_file_data")
     const fileName = sessionStorage.getItem("review_file_name")
     if (!fileData || !fileName) return
-
-    // Write audit log for all minor deviations on download
     minorDeviations.forEach(d => writeAuditLog(d))
-
     const a = document.createElement("a")
     a.href = fileData
     a.download = fileName
@@ -232,8 +153,10 @@ export default function ResultsPage() {
   const hasMinors     = minorDeviations.length > 0
   const hasMajors     = majorDeviations.length > 0
   const hasEscalation = escalations.length > 0
-  const totalClauses  = deviations.length
   const displayName   = clientName || "your company"
+  const mutualShort   = mutualOrUnilateral?.toLowerCase().includes("mutual") ? "Mutual" :
+                        mutualOrUnilateral?.toLowerCase().includes("unilateral") ? "Unilateral" :
+                        mutualOrUnilateral
 
   const pageState: PageState =
     hasEscalation ? "red" :
@@ -264,44 +187,6 @@ export default function ResultsPage() {
     window.location.href = `mailto:legal@counselect.com?subject=${subject}&body=${body}`
   }, [loaded, hasMajors, hasEscalation, majorDeviations, counterpartyName, submissionId, clientName])
 
-  const heroConfig = {
-    green: {
-      iconBg: "#EAF3DE", iconColor: "#3B6D11",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-      ),
-      verdict: "Ready to send",
-      sub: hasMinors
-        ? `This NDA is good to go. There are ${minorDeviations.length} minor difference${minorDeviations.length > 1 ? "s" : ""} from ${displayName}'s standard positions — none of them are a blocker to signing.`
-        : `No issues found — this NDA is ready to go to ${counterpartyName}.`,
-    },
-    amber: {
-      iconBg: "#FAEEDA", iconColor: "#854F0B",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-      ),
-      verdict: "Waiting on legal — don't send yet",
-      sub: `${majorDeviations.length} clause${majorDeviations.length > 1 ? "s fall" : " falls"} outside ${displayName}'s standard positions. Your Counselect attorney has been notified and will respond within 4 hours.`,
-    },
-    red: {
-      iconBg: "#FCEBEB", iconColor: "#A32D2D",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      ),
-      verdict: "Do not send — attorney review needed",
-      sub: `One or more clauses couldn't be assessed against ${displayName}'s standards. Your Counselect attorney has been notified and will send a finalised version within 4 hours.`,
-    },
-  }
-
-  const hero = heroConfig[pageState]
-
   if (!loaded) {
     return (
       <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
@@ -319,61 +204,132 @@ export default function ResultsPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-8">
 
-        {/* Hero */}
-        <div className="rounded-xl p-6 mb-4"
-          style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
-          <div className="flex items-start gap-4 mb-5">
+        {/* Single card */}
+        <div className="rounded-xl overflow-hidden mb-4"
+          style={{
+            backgroundColor: "#FFFFFF",
+            border: pageState === "green"
+              ? "0.5px solid #E2E4E8"
+              : pageState === "amber"
+              ? "0.5px solid #FAC775"
+              : "0.5px solid #F7C1C1"
+          }}>
+
+          {/* Hero */}
+          <div className="flex items-start gap-4 p-5">
             <div className="rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ width: 48, height: 48, backgroundColor: hero.iconBg, color: hero.iconColor }}>
-              {hero.icon}
+              style={{
+                width: 38, height: 38,
+                backgroundColor: pageState === "green" ? "#EAF3DE" : pageState === "amber" ? "#FAEEDA" : "#FCEBEB",
+                color: pageState === "green" ? "#3B6D11" : pageState === "amber" ? "#854F0B" : "#A32D2D",
+              }}>
+              {pageState === "green" && (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              )}
+              {pageState === "amber" && (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              )}
+              {pageState === "red" && (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              )}
             </div>
             <div>
-              <h1 className="font-medium mb-1" style={{ fontSize: "20px", color: "#431F5D" }}>
-                {hero.verdict}
+              <h1 className="font-medium mb-1" style={{ fontSize: "18px", color: "#431F5D" }}>
+                {pageState === "green" && "Ready to send"}
+                {pageState === "amber" && "Waiting on legal — don't send yet"}
+                {pageState === "red" && "Do not send — attorney review needed"}
               </h1>
-              <p style={{ fontSize: "14px", color: "#4A4A6A", lineHeight: 1.6 }}>{hero.sub}</p>
-              <p className="mt-2" style={{ fontSize: "12px", color: "#9B9B9B" }}>
+              <p style={{ fontSize: "13px", color: "#4A4A6A", lineHeight: 1.6 }}>
+                {pageState === "green" && hasMinors &&
+                  `${minorDeviations.length} minor difference${minorDeviations.length > 1 ? "s" : ""} from ${displayName}'s standard positions — none are a blocker to signing.`}
+                {pageState === "green" && !hasMinors &&
+                  `No issues found — this NDA is ready to go to ${counterpartyName}.`}
+                {pageState === "amber" &&
+                  `${majorDeviations.length} clause${majorDeviations.length > 1 ? "s fall" : " falls"} outside ${displayName}'s standard positions. Your Counselect attorney has been notified and will respond within 4 hours.`}
+                {pageState === "red" &&
+                  `One or more clauses couldn't be assessed against ${displayName}'s standards. Your Counselect attorney has been notified and will send a finalised version within 4 hours.`}
+              </p>
+              <p style={{ fontSize: "11px", color: "#9B9B9B", marginTop: "5px" }}>
                 {counterpartyName}
-                {mutualOrUnilateral ? ` · ${mutualOrUnilateral}` : ""}
+                {mutualShort ? ` · ${mutualShort}` : ""}
                 {` · Reviewed against ${displayName}'s NDA standards`}
               </p>
             </div>
           </div>
 
-          {/* Amber notice */}
-          {pageState === "amber" && (
-            <div className="rounded-lg px-4 py-3 mb-5 flex gap-3"
-              style={{ backgroundColor: "#FAEEDA", border: "0.5px solid #FAC775" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+          {/* Score row */}
+          <div className="flex items-center gap-3 px-5 py-3"
+            style={{ borderTop: "0.5px solid #F0F0F0", borderBottom: "0.5px solid #F0F0F0" }}>
+            <span style={{ fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.07em", color: "#C8C8C8" }}>
+              Overall
+            </span>
+            <div style={{ flex: 1, height: "1px", backgroundColor: "#F0F0F0" }} />
+            {pageState === "green" && (
+              <div className="flex items-center gap-1.5 rounded-full px-3 py-1"
+                style={{ backgroundColor: "#EAF3DE", color: "#3B6D11", fontSize: "11px", fontWeight: 500 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                All within acceptable range
+              </div>
+            )}
+            {pageState === "amber" && (
+              <div className="flex items-center gap-1.5 rounded-full px-3 py-1"
+                style={{ backgroundColor: "#FAEEDA", color: "#854F0B", fontSize: "11px", fontWeight: 500 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Pending legal review
+              </div>
+            )}
+            {pageState === "red" && (
+              <div className="flex items-center gap-1.5 rounded-full px-3 py-1"
+                style={{ backgroundColor: "#FCEBEB", color: "#A32D2D", fontSize: "11px", fontWeight: 500 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Attorney review required
+              </div>
+            )}
+          </div>
+
+          {/* Amber / red notice */}
+          {(pageState === "amber" || pageState === "red") && (
+            <div className="mx-5 my-4 rounded-lg flex gap-3 px-4 py-3"
+              style={{
+                backgroundColor: pageState === "amber" ? "#FFFBF5" : "#FEF2F2",
+                border: `0.5px solid ${pageState === "amber" ? "#FAC775" : "#F7C1C1"}`,
+              }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke={pageState === "amber" ? "#854F0B" : "#A32D2D"}
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ flexShrink: 0, marginTop: 1 }}>
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
-              <p style={{ fontSize: "13px", color: "#633806", lineHeight: 1.5 }}>
-                Your attorney will send the finalised version directly. No action needed from you right now.
+              <p style={{ fontSize: "12px", color: pageState === "amber" ? "#633806" : "#791F1F", lineHeight: 1.5 }}>
+                {pageState === "amber"
+                  ? "Your attorney will send the finalised version directly. No action needed from you right now."
+                  : "Do not send this NDA to the counterparty. Your attorney will provide the external-ready version."}
               </p>
             </div>
           )}
 
-          {/* Red notice */}
-          {pageState === "red" && (
-            <div className="rounded-lg px-4 py-3 mb-5 flex gap-3"
-              style={{ backgroundColor: "#FCEBEB", border: "0.5px solid #F7C1C1" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-              </svg>
-              <p style={{ fontSize: "13px", color: "#791F1F", lineHeight: 1.5 }}>
-                Do not send this NDA to the counterparty. Your attorney will provide the external-ready version.
-              </p>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex gap-3 flex-wrap">
+          {/* Buttons */}
+          <div className="flex gap-2 px-5 pb-5"
+            style={{ paddingTop: pageState === "green" ? "14px" : "0" }}>
             {pageState === "green" && (
-              <button
-                onClick={handleDownload}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm"
-                style={{ backgroundColor: "#EF7043", color: "#FFFFFF" }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <button onClick={handleDownload}
+                className="inline-flex items-center gap-2 rounded-lg font-medium text-sm"
+                style={{ padding: "8px 18px", backgroundColor: "#EF7043", color: "#FFFFFF", border: "none" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
@@ -381,92 +337,103 @@ export default function ResultsPage() {
               </button>
             )}
             <Link href="/home"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
-              style={{ color: "#4A4A6A", border: "0.5px solid #E2E4E8", backgroundColor: "#F7F8FA" }}>
+              className="inline-flex items-center rounded-lg text-sm"
+              style={{ padding: "8px 16px", color: "#4A4A6A", border: "0.5px solid #E2E4E8", backgroundColor: "#F7F8FA" }}>
               Back to home
             </Link>
           </div>
+
+          {/* Minor differences section */}
+          {pageState === "green" && hasMinors && (
+            <>
+              <div className="flex items-center justify-between px-5 py-3"
+                style={{ borderTop: "0.5px solid #F0F0F0" }}>
+                <span style={{ fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.07em", color: "#9B9B9B" }}>
+                  Minor differences — for your information
+                </span>
+                <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: "#FAEEDA", color: "#854F0B", fontSize: "10px", fontWeight: 500 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  {minorDeviations.length} item{minorDeviations.length > 1 ? "s" : ""}
+                </div>
+              </div>
+              <div className="px-5 pb-5">
+                {minorDeviations.map((d, i) => (
+                  <div key={d.id} className="flex items-start gap-3"
+                    style={{
+                      paddingTop: "10px", paddingBottom: "10px",
+                      borderBottom: i < minorDeviations.length - 1 ? "0.5px solid #F5F5F5" : "none",
+                    }}>
+                    <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", backgroundColor: "#FAC775", marginTop: 5 }} />
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#431F5D", minWidth: 150, flexShrink: 0 }}>
+                      {d.title}
+                    </span>
+                    <span style={{ fontSize: "13px", color: "#4A4A6A", flex: 1, lineHeight: 1.45 }}>
+                      {d.reason}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Flagged clauses section — amber / red */}
+          {(pageState === "amber" || pageState === "red") && (majorDeviations.length > 0 || escalations.length > 0) && (
+            <>
+              <div className="flex items-center justify-between px-5 py-3"
+                style={{ borderTop: "0.5px solid #F0F0F0" }}>
+                <span style={{ fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.07em", color: "#9B9B9B" }}>
+                  Flagged clauses
+                </span>
+                <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: "#FCEBEB", color: "#A32D2D", fontSize: "10px", fontWeight: 500 }}>
+                  {majorDeviations.length + escalations.length} {pageState === "red" ? "escalated" : "major"}
+                </div>
+              </div>
+              <div className="px-5 pb-5">
+                {[...majorDeviations, ...escalations].map((d, i) => (
+                  <div key={d.id} className="flex items-start gap-3"
+                    style={{
+                      paddingTop: "10px", paddingBottom: "10px",
+                      borderBottom: i < majorDeviations.length + escalations.length - 1 ? "0.5px solid #F5F5F5" : "none",
+                    }}>
+                    <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", backgroundColor: "#F09595", marginTop: 5 }} />
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#431F5D", minWidth: 150, flexShrink: 0 }}>
+                      {d.title}
+                    </span>
+                    <span style={{ fontSize: "13px", color: "#4A4A6A", flex: 1, lineHeight: 1.45 }}>
+                      {d.reason}
+                    </span>
+                    <span className="rounded-full flex-shrink-0"
+                      style={{
+                        fontSize: "10px", fontWeight: 500, padding: "2px 8px",
+                        backgroundColor: d.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
+                        color: d.type === "escalation" ? "#534AB7" : "#A32D2D",
+                        alignSelf: "center", marginLeft: 8,
+                      }}>
+                      {d.type === "escalation" ? "Escalated" : "Major"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Minor differences also shown inside amber/red — collapsed note */}
+              {hasMinors && (
+                <div className="flex items-center gap-2 px-5 pb-4"
+                  style={{ borderTop: "0.5px solid #F0F0F0", paddingTop: "12px" }}>
+                  <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", backgroundColor: "#FAC775" }} />
+                  <span style={{ fontSize: "12px", color: "#9B9B9B" }}>
+                    {minorDeviations.length} minor difference{minorDeviations.length > 1 ? "s" : ""} also noted — within acceptable range.
+                  </span>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        {/* Minor deviations — FYI only, green state */}
-        {pageState === "green" && hasMinors && (
-          <div className="rounded-xl p-5 mb-4"
-            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
-            <div className="flex items-start gap-3 mb-4">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p style={{ fontSize: "13px", color: "#854F0B", lineHeight: 1.5 }}>
-                For your information — {minorDeviations.length} minor difference{minorDeviations.length > 1 ? "s" : ""} from {displayName}'s standard positions. These are within acceptable range and are not a blocker to signing.
-              </p>
-            </div>
-            {minorDeviations.map(d => (
-              <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} />
-            ))}
-          </div>
-        )}
-
-        {/* Collapsible detail — amber / red states */}
-        {(pageState === "amber" || pageState === "red") && totalClauses > 0 && (
-          <div className="rounded-xl overflow-hidden mb-4"
-            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
-            <button
-              onClick={() => setDetailOpen(o => !o)}
-              className="w-full flex items-center justify-between px-5 py-3 text-left"
-              style={{ background: "none", border: "none", cursor: "pointer" }}>
-              <span style={{ fontSize: "13px", color: "#4A4A6A" }}>
-                See what was reviewed ({totalClauses} clause{totalClauses > 1 ? "s" : ""}
-                {hasMajors ? ` — ${majorDeviations.length} flagged` : ""}
-                {hasEscalation ? ` — ${escalations.length} escalated` : ""})
-              </span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9B9B9B"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transform: detailOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-
-            {detailOpen && (
-              <div className="px-5 pb-4" style={{ borderTop: "0.5px solid #F0F0F0" }}>
-                {hasMinors && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium uppercase mb-1"
-                      style={{ color: "#854F0B", letterSpacing: "0.08em" }}>
-                      Minor differences — {minorDeviations.length}
-                    </p>
-                    <p className="text-xs mb-3" style={{ color: "#9B9B9B" }}>
-                      Within acceptable range — not a blocker.
-                    </p>
-                    {minorDeviations.map(d => (
-                      <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} />
-                    ))}
-                  </div>
-                )}
-                {hasMajors && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium uppercase mb-2"
-                      style={{ color: "#A32D2D", letterSpacing: "0.08em" }}>
-                      Major deviations — {majorDeviations.length}
-                    </p>
-                    {majorDeviations.map(d => <FlaggedRow key={d.id} deviation={d} />)}
-                  </div>
-                )}
-                {hasEscalation && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium uppercase mb-2"
-                      style={{ color: "#534AB7", letterSpacing: "0.08em" }}>
-                      Escalated — {escalations.length}
-                    </p>
-                    {escalations.map(d => <FlaggedRow key={d.id} deviation={d} />)}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Footer */}
-        <p className="text-center" style={{ fontSize: "12px", color: "#9B9B9B" }}>
+        <p className="text-center" style={{ fontSize: "11px", color: "#C8C8C8" }}>
           Reviewed against {displayName}'s NDA standards · Pact by Counselect
         </p>
 
