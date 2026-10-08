@@ -153,14 +153,12 @@ export default function ResultsPage() {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
-  const [userEmail, setUserEmail] = useState("")
   const sessionRef = useRef<{
     userId: string; clientId: string; userEmail: string
     firstName: string; lastName: string; clientName: string
   } | null>(null)
 
   const [deviations, setDeviations] = useState<Deviation[]>([])
-  const [documentSummary, setDocumentSummary] = useState("")
   const [mutualOrUnilateral, setMutualOrUnilateral] = useState("")
   const [counterpartyName, setCounterpartyName] = useState("")
   const [submissionId, setSubmissionId] = useState("")
@@ -182,7 +180,6 @@ export default function ResultsPage() {
       if (!userData) return
       setFirstName(userData.first_name || "")
       setLastName(userData.last_name || "")
-      setUserEmail(session.user.email || "")
 
       const { data: clientData } = await supabase
         .from("clients")
@@ -214,7 +211,6 @@ export default function ResultsPage() {
     if (sid) setSubmissionId(sid)
 
     const data = JSON.parse(raw)
-    setDocumentSummary(data.document_summary || "")
     setMutualOrUnilateral(data.mutual_or_unilateral || "")
     setCounterpartyName(name || "Counterparty")
 
@@ -237,12 +233,12 @@ export default function ResultsPage() {
 
   const writeAuditLog = async (deviation: Deviation, action: DeviationStatus) => {
     if (!sessionRef.current || !submissionId || action === "pending") return
-    const { userId, clientId, userEmail: ue, firstName: fn, lastName: ln, clientName: cn } = sessionRef.current
+    const { userId, clientId, userEmail, firstName: fn, lastName: ln, clientName: cn } = sessionRef.current
     await supabase.from("audit_log").insert({
       submission_id: submissionId,
       client_id: clientId,
       user_id: userId,
-      user_email: ue,
+      user_email: userEmail,
       user_name: `${fn} ${ln}`.trim(),
       client_name: cn,
       clause_type: deviation.title,
@@ -259,6 +255,16 @@ export default function ResultsPage() {
       }
       return d
     }))
+  }
+
+  const handleDownload = () => {
+    const fileData = sessionStorage.getItem("review_file_data")
+    const fileName = sessionStorage.getItem("review_file_name")
+    if (!fileData || !fileName) return
+    const a = document.createElement("a")
+    a.href = fileData
+    a.download = fileName
+    a.click()
   }
 
   const minorDeviations = useMemo(() => deviations.filter(d => d.type === "minor"), [deviations])
@@ -383,7 +389,7 @@ export default function ResultsPage() {
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
               <p style={{ fontSize: "13px", color: "#633806", lineHeight: 1.5 }}>
-                The internal draft below is for reference only. Do not send to the counterparty until your attorney clears it.
+                Your attorney will send the finalised version directly. No action needed from you right now.
               </p>
             </div>
           )}
@@ -404,9 +410,8 @@ export default function ResultsPage() {
           {/* Action buttons */}
           <div className="flex gap-3 flex-wrap">
             {pageState === "green" && allActioned && (
-              <a
-                href={sessionStorage.getItem("review_document_url") || "#"}
-                download
+              <button
+                onClick={handleDownload}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm"
                 style={{ backgroundColor: "#EF7043", color: "#FFFFFF" }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -414,25 +419,12 @@ export default function ResultsPage() {
                   <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
                 Download NDA
-              </a>
+              </button>
             )}
             {pageState === "green" && !allActioned && hasMinors && (
               <p className="text-xs self-center" style={{ color: "#9B9B9B" }}>
                 Action all minor deviations to enable download.
               </p>
-            )}
-            {(pageState === "amber" || pageState === "red") && (
-              <a
-                href={sessionStorage.getItem("review_document_url") || "#"}
-                download
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm"
-                style={{ backgroundColor: "#F7F8FA", color: "#4A4A6A", border: "0.5px solid #E2E4E8" }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download internal draft
-              </a>
             )}
             <Link href="/home"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
@@ -442,7 +434,7 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Minor deviations — green state, shown above fold */}
+        {/* Minor deviations — green state */}
         {pageState === "green" && hasMinors && (
           <div className="rounded-xl p-5 mb-4"
             style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
