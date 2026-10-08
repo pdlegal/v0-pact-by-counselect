@@ -28,8 +28,6 @@ function NavBar({ firstName, lastName, clientName }: { firstName: string; lastNa
   )
 }
 
-type DeviationStatus = "pending" | "accepted" | "rejected"
-
 interface Deviation {
   id: number
   type: "minor" | "major" | "escalation"
@@ -37,34 +35,15 @@ interface Deviation {
   counterparty: string
   standard: string
   reason: string
-  status: DeviationStatus
-}
-
-function RiskBadge({ type }: { type: "minor" | "major" | "escalation" }) {
-  const styles = {
-    minor:      { bg: "#FAEEDA", color: "#854F0B" },
-    major:      { bg: "#FCEBEB", color: "#A32D2D" },
-    escalation: { bg: "#EEEDFE", color: "#534AB7" },
-  }
-  const labels = { minor: "Minor", major: "Major", escalation: "Escalated" }
-  return (
-    <span className="px-2 py-0.5 text-xs font-medium rounded-full"
-      style={{ backgroundColor: styles[type].bg, color: styles[type].color }}>
-      {labels[type]}
-    </span>
-  )
 }
 
 function MinorDeviationRow({
-  deviation, clientName, onStatusChange,
+  deviation, clientName,
 }: {
   deviation: Deviation
   clientName: string
-  onStatusChange: (id: number, status: DeviationStatus) => void
 }) {
   const displayName = clientName || "your company"
-  const isAccepted = deviation.status === "accepted"
-  const isRejected = deviation.status === "rejected"
 
   return (
     <div className="rounded-xl mb-3 overflow-hidden"
@@ -72,7 +51,10 @@ function MinorDeviationRow({
       <div className="px-4 py-3 flex items-center gap-2"
         style={{ borderBottom: "0.5px solid #F0F0F0", backgroundColor: "#FFFBF5" }}>
         <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
-        <RiskBadge type="minor" />
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full"
+          style={{ backgroundColor: "#FAEEDA", color: "#854F0B" }}>
+          Minor
+        </span>
       </div>
       <div className="grid grid-cols-2" style={{ borderBottom: "0.5px solid #F0F0F0" }}>
         <div className="p-3" style={{ borderRight: "0.5px solid #F0F0F0" }}>
@@ -84,31 +66,8 @@ function MinorDeviationRow({
           <p className="text-xs leading-relaxed" style={{ color: "#431F5D" }}>{deviation.standard || "—"}</p>
         </div>
       </div>
-      <div className="px-4 py-3 flex items-center justify-between gap-3"
-        style={{ borderTop: "0.5px solid #F0F0F0" }}>
-        <p className="text-xs leading-relaxed flex-1" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
-        <div className="flex gap-2 flex-shrink-0">
-          <button
-            onClick={() => onStatusChange(deviation.id, "rejected")}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg"
-            style={{
-              backgroundColor: isRejected ? "#FCEBEB" : "#F7F8FA",
-              color: isRejected ? "#A32D2D" : "#4A4A6A",
-              border: isRejected ? "0.5px solid #F7C1C1" : "0.5px solid #E2E4E8",
-            }}>
-            Reject
-          </button>
-          <button
-            onClick={() => onStatusChange(deviation.id, "accepted")}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg"
-            style={{
-              backgroundColor: isAccepted ? "#EAF3DE" : "#431F5D",
-              color: isAccepted ? "#3B6D11" : "#FFFFFF",
-              border: isAccepted ? "0.5px solid #C0DD97" : "none",
-            }}>
-            Accept
-          </button>
-        </div>
+      <div className="px-4 py-3" style={{ borderTop: "0.5px solid #F0F0F0" }}>
+        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
       </div>
     </div>
   )
@@ -127,7 +86,13 @@ function FlaggedRow({ deviation }: { deviation: Deviation }) {
           backgroundColor: deviation.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
         }}>
         <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
-        <RiskBadge type={deviation.type} />
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full"
+          style={{
+            backgroundColor: deviation.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
+            color: deviation.type === "escalation" ? "#534AB7" : "#A32D2D"
+          }}>
+          {deviation.type === "escalation" ? "Escalated" : "Major"}
+        </span>
         <span className="ml-auto text-xs"
           style={{ color: deviation.type === "escalation" ? "#534AB7" : "#A32D2D" }}>
           {deviation.type === "escalation" ? "Attorney assessment required" : "Flagged to legal"}
@@ -224,15 +189,14 @@ export default function ResultsPage() {
       counterparty: item.counterparty_position || "",
       standard: item.standard_position || "",
       reason: item.issue,
-      status: "pending" as DeviationStatus,
     }))
 
     setDeviations(issues)
     setLoaded(true)
   }, [router])
 
-  const writeAuditLog = async (deviation: Deviation, action: DeviationStatus) => {
-    if (!sessionRef.current || !submissionId || action === "pending") return
+  const writeAuditLog = async (deviation: Deviation) => {
+    if (!sessionRef.current || !submissionId) return
     const { userId, clientId, userEmail, firstName: fn, lastName: ln, clientName: cn } = sessionRef.current
     await supabase.from("audit_log").insert({
       submission_id: submissionId,
@@ -243,24 +207,18 @@ export default function ResultsPage() {
       client_name: cn,
       clause_type: deviation.title,
       deviation_severity: deviation.type,
-      action_taken: action,
+      action_taken: "noted",
     })
-  }
-
-  const handleStatusChange = (id: number, status: DeviationStatus) => {
-    setDeviations(prev => prev.map(d => {
-      if (d.id === id) {
-        writeAuditLog({ ...d, status }, status)
-        return { ...d, status }
-      }
-      return d
-    }))
   }
 
   const handleDownload = () => {
     const fileData = sessionStorage.getItem("review_file_data")
     const fileName = sessionStorage.getItem("review_file_name")
     if (!fileData || !fileName) return
+
+    // Write audit log for all minor deviations on download
+    minorDeviations.forEach(d => writeAuditLog(d))
+
     const a = document.createElement("a")
     a.href = fileData
     a.download = fileName
@@ -274,7 +232,6 @@ export default function ResultsPage() {
   const hasMinors     = minorDeviations.length > 0
   const hasMajors     = majorDeviations.length > 0
   const hasEscalation = escalations.length > 0
-  const allActioned   = minorDeviations.every(d => d.status !== "pending")
   const totalClauses  = deviations.length
   const displayName   = clientName || "your company"
 
@@ -316,7 +273,9 @@ export default function ResultsPage() {
         </svg>
       ),
       verdict: "Ready to send",
-      sub: `No issues found — this NDA is ready to go to ${counterpartyName}.`,
+      sub: hasMinors
+        ? `This NDA is good to go. There are ${minorDeviations.length} minor difference${minorDeviations.length > 1 ? "s" : ""} from ${displayName}'s standard positions — none of them are a blocker to signing.`
+        : `No issues found — this NDA is ready to go to ${counterpartyName}.`,
     },
     amber: {
       iconBg: "#FAEEDA", iconColor: "#854F0B",
@@ -409,7 +368,7 @@ export default function ResultsPage() {
 
           {/* Action buttons */}
           <div className="flex gap-3 flex-wrap">
-            {pageState === "green" && allActioned && (
+            {pageState === "green" && (
               <button
                 onClick={handleDownload}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm"
@@ -421,11 +380,6 @@ export default function ResultsPage() {
                 Download NDA
               </button>
             )}
-            {pageState === "green" && !allActioned && hasMinors && (
-              <p className="text-xs self-center" style={{ color: "#9B9B9B" }}>
-                Action all minor deviations to enable download.
-              </p>
-            )}
             <Link href="/home"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
               style={{ color: "#4A4A6A", border: "0.5px solid #E2E4E8", backgroundColor: "#F7F8FA" }}>
@@ -434,21 +388,20 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Minor deviations — green state */}
+        {/* Minor deviations — FYI only, green state */}
         {pageState === "green" && hasMinors && (
           <div className="rounded-xl p-5 mb-4"
             style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-medium uppercase"
-                style={{ color: "#854F0B", letterSpacing: "0.08em" }}>
-                Minor deviations — {minorDeviations.length}
-              </h2>
-              <span className="text-xs" style={{ color: "#9B9B9B" }}>
-                {minorDeviations.filter(d => d.status !== "pending").length} of {minorDeviations.length} actioned
-              </span>
+            <div className="flex items-start gap-3 mb-4">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p style={{ fontSize: "13px", color: "#854F0B", lineHeight: 1.5 }}>
+                For your information — {minorDeviations.length} minor difference{minorDeviations.length > 1 ? "s" : ""} from {displayName}'s standard positions. These are within acceptable range and are not a blocker to signing.
+              </p>
             </div>
             {minorDeviations.map(d => (
-              <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} onStatusChange={handleStatusChange} />
+              <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} />
             ))}
           </div>
         )}
@@ -477,12 +430,15 @@ export default function ResultsPage() {
               <div className="px-5 pb-4" style={{ borderTop: "0.5px solid #F0F0F0" }}>
                 {hasMinors && (
                   <div className="mt-4">
-                    <p className="text-xs font-medium uppercase mb-2"
+                    <p className="text-xs font-medium uppercase mb-1"
                       style={{ color: "#854F0B", letterSpacing: "0.08em" }}>
-                      Minor deviations — {minorDeviations.length}
+                      Minor differences — {minorDeviations.length}
+                    </p>
+                    <p className="text-xs mb-3" style={{ color: "#9B9B9B" }}>
+                      Within acceptable range — not a blocker.
                     </p>
                     {minorDeviations.map(d => (
-                      <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} onStatusChange={handleStatusChange} />
+                      <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} />
                     ))}
                   </div>
                 )}
