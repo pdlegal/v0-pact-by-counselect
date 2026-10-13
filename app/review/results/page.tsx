@@ -52,22 +52,13 @@ function NavBar({ firstName, lastName, clientName }: { firstName: string; lastNa
 
 function ConfidenceScore({ confidence, reason }: { confidence: Issue["confidence"]; reason?: string }) {
   const config = {
-    high: {
-      label: "High",
-      bg: "#EAF3DE", color: "#3B6D11", border: "#C0DD97", icon: "ti-check",
-    },
-    medium: {
-      label: "Medium",
-      bg: "#FAEEDA", color: "#854F0B", border: "#FAC775", icon: "ti-minus",
-    },
-    escalate: {
-      label: "Low",
-      bg: "#FCEBEB", color: "#A32D2D", border: "#F7C1C1", icon: "ti-alert-triangle",
-    },
+    high: { label: "High", bg: "#EAF3DE", color: "#3B6D11", border: "#C0DD97", icon: "ti-check" },
+    medium: { label: "Medium", bg: "#FAEEDA", color: "#854F0B", border: "#FAC775", icon: "ti-minus" },
+    escalate: { label: "Low", bg: "#FCEBEB", color: "#A32D2D", border: "#F7C1C1", icon: "ti-alert-triangle" },
   }
   const c = config[confidence]
   return (
-    <div style={{ marginBottom: "20px" }}>
+    <div style={{ marginBottom: "18px" }}>
       <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
         Pact AI confidence score
       </p>
@@ -84,20 +75,12 @@ function ConfidenceScore({ confidence, reason }: { confidence: Issue["confidence
   )
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
-      {children}
-    </p>
-  )
-}
-
-function CopyButton({ text, dark }: { text: string; dark?: boolean }) {
+function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
-      style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "6px", border: `0.5px solid ${dark ? "#85B7EB" : "#85B7EB"}`, background: "#FFFFFF", color: "#0C447C", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+      style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "6px", border: "0.5px solid #85B7EB", background: "#FFFFFF", color: "#0C447C", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
       <i className={`ti ${copied ? "ti-check" : "ti-copy"}`} aria-hidden="true" style={{ fontSize: "12px" }} />
       {copied ? "Copied" : "Copy"}
     </button>
@@ -146,7 +129,7 @@ export default function ReviewResultsPage() {
 
   if (!result) {
     return (
-      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F7F8FA" }}>
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F0F2F5" }}>
         <p style={{ color: "#9B9B9B", fontSize: "13px" }}>Loading results...</p>
       </main>
     )
@@ -158,47 +141,67 @@ export default function ReviewResultsPage() {
   const selectedIssue = selectedIndex !== null ? issues[selectedIndex] : null
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#F7F8FA" }}>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#F0F2F5" }}>
       <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
-      {/* Top bar */}
-      <div style={{ backgroundColor: "#FFFFFF", borderBottom: "0.5px solid #E2E4E8", padding: "9px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-          <span style={{ fontSize: "14px", fontWeight: 500, color: "#431F5D", whiteSpace: "nowrap" }}>{counterpartyName || "Counterparty"}</span>
-          <span style={{ fontSize: "12px", color: "#E2E4E8" }}>·</span>
-          <span style={{ fontSize: "12px", color: "#9B9B9B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+      {/* Page header */}
+      <div style={{ backgroundColor: "#FFFFFF", borderBottom: "0.5px solid #E2E4E8", padding: "14px 20px" }}>
+        <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>
+          NDA review
+        </p>
+        <p style={{ fontSize: "20px", fontWeight: 500, color: "#1A1A1A", margin: "0 0 12px" }}>
+          {counterpartyName || "Counterparty"}
+        </p>
+
+        {/* Issue count cards */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+          {majorCount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", borderRadius: "8px", background: "#FCEBEB", border: "0.5px solid #F09595" }}>
+              <span style={{ fontSize: "22px", fontWeight: 500, lineHeight: 1, color: "#791F1F" }}>{majorCount}</span>
+              <span style={{ fontSize: "11px", lineHeight: 1.3, color: "#A32D2D" }}>major<br />deviations</span>
+            </div>
+          )}
+          {minorCount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", borderRadius: "8px", background: "#FAEEDA", border: "0.5px solid #EF9F27" }}>
+              <span style={{ fontSize: "22px", fontWeight: 500, lineHeight: 1, color: "#633806" }}>{minorCount}</span>
+              <span style={{ fontSize: "11px", lineHeight: 1.3, color: "#854F0B" }}>minor<br />deviations</span>
+            </div>
+          )}
+          {issues.length === 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", borderRadius: "8px", background: "#EAF3DE", border: "0.5px solid #C0DD97" }}>
+              <i className="ti ti-check" aria-hidden="true" style={{ fontSize: "18px", color: "#3B6D11" }} />
+              <span style={{ fontSize: "11px", color: "#3B6D11", fontWeight: 500 }}>No deviations found</span>
+            </div>
+          )}
+        </div>
+
+        {/* Meta row */}
+        <div style={{ display: "flex", gap: "14px", alignItems: "center", paddingTop: "10px", borderTop: "0.5px solid #E2E4E8", flexWrap: "wrap" }}>
+          {fileName && (
+            <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
+              <i className="ti ti-file-text" aria-hidden="true" style={{ fontSize: "12px" }} />
+              {fileName}
+            </span>
+          )}
+          <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
+            <i className="ti ti-arrows-exchange" aria-hidden="true" style={{ fontSize: "12px" }} />
+            {result.mutual_or_unilateral?.toLowerCase().startsWith("mutual") ? "Mutual NDA" : "Unilateral NDA"}
+          </span>
+          <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
+            <i className="ti ti-scale" aria-hidden="true" style={{ fontSize: "12px" }} />
             Reviewed against {clientName}'s NDA standards
           </span>
+          {result.escalate_to && result.escalate_to !== "none" && (
+            <span style={{ fontSize: "11px", color: "#A32D2D", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500 }}>
+              <i className="ti ti-alert-circle" aria-hidden="true" style={{ fontSize: "12px" }} />
+              Escalate to {result.escalate_to.replace("_", " ")}
+            </span>
+          )}
+          <Link href="/home" style={{ fontSize: "11px", color: "#9B9B9B", marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
+            <i className="ti ti-home" aria-hidden="true" style={{ fontSize: "12px" }} />
+            Home
+          </Link>
         </div>
-        <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-          {majorCount > 0 && <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FCEBEB", color: "#A32D2D", whiteSpace: "nowrap" }}>{majorCount} major</span>}
-          {minorCount > 0 && <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FAEEDA", color: "#854F0B", whiteSpace: "nowrap" }}>{minorCount} minor</span>}
-          {issues.length === 0 && <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#EAF3DE", color: "#3B6D11" }}>Clean</span>}
-        </div>
-      </div>
-
-      {/* Meta strip */}
-      <div style={{ backgroundColor: "#FAFAFA", borderBottom: "0.5px solid #E2E4E8", padding: "6px 20px", display: "flex", gap: "16px", alignItems: "center" }}>
-        {fileName && (
-          <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
-            <i className="ti ti-file-text" aria-hidden="true" style={{ fontSize: "12px" }} />
-            {fileName}
-          </span>
-        )}
-        <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
-          <i className="ti ti-arrows-exchange" aria-hidden="true" style={{ fontSize: "12px" }} />
-          {result.mutual_or_unilateral?.toLowerCase().startsWith("mutual") ? "Mutual NDA" : "Unilateral NDA"}
-        </span>
-        {result.escalate_to && result.escalate_to !== "none" && (
-          <span style={{ fontSize: "11px", color: "#A32D2D", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500 }}>
-            <i className="ti ti-alert-circle" aria-hidden="true" style={{ fontSize: "12px" }} />
-            Escalate to {result.escalate_to.replace("_", " ")}
-          </span>
-        )}
-        <Link href="/home" style={{ fontSize: "11px", color: "#9B9B9B", marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
-          <i className="ti ti-home" aria-hidden="true" style={{ fontSize: "12px" }} />
-          Home
-        </Link>
       </div>
 
       {/* Empty state */}
@@ -208,17 +211,17 @@ export default function ReviewResultsPage() {
             <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#EAF3DE", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
               <i className="ti ti-check" aria-hidden="true" style={{ fontSize: "22px", color: "#3B6D11" }} />
             </div>
-            <p style={{ fontSize: "16px", fontWeight: 500, color: "#431F5D", marginBottom: "6px" }}>No deviations found</p>
+            <p style={{ fontSize: "16px", fontWeight: 500, color: "#1A1A1A", marginBottom: "6px" }}>No deviations found</p>
             <p style={{ fontSize: "13px", color: "#9B9B9B", marginBottom: "20px" }}>This NDA is compliant with {clientName}'s standards.</p>
             <Link href="/home" style={{ fontSize: "13px", color: "#431F5D", textDecoration: "underline" }}>Back to home</Link>
           </div>
         </div>
       ) : (
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "220px 1fr", minHeight: 0 }}>
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "200px 1fr", minHeight: 0 }}>
 
-          {/* Left — clause list */}
-          <div style={{ borderRight: "0.5px solid #E2E4E8", padding: "12px 10px", backgroundColor: "#FAFAFA", overflowY: "auto" }}>
-            <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 4px 10px" }}>
+          {/* Sidebar */}
+          <div style={{ background: "#EDEEF1", borderRight: "0.5px solid #D8DAE0", padding: "12px 8px", overflowY: "auto" }}>
+            <p style={{ fontSize: "10px", fontWeight: 500, color: "#888780", textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 6px 10px" }}>
               {issues.length} clause{issues.length !== 1 ? "s" : ""}
             </p>
             {issues.map((issue, index) => {
@@ -237,63 +240,75 @@ export default function ReviewResultsPage() {
                     <div style={{ fontSize: "12px", fontWeight: 500, color: isMajor ? "#A32D2D" : "#854F0B", marginBottom: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {issue.clause}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#9B9B9B" }}>{isMajor ? "Major deviation" : "Minor deviation"}</div>
+                    <div style={{ fontSize: "11px", color: "#888780" }}>{isMajor ? "Major deviation" : "Minor deviation"}</div>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          {/* Right — analysis panel */}
+          {/* Right panel */}
           {selectedIssue ? (
-            <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", minHeight: 0, backgroundColor: "#FFFFFF" }}>
 
               {/* Panel header */}
-              <div style={{ padding: "16px 24px 12px", borderBottom: "0.5px solid #E2E4E8", backgroundColor: "#FFFFFF" }}>
+              <div style={{ padding: "16px 22px 13px", borderBottom: "0.5px solid #E2E4E8" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: 500, color: "#431F5D" }}>{selectedIssue.clause}</span>
+                  <span style={{ fontSize: "15px", fontWeight: 500, color: "#1A1A1A" }}>{selectedIssue.clause}</span>
                   <span style={{
-                    fontSize: "11px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px",
+                    fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px",
                     background: selectedIssue.risk === "MAJOR" ? "#FCEBEB" : "#FAEEDA",
                     color: selectedIssue.risk === "MAJOR" ? "#A32D2D" : "#854F0B"
                   }}>
                     {selectedIssue.risk === "MAJOR" ? "Major deviation" : "Minor deviation"}
                   </span>
                 </div>
-                <p style={{ fontSize: "12px", color: "#9B9B9B", margin: 0, lineHeight: 1.5 }}>{selectedIssue.issue}</p>
+                <p style={{ fontSize: "12px", color: "#5F5E5A", margin: 0, lineHeight: 1.5 }}>{selectedIssue.issue}</p>
               </div>
 
               {/* Panel body */}
-              <div style={{ padding: "20px 24px", flex: 1, overflowY: "auto", backgroundColor: "#FFFFFF" }}>
+              <div style={{ padding: "18px 22px", flex: 1, overflowY: "auto" }}>
 
-                {/* Pact AI confidence score */}
                 <ConfidenceScore confidence={selectedIssue.confidence} reason={selectedIssue.confidence_reason} />
 
-                {/* Counterparty position — red tint */}
-                <SectionLabel>Counterparty position</SectionLabel>
-                <div style={{ background: "#FCEBEB", border: "0.5px solid #F7C1C1", borderRadius: "6px", padding: "10px 14px", marginBottom: "20px" }}>
-                  <p style={{ fontSize: "13px", color: "#791F1F", lineHeight: 1.75, margin: 0 }}>{selectedIssue.counterparty_position}</p>
+                {/* Side by side comparison */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 28px 1fr", marginBottom: "18px", alignItems: "stretch" }}>
+                  <div>
+                    <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
+                      Counterparty position
+                    </p>
+                    <div style={{ background: "#FCEBEB", border: "0.5px solid #F7C1C1", borderRadius: "6px", padding: "11px 14px", height: "calc(100% - 23px)", boxSizing: "border-box" }}>
+                      <p style={{ fontSize: "12px", color: "#1A1A1A", lineHeight: 1.75, margin: 0 }}>{selectedIssue.counterparty_position}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", paddingTop: "18px" }}>
+                    <span style={{ fontSize: "10px", fontWeight: 500, color: "#888780", background: "#EDEEF1", border: "0.5px solid #D3D1C7", borderRadius: "10px", padding: "2px 6px" }}>vs</span>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
+                      {clientName} standard position
+                    </p>
+                    <div style={{ background: "#EEEDFE", border: "0.5px solid #AFA9EC", borderRadius: "6px", padding: "11px 14px", height: "calc(100% - 23px)", boxSizing: "border-box" }}>
+                      <p style={{ fontSize: "12px", color: "#1A1A1A", lineHeight: 1.75, margin: 0, fontWeight: 500 }}>{selectedIssue.standard_position}</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Standard position — purple tint */}
-                <SectionLabel>{clientName} standard position</SectionLabel>
-                <div style={{ background: "#EEEDFE", border: "0.5px solid #AFA9EC", borderRadius: "6px", padding: "10px 14px", marginBottom: "20px" }}>
-                  <p style={{ fontSize: "13px", color: "#3C3489", lineHeight: 1.75, margin: 0, fontWeight: 500 }}>{selectedIssue.standard_position}</p>
-                </div>
-
-                {/* Suggested language — blue tint */}
+                {/* Suggested language */}
                 {selectedIssue.suggested_change && (
                   <>
-                    <SectionLabel>Suggested language</SectionLabel>
-                    <div style={{ background: "#E6F1FB", border: "0.5px solid #85B7EB", borderRadius: "6px", overflow: "hidden", marginBottom: "20px" }}>
-                      <div style={{ padding: "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "0.5px solid #85B7EB" }}>
+                    <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
+                      Suggested language
+                    </p>
+                    <div style={{ border: "0.5px solid #85B7EB", borderRadius: "6px", overflow: "hidden" }}>
+                      <div style={{ background: "#E6F1FB", padding: "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "0.5px solid #85B7EB" }}>
                         <span style={{ fontSize: "10px", fontWeight: 500, color: "#0C447C", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "5px" }}>
                           <i className="ti ti-wand" aria-hidden="true" style={{ fontSize: "12px" }} />
                           Proposed replacement
                         </span>
                         <CopyButton text={selectedIssue.suggested_change} />
                       </div>
-                      <div style={{ padding: "12px 14px", fontSize: "13px", lineHeight: 1.8, color: "#042C53" }}>
+                      <div style={{ padding: "12px 14px", fontSize: "12px", lineHeight: 1.8, color: "#1A1A1A" }}>
                         {selectedIssue.suggested_change}
                       </div>
                       <div style={{ padding: "5px 14px 7px", fontSize: "11px", color: "#185FA5", background: "#D6E8F8", borderTop: "0.5px solid #85B7EB" }}>
@@ -306,11 +321,11 @@ export default function ReviewResultsPage() {
               </div>
 
               {/* Nav footer */}
-              <div style={{ padding: "10px 24px", borderTop: "0.5px solid #E2E4E8", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FAFAFA" }}>
+              <div style={{ padding: "10px 22px", borderTop: "0.5px solid #E2E4E8", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FAFAFA" }}>
                 <button
                   onClick={() => setSelectedIndex(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
                   disabled={selectedIndex === 0}
-                  style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "6px", border: "0.5px solid #E2E4E8", background: "#FFFFFF", color: "#431F5D", cursor: selectedIndex === 0 ? "not-allowed" : "pointer", opacity: selectedIndex === 0 ? 0.4 : 1, display: "flex", alignItems: "center", gap: "5px" }}>
+                  style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "6px", border: "0.5px solid #D8DAE0", background: "#FFFFFF", color: "#1A1A1A", cursor: selectedIndex === 0 ? "not-allowed" : "pointer", opacity: selectedIndex === 0 ? 0.4 : 1, display: "flex", alignItems: "center", gap: "5px" }}>
                   <i className="ti ti-arrow-left" aria-hidden="true" style={{ fontSize: "13px" }} /> Previous
                 </button>
                 <span style={{ fontSize: "12px", color: "#9B9B9B" }}>
@@ -319,13 +334,13 @@ export default function ReviewResultsPage() {
                 <button
                   onClick={() => setSelectedIndex(prev => prev !== null && prev < issues.length - 1 ? prev + 1 : prev)}
                   disabled={selectedIndex === issues.length - 1}
-                  style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "6px", border: "0.5px solid #E2E4E8", background: "#FFFFFF", color: "#431F5D", cursor: selectedIndex === issues.length - 1 ? "not-allowed" : "pointer", opacity: selectedIndex === issues.length - 1 ? 0.4 : 1, display: "flex", alignItems: "center", gap: "5px" }}>
+                  style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "6px", border: "0.5px solid #D8DAE0", background: "#FFFFFF", color: "#1A1A1A", cursor: selectedIndex === issues.length - 1 ? "not-allowed" : "pointer", opacity: selectedIndex === issues.length - 1 ? 0.4 : 1, display: "flex", alignItems: "center", gap: "5px" }}>
                   Next <i className="ti ti-arrow-right" aria-hidden="true" style={{ fontSize: "13px" }} />
                 </button>
               </div>
             </div>
           ) : (
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#FFFFFF" }}>
               <p style={{ fontSize: "13px", color: "#9B9B9B" }}>Select a clause to review</p>
             </div>
           )}
