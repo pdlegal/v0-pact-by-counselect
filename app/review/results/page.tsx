@@ -148,8 +148,6 @@ export default function ReviewResultsPage() {
 
       {/* Page header */}
       <div style={{ backgroundColor: "#FFFFFF", borderBottom: "0.5px solid #E2E4E8", padding: "14px 20px" }}>
-
-        {/* Title row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "12px" }}>
           <div>
             <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
@@ -167,7 +165,6 @@ export default function ReviewResultsPage() {
           </button>
         </div>
 
-        {/* Issue count cards */}
         <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
           {majorCount > 0 && (
             <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", borderRadius: "8px", background: "#FCEBEB", border: "0.5px solid #F09595" }}>
@@ -189,7 +186,6 @@ export default function ReviewResultsPage() {
           )}
         </div>
 
-        {/* Meta row */}
         <div style={{ display: "flex", gap: "14px", alignItems: "center", paddingTop: "10px", borderTop: "0.5px solid #E2E4E8", flexWrap: "wrap" }}>
           {fileName && (
             <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -231,9 +227,9 @@ export default function ReviewResultsPage() {
       ) : (
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "200px 1fr", minHeight: 0 }}>
 
-          {/* Sidebar */}
-          <div style={{ background: "#EDEEF1", borderRight: "0.5px solid #D8DAE0", padding: "12px 8px", overflowY: "auto" }}>
-            <p style={{ fontSize: "10px", fontWeight: 500, color: "#888780", textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 6px 10px" }}>
+          {/* Sidebar — deep purple */}
+          <div style={{ background: "#2D1648", borderRight: "0.5px solid #1A0D2E", padding: "12px 8px", overflowY: "auto" }}>
+            <p style={{ fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 6px 10px" }}>
               {issues.length} clause{issues.length !== 1 ? "s" : ""}
             </p>
             {issues.map((issue, index) => {
@@ -244,15 +240,17 @@ export default function ReviewResultsPage() {
                   style={{
                     padding: "8px 10px", borderRadius: "6px", cursor: "pointer", marginBottom: "2px",
                     display: "flex", alignItems: "flex-start", gap: "8px",
-                    backgroundColor: isSelected ? (isMajor ? "#FCEBEB" : "#FAEEDA") : "transparent",
-                    border: isSelected ? `0.5px solid ${isMajor ? "#F7C1C1" : "#FAC775"}` : "0.5px solid transparent",
+                    backgroundColor: isSelected ? "rgba(255,255,255,0.1)" : "transparent",
+                    border: isSelected ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
                   }}>
-                  <div style={{ width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0, marginTop: "4px", backgroundColor: isMajor ? "#E24B4A" : "#BA7517" }} />
+                  <div style={{ width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0, marginTop: "4px", backgroundColor: isMajor ? "#E24B4A" : "#EF9F27" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "12px", fontWeight: 500, color: isMajor ? "#A32D2D" : "#854F0B", marginBottom: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 500, color: isSelected ? "#FFFFFF" : (isMajor ? "#F09595" : "#FAC775"), marginBottom: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {issue.clause}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#888780" }}>{isMajor ? "Major deviation" : "Minor deviation"}</div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>
+                      {isMajor ? "Major deviation" : "Minor deviation"}
+                    </div>
                   </div>
                 </div>
               )
@@ -263,7 +261,6 @@ export default function ReviewResultsPage() {
           {selectedIssue ? (
             <div style={{ display: "flex", flexDirection: "column", minHeight: 0, backgroundColor: "#FFFFFF" }}>
 
-              {/* Panel header */}
               <div style={{ padding: "16px 22px 13px", borderBottom: "0.5px solid #E2E4E8" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                   <span style={{ fontSize: "15px", fontWeight: 500, color: "#1A1A1A" }}>{selectedIssue.clause}</span>
@@ -278,12 +275,10 @@ export default function ReviewResultsPage() {
                 <p style={{ fontSize: "12px", color: "#5F5E5A", margin: 0, lineHeight: 1.5 }}>{selectedIssue.issue}</p>
               </div>
 
-              {/* Panel body */}
               <div style={{ padding: "18px 22px", flex: 1, overflowY: "auto" }}>
 
                 <ConfidenceScore confidence={selectedIssue.confidence} reason={selectedIssue.confidence_reason} />
 
-                {/* Side by side comparison */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 28px 1fr", marginBottom: "18px", alignItems: "stretch" }}>
                   <div>
                     <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
@@ -294,7 +289,7 @@ export default function ReviewResultsPage() {
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", paddingTop: "18px" }}>
-                    <span style={{ fontSize: "10px", fontWeight: 500, color: "#888780", background: "#EDEEF1", border: "0.5px solid #D3D1C7", borderRadius: "10px", padding: "2px 6px" }}>vs</span>
+                    <span style={{ fontSize: "10px", fontWeight: 500, color: "#888780", background: "#F0F2F5", border: "0.5px solid #D3D1C7", borderRadius: "10px", padding: "2px 6px" }}>vs</span>
                   </div>
                   <div>
                     <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
@@ -306,7 +301,6 @@ export default function ReviewResultsPage() {
                   </div>
                 </div>
 
-                {/* Suggested language */}
                 {selectedIssue.suggested_change && (
                   <>
                     <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
@@ -332,7 +326,6 @@ export default function ReviewResultsPage() {
 
               </div>
 
-              {/* Nav footer */}
               <div style={{ padding: "10px 22px", borderTop: "0.5px solid #E2E4E8", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FAFAFA" }}>
                 <button
                   onClick={() => setSelectedIndex(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
