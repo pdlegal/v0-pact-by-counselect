@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -51,56 +50,54 @@ function NavBar({ firstName, lastName, clientName }: { firstName: string; lastNa
   )
 }
 
-function ConfidenceBadge({ confidence, reason }: { confidence: Issue["confidence"]; reason?: string }) {
+function ConfidenceScore({ confidence, reason }: { confidence: Issue["confidence"]; reason?: string }) {
   const config = {
     high: {
-      label: "High confidence",
-      sublabel: null,
-      bg: "#EAF3DE",
-      color: "#3B6D11",
-      border: "#C0DD97",
-      icon: "ti-check",
+      label: "High",
+      bg: "#EAF3DE", color: "#3B6D11", border: "#C0DD97", icon: "ti-check",
     },
     medium: {
-      label: "Review suggested",
-      sublabel: reason || null,
-      bg: "#FAEEDA",
-      color: "#854F0B",
-      border: "#FAC775",
-      icon: "ti-eye",
+      label: "Medium",
+      bg: "#FAEEDA", color: "#854F0B", border: "#FAC775", icon: "ti-minus",
     },
     escalate: {
-      label: "Escalate to attorney",
-      sublabel: reason || null,
-      bg: "#FCEBEB",
-      color: "#A32D2D",
-      border: "#F7C1C1",
-      icon: "ti-alert-circle",
+      label: "Low",
+      bg: "#FCEBEB", color: "#A32D2D", border: "#F7C1C1", icon: "ti-alert-triangle",
     },
   }
   const c = config[confidence]
   return (
-    <div style={{ backgroundColor: c.bg, border: `0.5px solid ${c.border}`, borderRadius: "8px", padding: "8px 12px", marginBottom: "16px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: c.sublabel ? "3px" : 0 }}>
-        <i className={`ti ${c.icon}`} aria-hidden="true" style={{ fontSize: "13px", color: c.color }} />
-        <span style={{ fontSize: "12px", fontWeight: 500, color: c.color }}>{c.label}</span>
+    <div style={{ marginBottom: "20px" }}>
+      <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
+        Pact AI confidence score
+      </p>
+      <div style={{ backgroundColor: c.bg, border: `0.5px solid ${c.border}`, borderRadius: "6px", padding: "7px 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: reason ? "3px" : 0 }}>
+          <i className={`ti ${c.icon}`} aria-hidden="true" style={{ fontSize: "12px", color: c.color }} />
+          <span style={{ fontSize: "12px", fontWeight: 500, color: c.color }}>{c.label}</span>
+        </div>
+        {reason && (
+          <p style={{ fontSize: "11px", color: c.color, lineHeight: 1.5, margin: 0, paddingLeft: "18px" }}>{reason}</p>
+        )}
       </div>
-      {c.sublabel && (
-        <p style={{ fontSize: "12px", color: c.color, lineHeight: 1.5, margin: 0, paddingLeft: "19px" }}>{c.sublabel}</p>
-      )}
     </div>
   )
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <button onClick={handleCopy} style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "6px", border: "0.5px solid #B5D4F4", background: "#FFFFFF", color: "#185FA5", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+    <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
+      {children}
+    </p>
+  )
+}
+
+function CopyButton({ text, dark }: { text: string; dark?: boolean }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+      style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "6px", border: `0.5px solid ${dark ? "#85B7EB" : "#85B7EB"}`, background: "#FFFFFF", color: "#0C447C", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
       <i className={`ti ${copied ? "ti-check" : "ti-copy"}`} aria-hidden="true" style={{ fontSize: "12px" }} />
       {copied ? "Copied" : "Copy"}
     </button>
@@ -112,25 +109,25 @@ function CopyButton({ text }: { text: string }) {
 // ─────────────────────────────────────────────
 
 export default function ReviewResultsPage() {
-  const router = useRouter()
-
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
   const [result, setResult] = useState<ReviewResult | null>(null)
   const [counterpartyName, setCounterpartyName] = useState("")
+  const [fileName, setFileName] = useState("")
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem("review_result")
     const cp = sessionStorage.getItem("review_counterparty_name")
+    const fn = sessionStorage.getItem("review_file_name")
     if (raw) {
       const parsed = JSON.parse(raw)
       setResult(parsed)
-      // Auto-select first flagged clause
-      if (parsed.issues && parsed.issues.length > 0) setSelectedIndex(0)
+      if (parsed.issues?.length > 0) setSelectedIndex(0)
     }
     if (cp) setCounterpartyName(cp)
+    if (fn) setFileName(fn)
   }, [])
 
   useEffect(() => {
@@ -158,68 +155,55 @@ export default function ReviewResultsPage() {
   const issues = result.issues || []
   const majorCount = issues.filter(i => i.risk === "MAJOR").length
   const minorCount = issues.filter(i => i.risk === "MINOR").length
-  const cleanCount = issues.filter(i => !i.risk || i.risk === "COMPLIANT").length
   const selectedIssue = selectedIndex !== null ? issues[selectedIndex] : null
 
-  const dotColor = (issue: Issue) => {
-    if (issue.risk === "MAJOR") return "#E24B4A"
-    if (issue.risk === "MINOR") return "#BA7517"
-    return "#639922"
-  }
-
-  const dotLabel = (issue: Issue) => {
-    if (issue.risk === "MAJOR") return "Major deviation"
-    if (issue.risk === "MINOR") return "Minor deviation"
-    return "Compliant"
-  }
-
   return (
-    <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#F7F8FA" }}>
       <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
       {/* Top bar */}
-      <div style={{ backgroundColor: "#FFFFFF", borderBottom: "0.5px solid #E2E4E8", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "14px", fontWeight: 500, color: "#431F5D" }}>{counterpartyName || "Counterparty"}</span>
-          <span style={{ fontSize: "12px", color: "#9B9B9B" }}>·</span>
-          <span style={{ fontSize: "12px", color: "#4A4A6A" }}>{result.mutual_or_unilateral?.split("—")[0]?.trim() || "MNDA"}</span>
-          <span style={{ fontSize: "12px", color: "#9B9B9B" }}>·</span>
-          <span style={{ fontSize: "12px", color: "#4A4A6A" }}>Reviewed against {clientName}'s NDA standards</span>
+      <div style={{ backgroundColor: "#FFFFFF", borderBottom: "0.5px solid #E2E4E8", padding: "9px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+          <span style={{ fontSize: "14px", fontWeight: 500, color: "#431F5D", whiteSpace: "nowrap" }}>{counterpartyName || "Counterparty"}</span>
+          <span style={{ fontSize: "12px", color: "#E2E4E8" }}>·</span>
+          <span style={{ fontSize: "12px", color: "#9B9B9B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            Reviewed against {clientName}'s NDA standards
+          </span>
         </div>
-        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-          {majorCount > 0 && (
-            <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FCEBEB", color: "#A32D2D" }}>{majorCount} major</span>
-          )}
-          {minorCount > 0 && (
-            <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FAEEDA", color: "#854F0B" }}>{minorCount} minor</span>
-          )}
-          {issues.length === 0 && (
-            <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#EAF3DE", color: "#3B6D11" }}>Clean</span>
-          )}
+        <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+          {majorCount > 0 && <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FCEBEB", color: "#A32D2D", whiteSpace: "nowrap" }}>{majorCount} major</span>}
+          {minorCount > 0 && <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FAEEDA", color: "#854F0B", whiteSpace: "nowrap" }}>{minorCount} minor</span>}
+          {issues.length === 0 && <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#EAF3DE", color: "#3B6D11" }}>Clean</span>}
         </div>
       </div>
 
       {/* Meta strip */}
-      <div style={{ backgroundColor: "#FAFAFA", borderBottom: "0.5px solid #E2E4E8", padding: "7px 20px", display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        <span style={{ fontSize: "12px", color: "#4A4A6A", display: "flex", alignItems: "center", gap: "5px" }}>
-          <i className="ti ti-arrows-exchange" aria-hidden="true" style={{ fontSize: "13px" }} />
-          {result.mutual_or_unilateral?.split("—")[0]?.trim() || "—"}
-        </span>
-        <span style={{ fontSize: "12px", color: "#4A4A6A", display: "flex", alignItems: "center", gap: "5px" }}>
-          <i className="ti ti-file-text" aria-hidden="true" style={{ fontSize: "13px" }} />
-          {sessionStorage.getItem("review_file_name") || "NDA document"}
+      <div style={{ backgroundColor: "#FAFAFA", borderBottom: "0.5px solid #E2E4E8", padding: "6px 20px", display: "flex", gap: "16px", alignItems: "center" }}>
+        {fileName && (
+          <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
+            <i className="ti ti-file-text" aria-hidden="true" style={{ fontSize: "12px" }} />
+            {fileName}
+          </span>
+        )}
+        <span style={{ fontSize: "11px", color: "#9B9B9B", display: "flex", alignItems: "center", gap: "4px" }}>
+          <i className="ti ti-arrows-exchange" aria-hidden="true" style={{ fontSize: "12px" }} />
+          {result.mutual_or_unilateral?.toLowerCase().startsWith("mutual") ? "Mutual NDA" : "Unilateral NDA"}
         </span>
         {result.escalate_to && result.escalate_to !== "none" && (
-          <span style={{ fontSize: "12px", color: "#A32D2D", display: "flex", alignItems: "center", gap: "5px", fontWeight: 500 }}>
-            <i className="ti ti-alert-circle" aria-hidden="true" style={{ fontSize: "13px" }} />
+          <span style={{ fontSize: "11px", color: "#A32D2D", display: "flex", alignItems: "center", gap: "4px", fontWeight: 500 }}>
+            <i className="ti ti-alert-circle" aria-hidden="true" style={{ fontSize: "12px" }} />
             Escalate to {result.escalate_to.replace("_", " ")}
           </span>
         )}
+        <Link href="/home" style={{ fontSize: "11px", color: "#9B9B9B", marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
+          <i className="ti ti-home" aria-hidden="true" style={{ fontSize: "12px" }} />
+          Home
+        </Link>
       </div>
 
       {/* Empty state */}
       {issues.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center px-4 py-16">
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#EAF3DE", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
               <i className="ti ti-check" aria-hidden="true" style={{ fontSize: "22px", color: "#3B6D11" }} />
@@ -230,45 +214,30 @@ export default function ReviewResultsPage() {
           </div>
         </div>
       ) : (
-        /* Clause editor */
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "220px 1fr", minHeight: 0 }}>
 
           {/* Left — clause list */}
           <div style={{ borderRight: "0.5px solid #E2E4E8", padding: "12px 10px", backgroundColor: "#FAFAFA", overflowY: "auto" }}>
-            <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 4px 8px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 4px 10px" }}>
               {issues.length} clause{issues.length !== 1 ? "s" : ""}
             </p>
-
             {issues.map((issue, index) => {
               const isSelected = selectedIndex === index
               const isMajor = issue.risk === "MAJOR"
-              const isMinor = issue.risk === "MINOR"
               return (
-                <div
-                  key={index}
-                  onClick={() => setSelectedIndex(index)}
+                <div key={index} onClick={() => setSelectedIndex(index)}
                   style={{
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    marginBottom: "2px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "8px",
-                    backgroundColor: isSelected
-                      ? isMajor ? "#FCEBEB" : isMinor ? "#FAEEDA" : "#EAF3DE"
-                      : "transparent",
-                    border: isSelected
-                      ? `0.5px solid ${isMajor ? "#F7C1C1" : isMinor ? "#FAC775" : "#C0DD97"}`
-                      : "0.5px solid transparent",
-                  }}
-                >
-                  <div style={{ width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0, marginTop: "4px", backgroundColor: dotColor(issue) }} />
+                    padding: "8px 10px", borderRadius: "6px", cursor: "pointer", marginBottom: "2px",
+                    display: "flex", alignItems: "flex-start", gap: "8px",
+                    backgroundColor: isSelected ? (isMajor ? "#FCEBEB" : "#FAEEDA") : "transparent",
+                    border: isSelected ? `0.5px solid ${isMajor ? "#F7C1C1" : "#FAC775"}` : "0.5px solid transparent",
+                  }}>
+                  <div style={{ width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0, marginTop: "4px", backgroundColor: isMajor ? "#E24B4A" : "#BA7517" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "12px", fontWeight: 500, color: isMajor ? "#A32D2D" : isMinor ? "#854F0B" : "#3B6D11", marginBottom: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 500, color: isMajor ? "#A32D2D" : "#854F0B", marginBottom: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {issue.clause}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#9B9B9B" }}>{dotLabel(issue)}</div>
+                    <div style={{ fontSize: "11px", color: "#9B9B9B" }}>{isMajor ? "Major deviation" : "Minor deviation"}</div>
                   </div>
                 </div>
               )
@@ -280,8 +249,8 @@ export default function ReviewResultsPage() {
             <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
 
               {/* Panel header */}
-              <div style={{ padding: "14px 20px 10px", borderBottom: "0.5px solid #E2E4E8", backgroundColor: "#FFFFFF" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
+              <div style={{ padding: "16px 24px 12px", borderBottom: "0.5px solid #E2E4E8", backgroundColor: "#FFFFFF" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                   <span style={{ fontSize: "15px", fontWeight: 500, color: "#431F5D" }}>{selectedIssue.clause}</span>
                   <span style={{
                     fontSize: "11px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px",
@@ -291,43 +260,43 @@ export default function ReviewResultsPage() {
                     {selectedIssue.risk === "MAJOR" ? "Major deviation" : "Minor deviation"}
                   </span>
                 </div>
-                <p style={{ fontSize: "12px", color: "#9B9B9B", margin: 0 }}>{selectedIssue.issue}</p>
+                <p style={{ fontSize: "12px", color: "#9B9B9B", margin: 0, lineHeight: 1.5 }}>{selectedIssue.issue}</p>
               </div>
 
               {/* Panel body */}
-              <div style={{ padding: "16px 20px", flex: 1, overflowY: "auto", backgroundColor: "#FFFFFF" }}>
+              <div style={{ padding: "20px 24px", flex: 1, overflowY: "auto", backgroundColor: "#FFFFFF" }}>
 
-                {/* Confidence */}
-                <ConfidenceBadge confidence={selectedIssue.confidence} reason={selectedIssue.confidence_reason} />
+                {/* Pact AI confidence score */}
+                <ConfidenceScore confidence={selectedIssue.confidence} reason={selectedIssue.confidence_reason} />
 
-                {/* Counterparty position */}
-                <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Counterparty position</p>
-                <div style={{ background: "#F7F8FA", border: "0.5px solid #E2E4E8", borderRadius: "6px", padding: "10px 14px", fontSize: "12px", lineHeight: 1.7, color: "#431F5D", marginBottom: "16px" }}>
-                  {selectedIssue.counterparty_position}
+                {/* Counterparty position — red tint */}
+                <SectionLabel>Counterparty position</SectionLabel>
+                <div style={{ background: "#FCEBEB", border: "0.5px solid #F7C1C1", borderRadius: "6px", padding: "10px 14px", marginBottom: "20px" }}>
+                  <p style={{ fontSize: "13px", color: "#791F1F", lineHeight: 1.75, margin: 0 }}>{selectedIssue.counterparty_position}</p>
                 </div>
 
-                {/* Standard position */}
-                <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>{clientName} standard position</p>
-                <div style={{ background: "#F3EEF7", border: "0.5px solid #D1C4E9", borderRadius: "6px", padding: "10px 14px", fontSize: "12px", lineHeight: 1.6, color: "#431F5D", marginBottom: "16px" }}>
-                  {selectedIssue.standard_position}
+                {/* Standard position — purple tint */}
+                <SectionLabel>{clientName} standard position</SectionLabel>
+                <div style={{ background: "#EEEDFE", border: "0.5px solid #AFA9EC", borderRadius: "6px", padding: "10px 14px", marginBottom: "20px" }}>
+                  <p style={{ fontSize: "13px", color: "#3C3489", lineHeight: 1.75, margin: 0, fontWeight: 500 }}>{selectedIssue.standard_position}</p>
                 </div>
 
-                {/* Suggested language */}
+                {/* Suggested language — blue tint */}
                 {selectedIssue.suggested_change && (
                   <>
-                    <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Suggested language</p>
-                    <div style={{ border: "0.5px solid #B5D4F4", borderRadius: "6px", overflow: "hidden", marginBottom: "16px" }}>
-                      <div style={{ background: "#E6F1FB", padding: "7px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <i className="ti ti-wand" aria-hidden="true" style={{ fontSize: "13px", color: "#185FA5" }} />
-                          <span style={{ fontSize: "11px", fontWeight: 500, color: "#185FA5", textTransform: "uppercase", letterSpacing: "0.06em" }}>Proposed replacement</span>
-                        </div>
+                    <SectionLabel>Suggested language</SectionLabel>
+                    <div style={{ background: "#E6F1FB", border: "0.5px solid #85B7EB", borderRadius: "6px", overflow: "hidden", marginBottom: "20px" }}>
+                      <div style={{ padding: "7px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "0.5px solid #85B7EB" }}>
+                        <span style={{ fontSize: "10px", fontWeight: 500, color: "#0C447C", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "5px" }}>
+                          <i className="ti ti-wand" aria-hidden="true" style={{ fontSize: "12px" }} />
+                          Proposed replacement
+                        </span>
                         <CopyButton text={selectedIssue.suggested_change} />
                       </div>
-                      <div style={{ padding: "12px 14px", fontSize: "12px", lineHeight: 1.8, color: "#431F5D", background: "#FFFFFF" }}>
+                      <div style={{ padding: "12px 14px", fontSize: "13px", lineHeight: 1.8, color: "#042C53" }}>
                         {selectedIssue.suggested_change}
                       </div>
-                      <div style={{ padding: "6px 14px 8px", fontSize: "11px", color: "#9B9B9B", background: "#FAFAFA", borderTop: "0.5px solid #E2E4E8" }}>
+                      <div style={{ padding: "5px 14px 7px", fontSize: "11px", color: "#185FA5", background: "#D6E8F8", borderTop: "0.5px solid #85B7EB" }}>
                         Drawn from {clientName}'s playbook. Review before use.
                       </div>
                     </div>
@@ -337,7 +306,7 @@ export default function ReviewResultsPage() {
               </div>
 
               {/* Nav footer */}
-              <div style={{ padding: "10px 20px", borderTop: "0.5px solid #E2E4E8", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FAFAFA" }}>
+              <div style={{ padding: "10px 24px", borderTop: "0.5px solid #E2E4E8", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FAFAFA" }}>
                 <button
                   onClick={() => setSelectedIndex(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
                   disabled={selectedIndex === 0}
@@ -345,7 +314,7 @@ export default function ReviewResultsPage() {
                   <i className="ti ti-arrow-left" aria-hidden="true" style={{ fontSize: "13px" }} /> Previous
                 </button>
                 <span style={{ fontSize: "12px", color: "#9B9B9B" }}>
-                  Clause {(selectedIndex ?? 0) + 1} of {issues.length} · {issues.filter(i => i.risk === "MAJOR").length} flagged
+                  Clause {(selectedIndex ?? 0) + 1} of {issues.length} · {majorCount} flagged
                 </span>
                 <button
                   onClick={() => setSelectedIndex(prev => prev !== null && prev < issues.length - 1 ? prev + 1 : prev)}
