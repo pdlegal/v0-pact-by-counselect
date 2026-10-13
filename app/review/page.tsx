@@ -24,20 +24,6 @@ type InformationType =
   | "financial"
   | "none"
 
-type DurationUnit = "weeks" | "months" | "years"
-
-// ─────────────────────────────────────────────
-// CLAUSE TRIGGER LOGIC
-// ─────────────────────────────────────────────
-
-function getTriggeredClauses(informationTypes: InformationType[]) {
-  const ipTriggered = informationTypes.includes("software")
-  const dataPrivacyTriggered =
-    informationTypes.includes("customer_data") ||
-    informationTypes.includes("employee_data")
-  return { ipTriggered, dataPrivacyTriggered }
-}
-
 // ─────────────────────────────────────────────
 // COMPONENTS
 // ─────────────────────────────────────────────
@@ -161,39 +147,6 @@ function CheckboxCard({
         {sublabel && <span className="font-normal block mt-0.5" style={{ fontSize: "12px", color: "#4A4A6A" }}>{sublabel}</span>}
       </div>
     </button>
-  )
-}
-
-function DurationInput({
-  value, unit, onValueChange, onUnitChange, error
-}: {
-  value: string; unit: DurationUnit; onValueChange: (v: string) => void; onUnitChange: (u: DurationUnit) => void; error?: string
-}) {
-  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
-    if (raw === "" || (/^\d+$/.test(raw) && parseInt(raw) > 0)) onValueChange(raw)
-  }
-  return (
-    <div className="flex gap-3">
-      <input type="text" inputMode="numeric" value={value} onChange={handleNumberInput} placeholder="e.g. 12"
-        className="w-28 px-4 py-3 rounded-lg font-normal outline-none transition-all text-center"
-        style={{ backgroundColor: "#F7F8FA", border: error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px" }}
-        onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-        onBlur={(e) => { e.target.style.border = error ? "1.5px solid #B71C1C" : "0.5px solid #E2E4E8" }} />
-      <select value={unit} onChange={(e) => onUnitChange(e.target.value as DurationUnit)}
-        className="flex-1 px-4 py-3 rounded-lg font-normal outline-none transition-all"
-        style={{
-          backgroundColor: "#F7F8FA", border: "0.5px solid #E2E4E8", color: "#431F5D", fontSize: "14px", appearance: "none",
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A4A6A' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: "36px"
-        }}
-        onFocus={(e) => { e.target.style.border = "2px solid #FB6A1B" }}
-        onBlur={(e) => { e.target.style.border = "0.5px solid #E2E4E8" }}>
-        <option value="weeks">Weeks</option>
-        <option value="months">Months</option>
-        <option value="years">Years</option>
-      </select>
-    </div>
   )
 }
 
@@ -345,25 +298,20 @@ function FileUpload({
 export default function ReviewIntakePage() {
   const router = useRouter()
 
-  // Client data from Supabase
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
   const [clientId, setClientId] = useState("")
 
-  // Form state
   const [partyType, setPartyType] = useState("")
   const [sharingDirection, setSharingDirection] = useState("")
   const [engagementType, setEngagementType] = useState<EngagementType>("")
   const [informationTypes, setInformationTypes] = useState<InformationType[]>([])
-  const [durationValue, setDurationValue] = useState("")
-  const [durationUnit, setDurationUnit] = useState<DurationUnit>("months")
   const [counterpartyName, setCounterpartyName] = useState("")
   const [country, setCountry] = useState<{ name: string; code: string }>({ name: "", code: "" })
   const [file, setFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Load client data on mount
   useEffect(() => {
     async function loadClientData() {
       const { data: { session } } = await supabase.auth.getSession()
@@ -398,7 +346,6 @@ export default function ReviewIntakePage() {
     engagementType === "sharing_data"
 
   const showEscalationBanner = engagementType === "something_else"
-  const { ipTriggered, dataPrivacyTriggered } = getTriggeredClauses(informationTypes)
 
   const toggleInformationType = (type: InformationType) => {
     setInformationTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
@@ -425,7 +372,6 @@ export default function ReviewIntakePage() {
     if (showInformationTypes && informationTypes.length === 0) {
       newErrors.informationTypes = "Please select at least one information type"
     }
-    if (!durationValue) newErrors.duration = "Please enter the agreement term"
     if (!counterpartyName.trim()) newErrors.counterpartyName = "Please enter the counterparty name"
     if (!country.code) newErrors.country = "Please select a country"
     if (!file) newErrors.file = "Please upload the NDA document"
@@ -433,21 +379,17 @@ export default function ReviewIntakePage() {
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) return
 
-    // Save form context to sessionStorage
     sessionStorage.setItem("review_context", JSON.stringify({
       partyType,
       sharingDirection,
       engagementType,
       informationTypes,
-      durationValue,
-      durationUnit,
       counterpartyName,
       country,
       clientName,
       client_id: clientId
     }))
 
-    // Save file to sessionStorage as base64
     const reader = new FileReader()
     reader.onload = () => {
       sessionStorage.setItem("review_file_name", file!.name)
@@ -552,26 +494,8 @@ export default function ReviewIntakePage() {
                   ))}
                 </div>
                 {errors.informationTypes && <FieldError message={errors.informationTypes} />}
-                {(ipTriggered || dataPrivacyTriggered) && (
-                  <div className="p-3 rounded-lg space-y-1" style={{ backgroundColor: "#F3EEF7", border: "1px solid #D1C4E9" }}>
-                    <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>Additional clauses will be included:</p>
-                    {ipTriggered && <p style={{ fontSize: "12px", color: "#4A4A6A" }}>· IP licensing clause — access is for evaluation only, ownership stays with the disclosing party</p>}
-                    {dataPrivacyTriggered && <p style={{ fontSize: "12px", color: "#4A4A6A" }}>· Data privacy clause — both parties acknowledge applicable privacy laws and processing limitations</p>}
-                  </div>
-                )}
               </div>
             )}
-
-            <div className="space-y-3">
-              <FieldLabel>How long is the agreement term?</FieldLabel>
-              <DurationInput value={durationValue} unit={durationUnit}
-                onValueChange={(v) => { setDurationValue(v); clearError("duration") }}
-                onUnitChange={setDurationUnit} error={errors.duration} />
-              <FieldHelper>
-                {durationValue ? `Agreement term: ${durationValue} ${durationUnit}` : "Enter a number and select weeks, months, or years."}
-              </FieldHelper>
-              {errors.duration && <FieldError message={errors.duration} />}
-            </div>
           </div>
 
           <SectionLabel>About the counterparty</SectionLabel>
