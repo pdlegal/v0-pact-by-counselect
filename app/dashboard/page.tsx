@@ -116,10 +116,6 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div style={{ width: "100%", maxWidth: "560px", display: "flex", flexDirection: "column", alignItems: "center" }}>
 
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", margin: "0 0 10px", letterSpacing: "0.02em" }}>
-            Reviewed against {clientName}'s NDA standards
-          </p>
-
           <h1 style={{ fontSize: "38px", fontWeight: 500, color: "#FFFFFF", margin: "0 0 8px", textAlign: "center", lineHeight: 1.15 }}>
             Every deal starts <span style={{ color: "#FB6A1B" }}>here.</span>
           </h1>
@@ -165,9 +161,8 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)", display: "flex", alignItems: "center", gap: "5px", margin: "0 0 28px" }}>
-            <i className="ti ti-shield-check" aria-hidden="true" style={{ fontSize: "12px" }} />
-            Pact by Counselect · NDA standards applied automatically
+          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", margin: "20px 0 0", textAlign: "center" }}>
+          Reviewed against {clientName}'s NDA standards
           </p>
 
           {/* Recent submissions */}
