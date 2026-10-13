@@ -67,6 +67,7 @@ function NDAPreviewCard({ formData, clientName }: { formData: Record<string, str
       className="rounded-xl overflow-hidden mb-6"
       style={{ border: "1px solid #E2E4E8", borderLeft: "3px solid #431F5D" }}
     >
+      {/* Card header */}
       <div
         className="px-5 py-4 flex items-center gap-3"
         style={{ backgroundColor: "#F3EEF7", borderBottom: "1px solid #E8E0F0" }}
@@ -93,6 +94,7 @@ function NDAPreviewCard({ formData, clientName }: { formData: Record<string, str
         </div>
       </div>
 
+      {/* Parties */}
       <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid #F0F0F0" }}>
         <div className="flex-1 min-w-0">
           <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>{displayName} entity</p>
@@ -122,6 +124,7 @@ function NDAPreviewCard({ formData, clientName }: { formData: Record<string, str
         </div>
       </div>
 
+      {/* Purpose */}
       <div className="px-5 py-4" style={{ borderBottom: "1px solid #F0F0F0" }}>
         <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "4px" }}>Purpose</p>
         <p style={{ fontSize: "12px", color: "#4A4A6A", lineHeight: 1.5 }}>
@@ -129,13 +132,8 @@ function NDAPreviewCard({ formData, clientName }: { formData: Record<string, str
         </p>
       </div>
 
-      <div className="grid grid-cols-3" style={{ borderBottom: "1px solid #F0F0F0" }}>
-        <div className="px-5 py-3" style={{ borderRight: "1px solid #F0F0F0" }}>
-          <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Term</p>
-          <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
-            {formData.duration || "—"}
-          </p>
-        </div>
+      {/* Key terms strip — Term removed */}
+      <div className="grid grid-cols-2" style={{ borderBottom: "1px solid #F0F0F0" }}>
         <div className="px-5 py-3" style={{ borderRight: "1px solid #F0F0F0" }}>
           <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>Governing law</p>
           <p className="font-medium" style={{ fontSize: "12px", color: "#431F5D" }}>
@@ -150,6 +148,7 @@ function NDAPreviewCard({ formData, clientName }: { formData: Record<string, str
         </div>
       </div>
 
+      {/* Signatory */}
       <div className="px-5 py-3" style={{ backgroundColor: "#FAFAFA" }}>
         <p style={{ fontSize: "11px", color: "#9B9B9B", marginBottom: "2px" }}>
           Signing for {displayName}
