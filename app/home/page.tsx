@@ -65,7 +65,7 @@ export default function HomePage() {
         </span>
       </nav>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 460px", flex: 1, minHeight: "calc(100vh - 52px)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", flex: 1, minHeight: "calc(100vh - 52px)" }}>
 
         {/* Left — brand panel */}
         <div style={{ background: "#431F5D", padding: "52px 48px 48px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
