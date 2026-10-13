@@ -65,15 +65,15 @@ export default function HomePage() {
         </span>
       </nav>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", flex: 1, minHeight: "calc(100vh - 52px)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 460px", flex: 1, minHeight: "calc(100vh - 52px)" }}>
 
         {/* Left — brand panel */}
-        <div style={{ background: "#431F5D", padding: "48px 44px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ background: "#431F5D", padding: "52px 48px 48px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div>
             <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 20px" }}>
               Pact by Counselect
             </p>
-            <h1 style={{ fontSize: "36px", fontWeight: 500, color: "#FFFFFF", lineHeight: 1.2, margin: "0 0 16px" }}>
+            <h1 style={{ fontSize: "48px", fontWeight: 500, color: "#FFFFFF", lineHeight: 1.15, margin: "0 0 20px" }}>
               Every deal<br />starts <span style={{ color: "#FB6A1B" }}>here.</span>
             </h1>
             <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", lineHeight: 1.65, margin: 0, maxWidth: "280px" }}>
