@@ -132,7 +132,7 @@ export default function DashboardPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", width: "100%", marginBottom: "28px" }}>
             <button
               onClick={() => router.push("/generate")}
-              onMouseEnter={e => (e.currentTarget.style.border = "0.5px solid rgba(255,255,255,0.45)")}
+              onMouseEnter={e => (e.currentTarget.style.border = "1.5px solid #FB6A1B")}
               onMouseLeave={e => (e.currentTarget.style.border = "0.5px solid rgba(255,255,255,0.18)")}
               style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "20px 18px", cursor: "pointer", textAlign: "left", transition: "border 0.15s" }}>
               <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
