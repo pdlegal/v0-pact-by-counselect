@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 // ─────────────────────────────────────────────
@@ -92,6 +93,7 @@ function CopyButton({ text }: { text: string }) {
 // ─────────────────────────────────────────────
 
 export default function ReviewResultsPage() {
+  const router = useRouter()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
@@ -146,12 +148,24 @@ export default function ReviewResultsPage() {
 
       {/* Page header */}
       <div style={{ backgroundColor: "#FFFFFF", borderBottom: "0.5px solid #E2E4E8", padding: "14px 20px" }}>
-        <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>
-          NDA review
-        </p>
-        <p style={{ fontSize: "20px", fontWeight: 500, color: "#1A1A1A", margin: "0 0 12px" }}>
-          {counterpartyName || "Counterparty"}
-        </p>
+
+        {/* Title row */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "12px" }}>
+          <div>
+            <p style={{ fontSize: "10px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 3px" }}>
+              NDA Review
+            </p>
+            <p style={{ fontSize: "20px", fontWeight: 500, color: "#1A1A1A", margin: 0 }}>
+              {counterpartyName || "Counterparty"}
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/home")}
+            style={{ fontSize: "13px", fontWeight: 500, padding: "8px 18px", borderRadius: "6px", border: "none", background: "#431F5D", color: "#FFFFFF", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0, marginTop: "2px" }}>
+            <i className="ti ti-circle-check" aria-hidden="true" style={{ fontSize: "14px" }} />
+            Complete review
+          </button>
+        </div>
 
         {/* Issue count cards */}
         <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
@@ -197,10 +211,6 @@ export default function ReviewResultsPage() {
               Escalate to {result.escalate_to.replace("_", " ")}
             </span>
           )}
-          <Link href="/home" style={{ fontSize: "11px", color: "#9B9B9B", marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", textDecoration: "none" }}>
-            <i className="ti ti-home" aria-hidden="true" style={{ fontSize: "12px" }} />
-            Home
-          </Link>
         </div>
       </div>
 
@@ -213,7 +223,9 @@ export default function ReviewResultsPage() {
             </div>
             <p style={{ fontSize: "16px", fontWeight: 500, color: "#1A1A1A", marginBottom: "6px" }}>No deviations found</p>
             <p style={{ fontSize: "13px", color: "#9B9B9B", marginBottom: "20px" }}>This NDA is compliant with {clientName}'s standards.</p>
-            <Link href="/home" style={{ fontSize: "13px", color: "#431F5D", textDecoration: "underline" }}>Back to home</Link>
+            <button onClick={() => router.push("/home")} style={{ fontSize: "13px", fontWeight: 500, padding: "8px 18px", borderRadius: "6px", border: "none", background: "#431F5D", color: "#FFFFFF", cursor: "pointer" }}>
+              Complete review
+            </button>
           </div>
         </div>
       ) : (
