@@ -1,473 +1,367 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
+// ─────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────
+
+interface Issue {
+  risk: "MINOR" | "MAJOR"
+  clause: string
+  issue: string
+  counterparty_position: string
+  standard_position: string
+  suggested_change: string
+  confidence: "high" | "medium" | "escalate"
+  confidence_reason?: string
+}
+
+interface ReviewResult {
+  overall_risk_level: "COMPLIANT" | "MINOR" | "MAJOR"
+  mutual_or_unilateral: string
+  escalate_to: string
+  issues: Issue[]
+}
+
+// ─────────────────────────────────────────────
+// COMPONENTS
+// ─────────────────────────────────────────────
+
 function PactWordmark() {
   return (
     <div className="flex items-baseline">
-      <span className="font-medium text-xl" style={{ color: "#FFFFFF" }}>Pact</span>
-      <span
-        className="inline-block rounded-full ml-0.5"
-        style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", width: "6px", height: "6px" }}
-      />
+      <span className="text-xl font-medium" style={{ color: "#FFFFFF" }}>Pact</span>
+      <span className="inline-block rounded-full ml-0.5" style={{ background: "linear-gradient(135deg, #FB6A1B, #D2582F)", width: "6px", height: "6px" }} />
     </div>
   )
 }
 
 function NavBar({ firstName, lastName, clientName }: { firstName: string; lastName: string; clientName: string }) {
   return (
-    <nav className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: "#431F5D" }}>
+    <nav className="w-full px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#431F5D" }}>
       <Link href="/home"><PactWordmark /></Link>
-      <span className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>
-        {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""}
+      <span className="text-xs font-normal" style={{ color: "rgba(255,255,255,0.65)" }}>
+        {firstName && lastName ? `${firstName} ${lastName}` : "..."} · {clientName || ""} · <Link href="/" className="hover:underline">Log out</Link>
       </span>
     </nav>
   )
 }
 
-interface Deviation {
-  id: number
-  type: "minor" | "major" | "escalation"
-  title: string
-  counterparty: string
-  standard: string
-  reason: string
-}
-
-function MinorDeviationRow({
-  deviation, clientName,
-}: {
-  deviation: Deviation
-  clientName: string
-}) {
-  const displayName = clientName || "your company"
-
+function ConfidenceBadge({ confidence, reason }: { confidence: Issue["confidence"]; reason?: string }) {
+  const config = {
+    high: {
+      label: "High confidence",
+      sublabel: null,
+      bg: "#EAF3DE",
+      color: "#3B6D11",
+      border: "#C0DD97",
+      icon: "ti-check",
+    },
+    medium: {
+      label: "Review suggested",
+      sublabel: reason || null,
+      bg: "#FAEEDA",
+      color: "#854F0B",
+      border: "#FAC775",
+      icon: "ti-eye",
+    },
+    escalate: {
+      label: "Escalate to attorney",
+      sublabel: reason || null,
+      bg: "#FCEBEB",
+      color: "#A32D2D",
+      border: "#F7C1C1",
+      icon: "ti-alert-circle",
+    },
+  }
+  const c = config[confidence]
   return (
-    <div className="rounded-xl mb-3 overflow-hidden"
-      style={{ border: "0.5px solid #E2E4E8", backgroundColor: "#FFFFFF" }}>
-      <div className="px-4 py-3 flex items-center gap-2"
-        style={{ borderBottom: "0.5px solid #F0F0F0", backgroundColor: "#FFFBF5" }}>
-        <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
-        <span className="px-2 py-0.5 text-xs font-medium rounded-full"
-          style={{ backgroundColor: "#FAEEDA", color: "#854F0B" }}>
-          Minor
-        </span>
+    <div style={{ backgroundColor: c.bg, border: `0.5px solid ${c.border}`, borderRadius: "8px", padding: "8px 12px", marginBottom: "16px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: c.sublabel ? "3px" : 0 }}>
+        <i className={`ti ${c.icon}`} aria-hidden="true" style={{ fontSize: "13px", color: c.color }} />
+        <span style={{ fontSize: "12px", fontWeight: 500, color: c.color }}>{c.label}</span>
       </div>
-      <div className="grid grid-cols-2" style={{ borderBottom: "0.5px solid #F0F0F0" }}>
-        <div className="p-3" style={{ borderRight: "0.5px solid #F0F0F0" }}>
-          <p className="text-xs font-medium uppercase mb-1" style={{ color: "#854F0B", letterSpacing: "0.06em" }}>Counterparty</p>
-          <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.counterparty || "—"}</p>
-        </div>
-        <div className="p-3">
-          <p className="text-xs font-medium uppercase mb-1" style={{ color: "#431F5D", letterSpacing: "0.06em" }}>{displayName} standard</p>
-          <p className="text-xs leading-relaxed" style={{ color: "#431F5D" }}>{deviation.standard || "—"}</p>
-        </div>
-      </div>
-      <div className="px-4 py-3" style={{ borderTop: "0.5px solid #F0F0F0" }}>
-        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
-      </div>
+      {c.sublabel && (
+        <p style={{ fontSize: "12px", color: c.color, lineHeight: 1.5, margin: 0, paddingLeft: "19px" }}>{c.sublabel}</p>
+      )}
     </div>
   )
 }
 
-function FlaggedRow({ deviation }: { deviation: Deviation }) {
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
   return (
-    <div className="rounded-xl mb-3 overflow-hidden"
-      style={{
-        border: deviation.type === "escalation" ? "0.5px solid #CECBF6" : "0.5px solid #F7C1C1",
-        backgroundColor: "#FFFFFF",
-      }}>
-      <div className="px-4 py-3 flex items-center gap-2"
-        style={{
-          borderBottom: "0.5px solid #F0F0F0",
-          backgroundColor: deviation.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
-        }}>
-        <span className="font-medium text-sm" style={{ color: "#431F5D" }}>{deviation.title}</span>
-        <span className="px-2 py-0.5 text-xs font-medium rounded-full"
-          style={{
-            backgroundColor: deviation.type === "escalation" ? "#EEEDFE" : "#FCEBEB",
-            color: deviation.type === "escalation" ? "#534AB7" : "#A32D2D"
-          }}>
-          {deviation.type === "escalation" ? "Escalated" : "Major"}
-        </span>
-        <span className="ml-auto text-xs"
-          style={{ color: deviation.type === "escalation" ? "#534AB7" : "#A32D2D" }}>
-          {deviation.type === "escalation" ? "Attorney assessment required" : "Flagged to legal"}
-        </span>
-      </div>
-      <div className="px-4 py-3">
-        <p className="text-xs leading-relaxed" style={{ color: "#4A4A6A" }}>{deviation.reason}</p>
-        {deviation.counterparty && (
-          <p className="text-xs mt-2" style={{ color: "#9B9B9B" }}>
-            <span className="font-medium">Counterparty position:</span> {deviation.counterparty}
-          </p>
-        )}
-      </div>
-    </div>
+    <button onClick={handleCopy} style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "6px", border: "0.5px solid #B5D4F4", background: "#FFFFFF", color: "#185FA5", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+      <i className={`ti ${copied ? "ti-check" : "ti-copy"}`} aria-hidden="true" style={{ fontSize: "12px" }} />
+      {copied ? "Copied" : "Copy"}
+    </button>
   )
 }
 
-type PageState = "green" | "amber" | "red"
+// ─────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────
 
-export default function ResultsPage() {
+export default function ReviewResultsPage() {
   const router = useRouter()
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [clientName, setClientName] = useState("")
-  const sessionRef = useRef<{
-    userId: string; clientId: string; userEmail: string
-    firstName: string; lastName: string; clientName: string
-  } | null>(null)
-
-  const [deviations, setDeviations] = useState<Deviation[]>([])
-  const [mutualOrUnilateral, setMutualOrUnilateral] = useState("")
+  const [result, setResult] = useState<ReviewResult | null>(null)
   const [counterpartyName, setCounterpartyName] = useState("")
-  const [submissionId, setSubmissionId] = useState("")
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-  const notifyFiredRef = useRef(false)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem("review_result")
+    const cp = sessionStorage.getItem("review_counterparty_name")
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      setResult(parsed)
+      // Auto-select first flagged clause
+      if (parsed.issues && parsed.issues.length > 0) setSelectedIndex(0)
+    }
+    if (cp) setCounterpartyName(cp)
+  }, [])
 
   useEffect(() => {
     async function loadClientData() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.push("/"); return }
-
-      const { data: userData } = await supabase
-        .from("users")
-        .select("first_name, last_name, client_id")
-        .eq("id", session.user.id)
-        .single()
-
+      if (!session) return
+      const { data: userData } = await supabase.from("users").select("first_name, last_name, client_id").eq("id", session.user.id).single()
       if (!userData) return
       setFirstName(userData.first_name || "")
       setLastName(userData.last_name || "")
-
-      const { data: clientData } = await supabase
-        .from("clients")
-        .select("display_name")
-        .eq("id", userData.client_id)
-        .single()
-
-      const resolvedClientName = clientData?.display_name || ""
-      if (clientData) setClientName(resolvedClientName)
-
-      sessionRef.current = {
-        userId: session.user.id,
-        clientId: userData.client_id,
-        userEmail: session.user.email || "",
-        firstName: userData.first_name || "",
-        lastName: userData.last_name || "",
-        clientName: resolvedClientName,
-      }
+      const { data: clientData } = await supabase.from("clients").select("display_name").eq("id", userData.client_id).single()
+      if (clientData) setClientName(clientData.display_name || "")
     }
     loadClientData()
-  }, [router])
+  }, [])
 
-  useEffect(() => {
-    const raw = sessionStorage.getItem("review_result")
-    const name = sessionStorage.getItem("review_counterparty_name")
-    const sid = sessionStorage.getItem("review_submission_id")
-    if (!raw) { router.push("/review"); return }
-
-    if (sid) setSubmissionId(sid)
-
-    const data = JSON.parse(raw)
-    setMutualOrUnilateral(data.mutual_or_unilateral || "")
-    setCounterpartyName(name || "Counterparty")
-
-    const issues: Deviation[] = (data.issues || []).map((item: {
-      risk: string; clause: string; issue: string
-      counterparty_position?: string; standard_position?: string
-    }, index: number) => ({
-      id: index + 1,
-      type: item.risk === "MAJOR" ? "major" : item.risk === "ESCALATION" ? "escalation" : "minor",
-      title: item.clause,
-      counterparty: item.counterparty_position || "",
-      standard: item.standard_position || "",
-      reason: item.issue,
-    }))
-
-    setDeviations(issues)
-    setLoaded(true)
-  }, [router])
-
-  const writeAuditLog = async (deviation: Deviation) => {
-    if (!sessionRef.current || !submissionId) return
-    const { userId, clientId, userEmail, firstName: fn, lastName: ln, clientName: cn } = sessionRef.current
-    await supabase.from("audit_log").insert({
-      submission_id: submissionId,
-      client_id: clientId,
-      user_id: userId,
-      user_email: userEmail,
-      user_name: `${fn} ${ln}`.trim(),
-      client_name: cn,
-      clause_type: deviation.title,
-      deviation_severity: deviation.type,
-      action_taken: "noted",
-    })
-  }
-
-  const handleDownload = () => {
-    const fileData = sessionStorage.getItem("review_file_data")
-    const fileName = sessionStorage.getItem("review_file_name")
-    if (!fileData || !fileName) return
-    minorDeviations.forEach(d => writeAuditLog(d))
-    const a = document.createElement("a")
-    a.href = fileData
-    a.download = fileName
-    a.click()
-  }
-
-  const minorDeviations = useMemo(() => deviations.filter(d => d.type === "minor"), [deviations])
-  const majorDeviations = useMemo(() => deviations.filter(d => d.type === "major"), [deviations])
-  const escalations     = useMemo(() => deviations.filter(d => d.type === "escalation"), [deviations])
-
-  const hasMinors     = minorDeviations.length > 0
-  const hasMajors     = majorDeviations.length > 0
-  const hasEscalation = escalations.length > 0
-  const totalClauses  = deviations.length
-  const displayName   = clientName || "your company"
-
-  const pageState: PageState =
-    hasEscalation ? "red" :
-    hasMajors     ? "amber" :
-    "green"
-
-  // Auto-notify legal — escalations
-  useEffect(() => {
-    if (!loaded || !hasEscalation || notifyFiredRef.current) return
-    notifyFiredRef.current = true
-    const clauseList = escalations.map(d => `- ${d.title}: ${d.counterparty || d.reason}`).join("\n")
-    const subject = encodeURIComponent(`NDA Review — Attorney Review Required · ${counterpartyName}`)
-    const body = encodeURIComponent(
-      `Dear Legal Team,\n\nAn NDA review for ${counterpartyName} has identified the following clause(s) that require attorney review:\n\n${clauseList}\n\nSubmission ID: ${submissionId}\n\nPlease review and provide a finalised version for external distribution.\n\nThank you.`
-    )
-    window.location.href = `mailto:legal@counselect.com?subject=${subject}&body=${body}`
-  }, [loaded, hasEscalation, escalations, counterpartyName, submissionId])
-
-  // Auto-notify legal — major deviations
-  useEffect(() => {
-    if (!loaded || !hasMajors || hasEscalation || notifyFiredRef.current) return
-    notifyFiredRef.current = true
-    const clauseList = majorDeviations.map(d => `- ${d.title}: ${d.counterparty || d.reason}`).join("\n")
-    const subject = encodeURIComponent(`NDA Review — Major Deviations · ${counterpartyName}`)
-    const body = encodeURIComponent(
-      `Dear Legal Team,\n\nAn NDA review for ${counterpartyName} has identified the following major deviations from ${clientName}'s standard positions:\n\n${clauseList}\n\nSubmission ID: ${submissionId}\n\nPlease review and advise.\n\nThank you.`
-    )
-    window.location.href = `mailto:legal@counselect.com?subject=${subject}&body=${body}`
-  }, [loaded, hasMajors, hasEscalation, majorDeviations, counterpartyName, submissionId, clientName])
-
-  const heroConfig = {
-    green: {
-      iconBg: "#EAF3DE", iconColor: "#3B6D11",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-      ),
-      verdict: "Ready to send",
-      sub: hasMinors
-        ? `This NDA is good to go. There are ${minorDeviations.length} minor difference${minorDeviations.length > 1 ? "s" : ""} from ${displayName}'s standard positions — none of them are a blocker to signing.`
-        : `No issues found — this NDA is ready to go to ${counterpartyName}.`,
-    },
-    amber: {
-      iconBg: "#FAEEDA", iconColor: "#854F0B",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-      ),
-      verdict: "Waiting on legal — don't send yet",
-      sub: `${majorDeviations.length} clause${majorDeviations.length > 1 ? "s fall" : " falls"} outside ${displayName}'s standard positions. Your Counselect attorney has been notified and will respond within 4 hours.`,
-    },
-    red: {
-      iconBg: "#FCEBEB", iconColor: "#A32D2D",
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      ),
-      verdict: "Do not send — attorney review needed",
-      sub: `One or more clauses couldn't be assessed against ${displayName}'s standards. Your Counselect attorney has been notified and will send a finalised version within 4 hours.`,
-    },
-  }
-
-  const hero = heroConfig[pageState]
-
-  if (!loaded) {
+  if (!result) {
     return (
-      <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
-        <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
-        <div className="flex-1 flex items-center justify-center">
-          <p style={{ color: "#4A4A6A", fontSize: "13px" }}>Loading results...</p>
-        </div>
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F7F8FA" }}>
+        <p style={{ color: "#9B9B9B", fontSize: "13px" }}>Loading results...</p>
       </main>
     )
   }
 
+  const issues = result.issues || []
+  const majorCount = issues.filter(i => i.risk === "MAJOR").length
+  const minorCount = issues.filter(i => i.risk === "MINOR").length
+  const cleanCount = issues.filter(i => !i.risk || i.risk === "COMPLIANT").length
+  const selectedIssue = selectedIndex !== null ? issues[selectedIndex] : null
+
+  const dotColor = (issue: Issue) => {
+    if (issue.risk === "MAJOR") return "#E24B4A"
+    if (issue.risk === "MINOR") return "#BA7517"
+    return "#639922"
+  }
+
+  const dotLabel = (issue: Issue) => {
+    if (issue.risk === "MAJOR") return "Major deviation"
+    if (issue.risk === "MINOR") return "Minor deviation"
+    return "Compliant"
+  }
+
   return (
-    <main className="min-h-screen" style={{ backgroundColor: "#F7F8FA" }}>
+    <main className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F8FA" }}>
       <NavBar firstName={firstName} lastName={lastName} clientName={clientName} />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-
-        {/* Hero */}
-        <div className="rounded-xl p-6 mb-4"
-          style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
-          <div className="flex items-start gap-4 mb-5">
-            <div className="rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ width: 48, height: 48, backgroundColor: hero.iconBg, color: hero.iconColor }}>
-              {hero.icon}
-            </div>
-            <div>
-              <h1 className="font-medium mb-1" style={{ fontSize: "20px", color: "#431F5D" }}>
-                {hero.verdict}
-              </h1>
-              <p style={{ fontSize: "14px", color: "#4A4A6A", lineHeight: 1.6 }}>{hero.sub}</p>
-              <p className="mt-2" style={{ fontSize: "12px", color: "#9B9B9B" }}>
-                {counterpartyName}
-                {mutualOrUnilateral ? ` · ${mutualOrUnilateral}` : ""}
-                {` · Reviewed against ${displayName}'s NDA standards`}
-              </p>
-            </div>
-          </div>
-
-          {/* Amber notice */}
-          {pageState === "amber" && (
-            <div className="rounded-lg px-4 py-3 mb-5 flex gap-3"
-              style={{ backgroundColor: "#FAEEDA", border: "0.5px solid #FAC775" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p style={{ fontSize: "13px", color: "#633806", lineHeight: 1.5 }}>
-                Your attorney will send the finalised version directly. No action needed from you right now.
-              </p>
-            </div>
+      {/* Top bar */}
+      <div style={{ backgroundColor: "#FFFFFF", borderBottom: "0.5px solid #E2E4E8", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "14px", fontWeight: 500, color: "#431F5D" }}>{counterpartyName || "Counterparty"}</span>
+          <span style={{ fontSize: "12px", color: "#9B9B9B" }}>·</span>
+          <span style={{ fontSize: "12px", color: "#4A4A6A" }}>{result.mutual_or_unilateral?.split("—")[0]?.trim() || "MNDA"}</span>
+          <span style={{ fontSize: "12px", color: "#9B9B9B" }}>·</span>
+          <span style={{ fontSize: "12px", color: "#4A4A6A" }}>Reviewed against {clientName}'s NDA standards</span>
+        </div>
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          {majorCount > 0 && (
+            <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FCEBEB", color: "#A32D2D" }}>{majorCount} major</span>
           )}
-
-          {/* Red notice */}
-          {pageState === "red" && (
-            <div className="rounded-lg px-4 py-3 mb-5 flex gap-3"
-              style={{ backgroundColor: "#FCEBEB", border: "0.5px solid #F7C1C1" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-              </svg>
-              <p style={{ fontSize: "13px", color: "#791F1F", lineHeight: 1.5 }}>
-                Do not send this NDA to the counterparty. Your attorney will provide the external-ready version.
-              </p>
-            </div>
+          {minorCount > 0 && (
+            <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#FAEEDA", color: "#854F0B" }}>{minorCount} minor</span>
           )}
+          {issues.length === 0 && (
+            <span style={{ fontSize: "10px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px", background: "#EAF3DE", color: "#3B6D11" }}>Clean</span>
+          )}
+        </div>
+      </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-3 flex-wrap">
-            {pageState === "green" && (
-              <button
-                onClick={handleDownload}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm"
-                style={{ backgroundColor: "#EF7043", color: "#FFFFFF", border: "none" }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download NDA
-              </button>
-            )}
-            <Link href="/home"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
-              style={{ color: "#4A4A6A", border: "0.5px solid #E2E4E8", backgroundColor: "#F7F8FA" }}>
-              Back to home
-            </Link>
+      {/* Meta strip */}
+      <div style={{ backgroundColor: "#FAFAFA", borderBottom: "0.5px solid #E2E4E8", padding: "7px 20px", display: "flex", gap: "20px", flexWrap: "wrap" }}>
+        <span style={{ fontSize: "12px", color: "#4A4A6A", display: "flex", alignItems: "center", gap: "5px" }}>
+          <i className="ti ti-arrows-exchange" aria-hidden="true" style={{ fontSize: "13px" }} />
+          {result.mutual_or_unilateral?.split("—")[0]?.trim() || "—"}
+        </span>
+        <span style={{ fontSize: "12px", color: "#4A4A6A", display: "flex", alignItems: "center", gap: "5px" }}>
+          <i className="ti ti-file-text" aria-hidden="true" style={{ fontSize: "13px" }} />
+          {sessionStorage.getItem("review_file_name") || "NDA document"}
+        </span>
+        {result.escalate_to && result.escalate_to !== "none" && (
+          <span style={{ fontSize: "12px", color: "#A32D2D", display: "flex", alignItems: "center", gap: "5px", fontWeight: 500 }}>
+            <i className="ti ti-alert-circle" aria-hidden="true" style={{ fontSize: "13px" }} />
+            Escalate to {result.escalate_to.replace("_", " ")}
+          </span>
+        )}
+      </div>
+
+      {/* Empty state */}
+      {issues.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center px-4 py-16">
+          <div style={{ textAlign: "center" }}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#EAF3DE", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+              <i className="ti ti-check" aria-hidden="true" style={{ fontSize: "22px", color: "#3B6D11" }} />
+            </div>
+            <p style={{ fontSize: "16px", fontWeight: 500, color: "#431F5D", marginBottom: "6px" }}>No deviations found</p>
+            <p style={{ fontSize: "13px", color: "#9B9B9B", marginBottom: "20px" }}>This NDA is compliant with {clientName}'s standards.</p>
+            <Link href="/home" style={{ fontSize: "13px", color: "#431F5D", textDecoration: "underline" }}>Back to home</Link>
           </div>
         </div>
+      ) : (
+        /* Clause editor */
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "220px 1fr", minHeight: 0 }}>
 
-        {/* Minor deviations — FYI only, green state */}
-        {pageState === "green" && hasMinors && (
-          <div className="rounded-xl p-5 mb-4"
-            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
-            <div className="flex items-start gap-3 mb-4">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <p style={{ fontSize: "13px", color: "#854F0B", lineHeight: 1.5 }}>
-                For your information — {minorDeviations.length} minor difference{minorDeviations.length > 1 ? "s" : ""} from {displayName}'s standard positions. These are within acceptable range and are not a blocker to signing.
-              </p>
-            </div>
-            {minorDeviations.map(d => (
-              <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} />
-            ))}
+          {/* Left — clause list */}
+          <div style={{ borderRight: "0.5px solid #E2E4E8", padding: "12px 10px", backgroundColor: "#FAFAFA", overflowY: "auto" }}>
+            <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 4px 8px" }}>
+              {issues.length} clause{issues.length !== 1 ? "s" : ""}
+            </p>
+
+            {issues.map((issue, index) => {
+              const isSelected = selectedIndex === index
+              const isMajor = issue.risk === "MAJOR"
+              const isMinor = issue.risk === "MINOR"
+              return (
+                <div
+                  key={index}
+                  onClick={() => setSelectedIndex(index)}
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    marginBottom: "2px",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "8px",
+                    backgroundColor: isSelected
+                      ? isMajor ? "#FCEBEB" : isMinor ? "#FAEEDA" : "#EAF3DE"
+                      : "transparent",
+                    border: isSelected
+                      ? `0.5px solid ${isMajor ? "#F7C1C1" : isMinor ? "#FAC775" : "#C0DD97"}`
+                      : "0.5px solid transparent",
+                  }}
+                >
+                  <div style={{ width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0, marginTop: "4px", backgroundColor: dotColor(issue) }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "12px", fontWeight: 500, color: isMajor ? "#A32D2D" : isMinor ? "#854F0B" : "#3B6D11", marginBottom: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {issue.clause}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#9B9B9B" }}>{dotLabel(issue)}</div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        )}
 
-        {/* Collapsible detail — amber / red states */}
-        {(pageState === "amber" || pageState === "red") && totalClauses > 0 && (
-          <div className="rounded-xl overflow-hidden mb-4"
-            style={{ backgroundColor: "#FFFFFF", border: "0.5px solid #E2E4E8" }}>
-            <button
-              onClick={() => setDetailOpen(o => !o)}
-              className="w-full flex items-center justify-between px-5 py-3 text-left"
-              style={{ background: "none", border: "none", cursor: "pointer" }}>
-              <span style={{ fontSize: "13px", color: "#4A4A6A" }}>
-                See what was reviewed ({totalClauses} clause{totalClauses > 1 ? "s" : ""}
-                {hasMajors ? ` — ${majorDeviations.length} flagged` : ""}
-                {hasEscalation ? ` — ${escalations.length} escalated` : ""})
-              </span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9B9B9B"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transform: detailOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
+          {/* Right — analysis panel */}
+          {selectedIssue ? (
+            <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
 
-            {detailOpen && (
-              <div className="px-5 pb-4" style={{ borderTop: "0.5px solid #F0F0F0" }}>
-                {hasMinors && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium uppercase mb-1"
-                      style={{ color: "#854F0B", letterSpacing: "0.08em" }}>
-                      Minor differences — {minorDeviations.length}
-                    </p>
-                    <p className="text-xs mb-3" style={{ color: "#9B9B9B" }}>
-                      Within acceptable range — not a blocker.
-                    </p>
-                    {minorDeviations.map(d => (
-                      <MinorDeviationRow key={d.id} deviation={d} clientName={clientName} />
-                    ))}
-                  </div>
-                )}
-                {hasMajors && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium uppercase mb-2"
-                      style={{ color: "#A32D2D", letterSpacing: "0.08em" }}>
-                      Major deviations — {majorDeviations.length}
-                    </p>
-                    {majorDeviations.map(d => <FlaggedRow key={d.id} deviation={d} />)}
-                  </div>
-                )}
-                {hasEscalation && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium uppercase mb-2"
-                      style={{ color: "#534AB7", letterSpacing: "0.08em" }}>
-                      Escalated — {escalations.length}
-                    </p>
-                    {escalations.map(d => <FlaggedRow key={d.id} deviation={d} />)}
-                  </div>
-                )}
+              {/* Panel header */}
+              <div style={{ padding: "14px 20px 10px", borderBottom: "0.5px solid #E2E4E8", backgroundColor: "#FFFFFF" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 500, color: "#431F5D" }}>{selectedIssue.clause}</span>
+                  <span style={{
+                    fontSize: "11px", fontWeight: 500, padding: "2px 8px", borderRadius: "10px",
+                    background: selectedIssue.risk === "MAJOR" ? "#FCEBEB" : "#FAEEDA",
+                    color: selectedIssue.risk === "MAJOR" ? "#A32D2D" : "#854F0B"
+                  }}>
+                    {selectedIssue.risk === "MAJOR" ? "Major deviation" : "Minor deviation"}
+                  </span>
+                </div>
+                <p style={{ fontSize: "12px", color: "#9B9B9B", margin: 0 }}>{selectedIssue.issue}</p>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Footer */}
-        <p className="text-center" style={{ fontSize: "12px", color: "#9B9B9B" }}>
-          Reviewed against {displayName}'s NDA standards · Pact by Counselect
-        </p>
+              {/* Panel body */}
+              <div style={{ padding: "16px 20px", flex: 1, overflowY: "auto", backgroundColor: "#FFFFFF" }}>
 
-      </div>
+                {/* Confidence */}
+                <ConfidenceBadge confidence={selectedIssue.confidence} reason={selectedIssue.confidence_reason} />
+
+                {/* Counterparty position */}
+                <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Counterparty position</p>
+                <div style={{ background: "#F7F8FA", border: "0.5px solid #E2E4E8", borderRadius: "6px", padding: "10px 14px", fontSize: "12px", lineHeight: 1.7, color: "#431F5D", marginBottom: "16px" }}>
+                  {selectedIssue.counterparty_position}
+                </div>
+
+                {/* Standard position */}
+                <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>{clientName} standard position</p>
+                <div style={{ background: "#F3EEF7", border: "0.5px solid #D1C4E9", borderRadius: "6px", padding: "10px 14px", fontSize: "12px", lineHeight: 1.6, color: "#431F5D", marginBottom: "16px" }}>
+                  {selectedIssue.standard_position}
+                </div>
+
+                {/* Suggested language */}
+                {selectedIssue.suggested_change && (
+                  <>
+                    <p style={{ fontSize: "11px", fontWeight: 500, color: "#9B9B9B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Suggested language</p>
+                    <div style={{ border: "0.5px solid #B5D4F4", borderRadius: "6px", overflow: "hidden", marginBottom: "16px" }}>
+                      <div style={{ background: "#E6F1FB", padding: "7px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <i className="ti ti-wand" aria-hidden="true" style={{ fontSize: "13px", color: "#185FA5" }} />
+                          <span style={{ fontSize: "11px", fontWeight: 500, color: "#185FA5", textTransform: "uppercase", letterSpacing: "0.06em" }}>Proposed replacement</span>
+                        </div>
+                        <CopyButton text={selectedIssue.suggested_change} />
+                      </div>
+                      <div style={{ padding: "12px 14px", fontSize: "12px", lineHeight: 1.8, color: "#431F5D", background: "#FFFFFF" }}>
+                        {selectedIssue.suggested_change}
+                      </div>
+                      <div style={{ padding: "6px 14px 8px", fontSize: "11px", color: "#9B9B9B", background: "#FAFAFA", borderTop: "0.5px solid #E2E4E8" }}>
+                        Drawn from {clientName}'s playbook. Review before use.
+                      </div>
+                    </div>
+                  </>
+                )}
+
+              </div>
+
+              {/* Nav footer */}
+              <div style={{ padding: "10px 20px", borderTop: "0.5px solid #E2E4E8", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FAFAFA" }}>
+                <button
+                  onClick={() => setSelectedIndex(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
+                  disabled={selectedIndex === 0}
+                  style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "6px", border: "0.5px solid #E2E4E8", background: "#FFFFFF", color: "#431F5D", cursor: selectedIndex === 0 ? "not-allowed" : "pointer", opacity: selectedIndex === 0 ? 0.4 : 1, display: "flex", alignItems: "center", gap: "5px" }}>
+                  <i className="ti ti-arrow-left" aria-hidden="true" style={{ fontSize: "13px" }} /> Previous
+                </button>
+                <span style={{ fontSize: "12px", color: "#9B9B9B" }}>
+                  Clause {(selectedIndex ?? 0) + 1} of {issues.length} · {issues.filter(i => i.risk === "MAJOR").length} flagged
+                </span>
+                <button
+                  onClick={() => setSelectedIndex(prev => prev !== null && prev < issues.length - 1 ? prev + 1 : prev)}
+                  disabled={selectedIndex === issues.length - 1}
+                  style={{ fontSize: "12px", padding: "6px 14px", borderRadius: "6px", border: "0.5px solid #E2E4E8", background: "#FFFFFF", color: "#431F5D", cursor: selectedIndex === issues.length - 1 ? "not-allowed" : "pointer", opacity: selectedIndex === issues.length - 1 ? 0.4 : 1, display: "flex", alignItems: "center", gap: "5px" }}>
+                  Next <i className="ti ti-arrow-right" aria-hidden="true" style={{ fontSize: "13px" }} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <p style={{ fontSize: "13px", color: "#9B9B9B" }}>Select a clause to review</p>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   )
 }
