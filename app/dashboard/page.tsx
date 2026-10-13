@@ -161,10 +161,6 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", margin: "20px 0 0", textAlign: "center" }}>
-          Reviewed against {clientName}'s NDA standards
-          </p>
-
           {/* Recent submissions */}
           {!loadingSubmissions && recentSubmissions.length > 0 && (
             <div style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "16px 20px" }}>
