@@ -132,21 +132,31 @@ export default function DashboardPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", width: "100%", marginBottom: "28px" }}>
             <button
               onClick={() => router.push("/generate")}
-              style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "20px 18px", cursor: "pointer", textAlign: "left" }}>
+              onMouseEnter={e => (e.currentTarget.style.border = "0.5px solid rgba(255,255,255,0.45)")}
+              onMouseLeave={e => (e.currentTarget.style.border = "0.5px solid rgba(255,255,255,0.18)")}
+              style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "20px 18px", cursor: "pointer", textAlign: "left", transition: "border 0.15s" }}>
               <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
-                <i className="ti ti-file-plus" aria-hidden="true" style={{ fontSize: "17px", color: "#FFFFFF" }} />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
+                  <path d="M14 2v6h6M12 18v-6M9 15h6"/>
+                </svg>
               </div>
               <p style={{ fontSize: "14px", fontWeight: 500, color: "#FFFFFF", margin: "0 0 5px" }}>Generate an NDA</p>
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, lineHeight: 1.5 }}>
                 Draft from {clientName}'s standard template, ready to send.
               </p>
             </button>
-
+          
             <button
               onClick={() => router.push("/review")}
-              style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "20px 18px", cursor: "pointer", textAlign: "left" }}>
+              onMouseEnter={e => (e.currentTarget.style.border = "0.5px solid rgba(255,255,255,0.45)")}
+              onMouseLeave={e => (e.currentTarget.style.border = "0.5px solid rgba(255,255,255,0.18)")}
+              style={{ background: "rgba(255,255,255,0.1)", border: "0.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "20px 18px", cursor: "pointer", textAlign: "left", transition: "border 0.15s" }}>
               <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
-                <i className="ti ti-file-search" aria-hidden="true" style={{ fontSize: "17px", color: "#FFFFFF" }} />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
+                  <path d="M14 2v6h6M10 9H8M16 13H8M16 17H8"/>
+                </svg>
               </div>
               <p style={{ fontSize: "14px", fontWeight: 500, color: "#FFFFFF", margin: "0 0 5px" }}>Review a counterparty NDA</p>
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, lineHeight: 1.5 }}>
